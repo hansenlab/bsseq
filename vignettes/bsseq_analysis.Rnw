@@ -1,0 +1,356 @@
+%\VignetteIndexEntry{Analyzing WGBS with bsseq}
+%\VignetteDepends{bsseq}
+%\VignetteDepends{bsseqData}
+%\VignettePackage{bsseq}
+\documentclass[12pt]{article}
+<<echo=FALSE,results=hide>>=
+options(width=70)
+@ 
+\SweaveOpts{eps=FALSE,echo=TRUE,eval=TRUE}
+\usepackage{times}
+\usepackage{color,hyperref}
+\usepackage{fullpage}
+\usepackage[numbers]{natbib}
+\usepackage{parskip}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.75}
+\hypersetup{colorlinks,breaklinks,
+            linkcolor=darkblue,urlcolor=darkblue,
+            anchorcolor=darkblue,citecolor=darkblue}
+
+\newcommand{\Rcode}[1]{{\texttt{#1}}}
+\newcommand{\Rclass}[1]{{\texttt{"#1"}}}
+\newcommand{\Rpackage}[1]{{\texttt{#1}}}
+\newcommand{\software}[1]{\textsf{#1}}
+\newcommand{\R}{\software{R}}
+
+\title{Analyzing WGBS with the bsseq package}
+\author{Kasper Daniel Hansen}
+\date{Modified: June 26, 2011.  Compiled: \today}
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+
+This document discusses the ins and outs of an analysis of a whole-genome shotgun bisulfite
+sequencing (WGBS) dataset, using the BSmooth algorithm, which was first used in \cite{Hansen:2011}
+and more formally presented and evaluated in \cite{Hansen:2012}.  The intention with the document is
+to focus on analysis-related tasks and questions.  Basic usage of the \Rpackage{bsseq} package is
+covered in ``The bsseq user's guide''.  It may be useful to consult the user's guide while reading
+this analysis guide.
+
+In this vignette we analyze chromosome 21 and 22 from \cite{Hansen:2011}.  This is primary data from
+3 patients with colon cancer.  For each patient we have normal colon tissue as well as cancer colon.
+The samples were run on ABI SOLiD and we generated 50bp single-end reads.  The reads were aligned
+using the Merman aligner in the BSmooth suite (\url{http://www.rafalab.org/bsmooth}).  See the
+primary publication for more details \cite{Hansen:2011}.
+
+This data is contained in the \Rpackage{bsseqData}
+
+<<load,results=hide>>=
+library(bsseq)
+library(bsseqData)
+@ 
+
+The \Rpackage{bsseqData} contains a script, \texttt{inst/script/create\_BS.cancer.R}, describing how
+this data is created from the Merman alignment output (also contained in the package).  Note that
+the current version of the BSmooth pipeline uses a slightly different alignment output format.
+
+The following object contains the unsmoothed ``raw'' summarized alignment data.
+<<showData>>=
+BS.cancer.ex
+pData(BS.cancer.ex)
+@ 
+
+\section*{Smoothing}
+
+The first step of the analysis is to smooth the data
+
+<<smooth,eval=FALSE>>=
+BS.cancer.ex.fit <- BSmooth(BS.cancer.ex, mc.cores = 1, verbose = TRUE)
+@ 
+This particular piece of code is not being run when the vignette is being created.  It takes roughly
+2 minutes per sample.  If you have 6 cores available, use \Rcode{mc.cores = 6} and the total run
+time will be roughly 2 minutes.  Note that setting \Rcode{mc.cores} to a value greater than 1 is not
+support on MS Windows due to a limitation of the operating system.
+
+For ease of use, the \Rpackage{bsseqData} includes the result of this command:
+<<showDataFit>>=
+data(BS.cancer.ex.fit)
+BS.cancer.ex.fit
+@ 
+
+This step uses parallelization where each sample is run on a separate core using \Rcode{mclapply}
+from the \Rpackage{parallel} package.  This form of parallelization is built into \Rpackage{bsseq},
+and (as written) requires access to a machine with 6 cores and enough RAM.  The smoothing step is
+being done completely independently on each sample, so if you have a lot of samples (or other
+circumstances), an alternative is to split the computations manually.  A later subsection shows some
+example code for doing that.
+
+Let us discuss coverage and representation.  The \Rcode{BS.cancer.ex} object contains all annotated
+CpGs on human chromosome 21 and 22, whether or not there is actual data.  Since we have multiple
+samples, we can roughly divide the genome into 3 categories: CpGs where all samples have data, CpGs
+where none of the samples have data and CpGs where some, but not all, of the samples have data.
+Examining the object at hand, we get
+
+<<cpgNumbers>>=
+## The average coverage of CpGs on the two chromosomes
+round(colMeans(getCoverage(BS.cancer.ex)), 1)
+## Number of CpGs in two chromosomes
+length(BS.cancer.ex)
+## Number of CpGs which are covered by at least 1 read in all 6 samples
+sum(rowSums(getCoverage(BS.cancer.ex) >= 1) == 6)
+## Number of CpGs with 0 coverage in all samples
+sum(rowSums(getCoverage(BS.cancer.ex)) == 0)
+@ 
+
+The CpG coverage is roughly 4x, so we would expect many zero coverage CpGs by
+chance. although that should not necessarily occur in all 6 samples at the same CpG.  If we assume
+that coverage genome-wide is Poisson distributed with a parameter (lambda) of 4, we would expect
+<<poisson>>=
+logp <- ppois(0, lambda = 4, lower.tail = FALSE, log.p = TRUE)
+round(1 - exp(6 * logp), 3)
+@ 
+of the CpGs to have at least one sample with zero coverage.
+
+There are roughly 130k CpGs with no data at all in any of the 6 samples.  This can happen either
+because of chance (although that is unlikely) or because the CpG is unmappable.  Since we are
+dealing with bisulfite converted reads, the unmappable portion of the genome is greater than with
+normal DNA-sequencing.  For this experiment we only used 50bp single-end reads (in our experience
+using 100bp paired-end reads greatly increases the mappable percentage of the genome).  These CpGs
+(with zero coverage in all samples) are in some sense easy to deal with: one should of course be
+careful drawing conclusions about CpGs with no data.
+
+We have roughly $959 - 573 - 136 = 250$k CpGs where some (but not all) of the samples have zero
+coverage, and these are in some sense harder to deal with.  Since we have very low coverage to begin
+with, it may happen just by chance that a single sample have zero coverage, and it may be too
+restrictive to just exclude these CpGs from an analysis.
+
+Smoothing is done separately for each sample, only using the data where the coverage (for that
+sample) is non-zero.  This estimates a genome-wide methylation profile, which is then
+\emph{evaluated} in all CpGs in the \Rclass{BSseq} object.  As a result, after smoothing, every CpG
+in the object has an estimated methylation value.  This is very nice for the situation where you
+want to compare a single CpG across multiple samples, but one or two of the samples have zero
+coverage by chance.  But note that these smoothed methylation profiles makes less sense in the parts
+of the genome where there are no covered CpGs nearby.  We fix this by removing these CpGs after
+smoothing, see below.
+
+Other arguments to the \Rcode{BSmooth} function are \Rcode{mc.cores}, \Rcode{mc.preschedule},
+\Rcode{parallelBy} which controls the parallelization built into the function as well as \Rcode{ns},
+\Rcode{h}, \Rcode{maxGap} which controls the smoothing.  \Rcode{ns} is the minimum number of CpGs
+contained in each window, \Rcode{h} is half the minimum window with (the actual window width is
+either 2 times \Rcode{h} or wide enough to contain \Rcode{ns} covered CpGs, whichever is greater).
+Note that the window width is different at each position in the genome and may also be different for
+different samples at the same position, since it depends on how many nearby CpGs with non-zero
+coverage.  Per default, a smoothing cluster is a whole chromosome.  By ``cluster'' we mean a set of
+CpGs which are processed together.  This means that even if there is a large distance between two
+CpGs, we borrow strength between them.  By setting \Rcode{maxGap} this can be prevented since the
+argument describes the longest distance between two CpGs before a cluster is broken up into two
+clusters.
+
+\subsubsection*{Manually splitting the smoothing computation}
+
+
+An example, only showing sample 1 and 2 for brevity, is (this example is not being run when the
+vignette is being created):
+
+<<smoothSplit,eval=FALSE>>=
+## Split datag
+BS1 <- BS.cancer.ex[, 1]
+save(BS1, file = "BS1.rda")
+BS2 <- BS.cancer.ex[, 2]
+save(BS1, file = "BS1.rda")
+## done splitting
+
+## Do the following on each node
+
+## node 1
+load("BS1.rda")
+BS1.fit <- BSmooth(BS1)
+save(BS1.fit)
+save(BS1.fit, file = "BS1.fit.rda")
+## done node 1
+
+## node 2
+load("BS2.rda")
+BS2.fit <- BSmooth(BS2)
+save(BS2.fit, file = "BS2.fit.rda")
+## done node 2
+
+## join; in a new R session
+load("BS1.fit.rda")
+load("BS2.fit.rda")
+BS.fit <- combine(BS1.fit, BS2.fit)
+@ 
+This still requires that you have one node with enough RAM to hold all samples in memory. 
+
+
+\section*{Computing t-statistics}
+
+Before computing t-statistics, we will remove CpGs with little or no coverage.  If this is not done,
+you may find many DMRs in areas of the genome with very little coverage, which are most likely false
+positives.  It is open to personal preferences exactly which CpGs to remove, but for this analysis
+we will only keep CpGs where at least 2 cancer samples and at least 2 normal samples have at least
+2x in coverage.  For readability, we store the coverage in a separate matrix (this is just due to
+line breaks in Sweave)
+<<keepLoci>>=
+BS.cov <- getCoverage(BS.cancer.ex.fit)
+keepLoci.ex <- which(rowSums(BS.cov[, c("C1", "C2", "C3")] >= 2) >= 2 &
+                  rowSums(BS.cov[, c("N1", "N2", "N3")] >= 2) >= 2)
+length(keepLoci.ex)
+BS.cancer.ex.fit <- BS.cancer.ex.fit[keepLoci.ex,]
+@ 
+(the \Rcode{keepLoci.ex}  is also available for direct inspection in the \Rpackage{bsseqData}
+package.)
+
+
+We are now ready to compute t-statistics, by
+<<BSmooth.tstat>>=
+BS.cancer.ex.tstat <- BSmooth.tstat(BS.cancer.ex.fit, 
+                                    group1 = c("C1", "C2", "C3"),
+                                    group2 = c("N1", "N2", "N3"), 
+                                    estimate.var = "group2",
+                                    local.correct = TRUE,
+                                    verbose = TRUE)
+BS.cancer.ex.tstat
+@ 
+(the \Rcode{BS.cancer.ex.tstat}  is also available for direct inspection in the \Rpackage{bsseqData}
+package.)
+
+
+
+The arguments to \Rcode{BSmooth.tstat} are simple.  \Rcode{group1} and \Rcode{group2} contain the
+sample names of the two groups being compared (it is always group1 - group2), and indices may be
+used instead of sample names.  \Rcode{estimate.var} describes which samples are being used to
+estimate the variability.  Because this is a cancer dataset, and cancer have higher variability than
+normals, we only use the normal samples to estimate the variability.  Other choices of
+\Rcode{estimate.var} are \Rcode{same} (assume same variability in each group) and \Rcode{paired} (do
+a paired t-test).  The argument \Rcode{local.correct} describes whether we should use a large-scale
+(low-frequency) mean correction.  This is especially important in cancer where we have found many
+large-scale methylation differences between cancer and normals.
+
+We can look at the marginal distribution of the t-statistic by
+
+\setkeys{Gin}{width=0.5\textwidth}
+<<plotTstat,fig=TRUE,width=5,height=5>>=
+plot(BS.cancer.ex.tstat)
+@ 
+\setkeys{Gin}{width=0.8\textwidth}
+
+
+The ``blocks'' of hypomethylation are clearly visible in the marginal distribution of the
+uncorrected t-statistics.
+
+Even in comparisons where we do not observe these large-scale methylation differences, it often
+improves the marginal distribution of the t-statistics to locally correct them (``improves'' in the
+sense of making them more symmetric).
+
+\section*{Finding DMRs}
+
+Once t-statistics have been computed, we can compute differentially methylated regions (DMRs) by
+thresholding the t-statistics.  Here we use a cutoff of $4.6$, which was chosen by looking at the
+quantiles of the t-statistics (for the entire genome).
+<<dmrs>>=
+dmrs0 <- dmrFinder(BS.cancer.ex.tstat, cutoff = c(-4.6, 4.6))
+dmrs <- subset(dmrs0, n >= 3 & abs(meanDiff) >= 0.1)
+nrow(dmrs)
+head(dmrs, n = 3)
+@ 
+
+Here, we filter out DMRs that do not have at least 3 CpGs in them and at least a mean difference
+(across the DMR) in methylation between normal and cancers of at least 0.1.  While the exact values
+of these two filters can be debated, it is surely a good idea to use something like this.
+
+Other arguments to \Rcode{dmrFinder} are \Rcode{qcutoff} which chooses a quantile-based cutoff (for
+example \Rcode{qcutoff = c(0.01, 0.99)}) and \Rcode{maxGap} which makes sure that a DMR is being
+split if there are two CpGs with more than \Rcode{maxGap} between them (default of 300bp).
+
+We rank DMRs by the column \Rcode{areaStat} which is the sum of the t-statistics in each CpG.  This
+is kind of the area of the DMR, except that it is weighted by the number of CpGs and not by genomic
+length.  This is currently the best statistic we know, although it is far from perfect (we would
+like to do something better).
+
+\section*{Plotting}
+
+It is \emph{always} a good idea to look at the DMRs.  One way of encoding standard plotting
+parameters like \Rcode{col}, \Rcode{lty}, and \Rcode{lwd} is to add columns to the \Rcode{pData},
+like 
+
+<<plotSetup>>=
+pData <- pData(BS.cancer.ex.fit)
+pData$col <- rep(c("red", "blue"), each = 3)
+pData(BS.cancer.ex.fit) <- pData
+@ 
+
+Once this is setup, we can plot a single DMR like
+
+\setkeys{Gin}{width=1\textwidth}
+<<plotDmr,fig=TRUE,width=10,height=5>>=
+plotRegion(BS.cancer.ex.fit, dmrs[1,], extend = 5000, addRegions = dmrs)
+@ 
+\setkeys{Gin}{width=0.8\textwidth}
+\vspace*{-6\baselineskip}
+
+\Rcode{extend} tells us how many bp to extend to either side of the plotting region.
+\Rcode{addRegions} is a \Rclass{data.frame} or \Rcode{GRanges} listing additional regions that
+should be highlighted.
+
+Typically, we plot hundreds of DMRs in a single PDF file and use external tools to look at them.
+For this purpose, \Rcode{plotManyRegions} is very useful since it is much faster than plotting
+individual DMRs with \Rcode{plotRegion}.  An example (not run) is
+<<plotManyRegions,eval=FALSE>>=
+pdf(file = "dmrs_top200.pdf", width = 10, height = 5)
+plotManyRegions(BS.cancer.ex.fit, dmrs[1:200,], extend = 5000, 
+                addRegions = dmrs)
+dev.off()
+@ 
+which plots the top200.
+
+\section*{Question and answers}
+
+\textbf{1. The BSmooth algorithm is supposed to give smooth methylation estimates.  Yet, when I plot
+  the smoothed values, I see jagged lines, which do not look smooth to me.}
+
+We estimate a genome-wide methylation profile that is a smooth function of the genomic position.
+However, this profile is not stored in the \Rclass{BSseq} objects.  Instead, we evaluate this smooth
+profile in the methylation loci in the object.  An example (made-up values) is
+\begin{verbatim}
+pos  meth
+1     0.1
+3     0.1
+5     0.1
+200   0.6
+203   0.6
+205   0.6
+\end{verbatim}
+
+For plotting we do linear interpolation between this points.  The end result is that the methylation
+profile may appear jagged especially if there is a ``big'' distance between two CpGs (between pos
+\texttt{5} and \texttt{200} above).  If we wanted to plot truly smooth profiles we would have to
+store the methylation profile evaluated at a regular grid across the genome.  This takes up a lot of
+space and would add complications to the internal data structures.
+
+
+%%
+%% Backmatter
+%%
+
+\bibliographystyle{unsrturl}
+\bibliography{bsseq}
+
+\section*{SessionInfo}
+
+<<sessionInfo,results=tex,eval=TRUE,echo=FALSE>>=
+toLatex(sessionInfo())
+@ 
+
+\end{document}
+
+% Local Variables:
+% eval: (add-hook 'LaTeX-mode-hook '(lambda () (if (string= (buffer-name) "bsseq_analysis.Rnw") (setq fill-column 100))))
+% LocalWords: LocalWords bisulfite methylation methylated CpG CpGs DMR bsseq bp 
+% LocalWords: DMRs differentially ABI SOLiD dataset WGBS BSmooth 
+% LocalWords: parallelization Bioconductor hypomethylation genomic pos PDF thresholding
+% LocalWords: mappable unmappable indices normals quantile
+% End:
+
