@@ -449,7 +449,7 @@ read.bsmooth <- function(dirs, sampleNames = NULL, seqnames = NULL, returnRaw = 
         if(verbose) cat(sprintf("Joining samples ... "))
         stime <- system.time({
             ## FIXME: we can do much better than this ... need to write combineList
-            out <- Reduce("combine", allOut)
+            allOut <- Reduce("combine", allOut)
         })[3]
         if(verbose) cat(sprintf("in %.1f secs\n", stime))
     }
