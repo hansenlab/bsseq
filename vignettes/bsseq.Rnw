@@ -21,7 +21,7 @@ options(width=70)
 \newcommand{\R}{\software{R}}
 
 \title{The bsseq user's guide}
-\author{Kasper Daniel Hansen}
+\author{Kasper Daniel Hansen \\ \texttt{khansen@jhsph.edu}}
 \date{Modified: June 20, 2011.  Compiled: \today}
 \begin{document}
 \setlength{\parskip}{1\baselineskip}

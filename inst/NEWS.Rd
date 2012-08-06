@@ -4,6 +4,8 @@
 
 \section{Version 0.4}{
   \itemize{
+    \item Improved combine and fixed a bug.  Also added a non-exported
+    combineList for testing.
     \item Bug fix to read.bsmooth; it now works correctly for the
     default settings (= returning a single object of class BSseq and not a
     list). 
