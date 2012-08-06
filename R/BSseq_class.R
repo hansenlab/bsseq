@@ -192,42 +192,83 @@ setMethod("combine", signature(x = "BSseq", y = "BSseq"), function(x, y, ...) {
     if(hasBeenSmoothed(x) && hasBeenSmoothed(y) && !all.equal(x@trans, y@trans))
         stop("'x' and 'y' need to be smoothed on the same scale")
     phenoData <- combine(phenoData(x), phenoData(y))
-    gr <- reduce(c(granges(x), granges(y)), min.gapwidth = 0L)
-    mm.x <- as.matrix(findOverlaps(gr, granges(x)))
-    mm.y <- as.matrix(findOverlaps(gr, granges(y)))
-    sampleNames <- c(sampleNames(x), sampleNames(y))
-    ## FIXME: there is no check that the two sampleNames are disjoint.
-    M <- Cov <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
-    colnames(M) <- colnames(Cov) <- sampleNames
-    M[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "M")[mm.x[,2],]
-    M[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "M")[mm.y[,2],]
-    Cov[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "Cov")[mm.x[,2],]
-    Cov[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "Cov")[mm.y[,2],]
-    if(!hasBeenSmoothed(x) || !hasBeenSmoothed(y)) {
+    if(identical(granges(x), granges(y))) {
+        M <- cbind(getBSseq(x, "M"), getBSseq(y, "M"))
+        Cov <- cbind(getBSseq(x, "Cov"), getBSseq(y, "Cov"))
+        if(!hasBeenSmoothed(x) || !hasBeenSmoothed(y)) {
+            coef <- NULL
+            se.coef <- NULL
+            trans <- NULL
+        } else {
+            coef <- cbind(getBSseq(x, "coef"), getBSseq(y, "coef"))
+            se.coef <- cbind(getBSseq(x, "se.coef"), getBSseq(y, "se.coef"))
+            trans <- getBSseq(x, "trans")
+        }
+    } else {
+        gr <- reduce(c(granges(x), granges(y)), min.gapwidth = 0L)
+        mm.x <- as.matrix(findOverlaps(gr, granges(x)))
+        mm.y <- as.matrix(findOverlaps(gr, granges(y)))
+        sampleNames <- c(sampleNames(x), sampleNames(y))
+        ## FIXME: there is no check that the two sampleNames are disjoint.
+        M <- Cov <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
+        colnames(M) <- colnames(Cov) <- sampleNames
+        M[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "M")[mm.x[,2],]
+        M[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "M")[mm.y[,2],]
+        Cov[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "Cov")[mm.x[,2],]
+        Cov[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "Cov")[mm.y[,2],]
+        if(!hasBeenSmoothed(x) || !hasBeenSmoothed(y)) {
+            coef <- NULL
+            se.coef <- NULL
+            trans <- NULL
+        } else {
+            trans <- x@trans
+            coef <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
+            colnames(coef) <- sampleNames(phenoData)
+            if(hasBeenSmoothed(x))
+                coef[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "coef")[mm.x[,2],]
+            if(hasBeenSmoothed(y))
+                coef[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "coef")[mm.y[,2],]
+            if(is.null(getBSseq(x, "se.coef")) && is.null(getBSseq(x, "se.coef")))
+                se.coef <- NULL
+            else {
+                se.coef <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
+                colnames(se.coef) <- sampleNames(phenoData)
+                if(!is.null(getBSseq(x, "se.coef")))
+                    se.coef[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "se.coef")[mm.x[,2],]
+                if(!is.null(getBSseq(y, "se.coef")))
+                    se.coef[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "se.coef")[mm.y[,2],]
+            }
+        }
+    }
+    BSseq(gr = gr, M = M, Cov = Cov, coef = coef, se.coef = se.coef,
+          phenoData = phenoData, trans = trans, rmZeroCov = FALSE)
+})
+
+combineList <- function(...) {
+    x <- list(...)
+    stopifnot(all(sapply(x, class) == "BSseq"))
+    gr <- getBSseq(x[[1]], "granges")
+    trans <- getBSseq(x[[1]], "trans")
+    ok <- sapply(x[-1], function(xx) {
+        identical(gr, getBSseq(xx, "granges")) &&
+            identical(transgr, getBSseq(xx, "trans"))
+    })
+    if(!all(ok))
+        stop("all elements of '...' in combineList needs to have the same granges and trans")
+    M <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "M")))
+    Cov <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "Cov")))
+    if(any(!sapply(x, hasBeenSmoothed))) {
         coef <- NULL
         se.coef <- NULL
         trans <- NULL
     } else {
-        trans <- x@trans
-        coef <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
-        colnames(coef) <- sampleNames(phenoData)
-        if(hasBeenSmoothed(x))
-            coef[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "coef")[mm.x[,2],]
-        if(hasBeenSmoothed(y))
-            coef[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "coef")[mm.y[,2],]
-        if(is.null(getBSseq(x, "se.coef")) && is.null(getBSseq(x, "se.coef")))
-            se.coef <- NULL
-        else {
-            se.coef <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
-            colnames(se.coef) <- sampleNames(phenoData)
-            if(!is.null(getBSseq(x, "se.coef")))
-                se.coef[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "se.coef")[mm.x[,2],]
-            if(!is.null(getBSseq(y, "se.coef")))
-                se.coef[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "se.coef")[mm.y[,2],]
-        }
+        coef <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "coef")))
+        se.coef <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "se.coef")))
     }
-    BSseq(gr = gr, M = M, Cov = Cov, coef = coef, se.coef = se.coef, trans = trans, rmZeroCov = FALSE)
-})
+    phenoData <- Reduce(combine, lapply(x, phenoData))
+    BSseq(gr = gr, M = M, Cov = Cov, coef = coef, se.coef = se.coef,
+          phenoData = phenoData, trans = trans, rmZeroCov = FALSE)
+}
 
 getBSseq <- function(BSseq, type = c("Cov", "M", "gr", "coef", "se.coef", "trans", "parameters")) {
     type <- match.arg(type)

@@ -24,7 +24,7 @@ options(width=70)
 \newcommand{\R}{\software{R}}
 
 \title{Analyzing WGBS with the bsseq package}
-\author{Kasper Daniel Hansen}
+\author{Kasper Daniel Hansen\\ \texttt{khansen@jhsph.edu}}
 \date{Modified: June 26, 2011.  Compiled: \today}
 \begin{document}
 
