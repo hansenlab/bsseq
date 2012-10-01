@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 0.6.0
+Version: 0.7.0
 Title: Analyze, manage and store bisulfite sequencing data
 Description: Tools for analyzing and visualizing bisulfite sequencing data
 Author: Kasper Daniel Hansen
