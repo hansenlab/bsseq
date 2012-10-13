@@ -4,6 +4,7 @@
 \alias{BSseq-class}
 \alias{[,BSseq-method}
 \alias{combine,BSseq,BSseq-method}
+\alias{combineList}
 \alias{dim,BSseq-method}
 \alias{ncol,BSseq-method}
 \alias{nrow,BSseq-method}
@@ -137,6 +138,14 @@ of the form \code{BSseq(...)}.
 
       This function returns a logical depending on whether or not the
       \code{BSseq} object has been smoothed using \code{BSmooth}.  }
+
+    \item{\code{combineList(list)}}{
+
+      This function function is a faster way of using \code{combine} on
+      multiple objects, all containing methylation data for the exact same
+      methylation loci.  The input is a list, with each component an object
+      of class \code{BSseq}.  The (slower) alternative is to use
+      \code{Reduce(combine, list)}. }
   }
 }
 
