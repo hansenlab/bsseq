@@ -25,7 +25,7 @@ options(width=70)
 
 \title{Analyzing WGBS with the bsseq package}
 \author{Kasper Daniel Hansen\\ \texttt{khansen@jhsph.edu}}
-\date{Modified: June 26, 2011.  Compiled: \today}
+\date{Modified: October 13, 2012.  Compiled: \today}
 \begin{document}
 
 \maketitle
@@ -61,6 +61,11 @@ The following object contains the unsmoothed ``raw'' summarized alignment data.
 BS.cancer.ex
 pData(BS.cancer.ex)
 @ 
+
+If you use this package, please cite our BSmooth paper
+<<citation,echo=FALSE,results=tex>>=
+print(citation("bsseq"), style = "latex")
+@
 
 \section*{Smoothing}
 

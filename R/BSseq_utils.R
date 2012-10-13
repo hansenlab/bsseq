@@ -60,6 +60,8 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
     }
     stopifnot(is(BSseq, "BSseq"))
     type <- match.arg(type)
+    if(type == "smooth" & !hasBeenSmoothed(BSseq))
+        stop("'type=smooth' requires the object to have been smoothed.")
     what <- match.arg(what)
     z <- abs(qnorm((1 - alpha)/2, mean = 0, sd = 1))
     if(is.null(regions) && type == "smooth") {

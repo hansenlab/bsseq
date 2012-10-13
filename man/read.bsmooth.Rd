@@ -33,6 +33,10 @@ read.bsmooth(dirs, sampleNames = NULL, seqnames = NULL,
   \item{verbose}{Make the function verbose.}
 }
 \note{
+  Input files can either be gzipped or not.  Gzipping the input files
+  results in much greater speed of reading (and saves space), so it is
+  recommended.
+  
   We are working on making this function faster and less memory hungry.
 }
 \value{
