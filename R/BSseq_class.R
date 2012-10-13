@@ -193,6 +193,7 @@ setMethod("combine", signature(x = "BSseq", y = "BSseq"), function(x, y, ...) {
         stop("'x' and 'y' need to be smoothed on the same scale")
     phenoData <- combine(phenoData(x), phenoData(y))
     if(identical(granges(x), granges(y))) {
+        gr <- granges(x)
         M <- cbind(getBSseq(x, "M"), getBSseq(y, "M"))
         Cov <- cbind(getBSseq(x, "Cov"), getBSseq(y, "Cov"))
         if(!hasBeenSmoothed(x) || !hasBeenSmoothed(y)) {

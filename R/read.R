@@ -336,7 +336,7 @@ read.umtab.chr <- function(files, sampleNames = NULL,
 read.bsmoothDirRaw <- function(dir, seqnames = NULL, keepCycle = FALSE, keepFilt = FALSE,
                                header = TRUE, verbose = TRUE) {
     dir <- normalizePath(dir)
-    inpattern <- "\\.cpg\\.tsv\\.gz$"
+    inpattern <- "\\.cpg\\.tsv(|\\.gz)$"
     if(length(dir) != 1 || !file.info(dir)$isdir)
         stop("argument 'dir' needs to be a single directory")
     allChrFiles <- list.files(dir, pattern = inpattern, full.names = TRUE)
@@ -347,8 +347,12 @@ read.bsmoothDirRaw <- function(dir, seqnames = NULL, keepCycle = FALSE, keepFilt
         return(NULL)
     }
     if(header) {
-        columnHeaders <- sapply(allChrFiles, function(file) {
-            out <- readLines(con <- gzfile(file), n = 1)
+        columnHeaders <- sapply(allChrFiles, function(thisfile) {
+            if(grepl("\\.gz$", thisfile))
+                con <- gzfile(thisfile)
+            else
+                con <- file(thisfile, open = "r")
+            out <- readLines(con, n = 1)
             close(con)
             out
         })
@@ -367,10 +371,14 @@ read.bsmoothDirRaw <- function(dir, seqnames = NULL, keepCycle = FALSE, keepFilt
         what0[c("Mcy", "Ucy")] <- replicate(2, NULL)
     if(!keepFilt) 
         what0[grep("^filt", names(what0))] <- replicate(length(grep("^filt", names(what0))), NULL)
-    outList <- lapply(allChrFiles, function(file) {
+    outList <- lapply(allChrFiles, function(thisfile) {
         if(verbose)
-            cat(sprintf("Reading '%s'\n", file))
-        out <- scan(con <- gzfile(file, open = "r"), skip = header, what = what0, sep = "\t",
+            cat(sprintf("Reading '%s'\n", thisfile))
+        if(grepl("\\.gz$", thisfile))
+            con <- gzfile(thisfile)
+        else
+            con <- file(thisfile)
+        out <- scan(con, skip = header, what = what0, sep = "\t",
                     quote = "", na.strings = "NA", quiet = TRUE)
         close(con)
         out

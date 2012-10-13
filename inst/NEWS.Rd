@@ -2,6 +2,20 @@
 \title{bsseq news}
 \encoding{UTF-8}
 
+\section{Version 0.7}{
+  \itemize{
+    \item Fixed a bug in getMeth, where type="raw" resulted in an error
+    for non-smoothed data objects.
+    \item Updated CITATION and citations in the vignettes.
+    \item Now read.bsmooth supports both gzipped and non-gzipped files,
+    whereas previously it assumed the output files to be gzipped.
+    Thanks to Andreas Schoenegger for reporting this problem.
+    \item Fixed a bug in combine() that also resulted in a bug in
+    read.bsmooth when multiple input directories were specified.  Bug
+    reported by Andreas Schoenegger.
+  }
+}
+
 \section{Version 0.4}{
   \itemize{
     \item Improved combine and fixed a bug.  Also added a non-exported

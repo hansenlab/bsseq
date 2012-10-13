@@ -19,10 +19,11 @@ options(width=70)
 \newcommand{\Rpackage}[1]{{\texttt{#1}}}
 \newcommand{\software}[1]{\textsf{#1}}
 \newcommand{\R}{\software{R}}
+\newcommand{\bold}[1]{\textbf{#1}}
 
 \title{The bsseq user's guide}
 \author{Kasper Daniel Hansen \\ \texttt{khansen@jhsph.edu}}
-\date{Modified: June 20, 2011.  Compiled: \today}
+\date{Modified: October 13, 2012.  Compiled: \today}
 \begin{document}
 \setlength{\parskip}{1\baselineskip}
 \setlength{\parindent}{0pt}
@@ -102,6 +103,14 @@ Some standard terms from the DNA methylation field: differentially methylated re
 methylation (methylation that is higher in one condition/sample than in another), hypo methylation
 (methylation that is lower in one condition/sample than in another), and finally differentially
 methylated position (DMP) referring to a single loci.
+
+\subsubsection*{Citation}
+
+If you use this package, please cite our BSmooth paper:
+
+<<citation,echo=FALSE,results=tex>>=
+print(citation("bsseq"), style = "latex")
+@ 
 
 \section{Overview}
 
@@ -288,12 +297,12 @@ computed for region-level summary estimates.  Examples
 
 <<getMeth>>=
 getMeth(BS.chr22, regions, type = "raw")
-getMeth(BS.chr22, regions[2], type = "smooth", what = "perBase")
+getMeth(BS.chr22, regions[2], type = "raw", what = "perBase")
 @ 
 
 \section{Reading data}
 
-\subsubsection{Alignment output from the BSmooth alignment suite}
+\subsubsection*{Alignment output from the BSmooth alignment suite}
 
 It is straightforward to read output files (summarized evidence) from the BSmooth alignment suite,
 using \Rcode{read.bsmooth}.  This function takes as argument a number of directories, usually
@@ -301,12 +310,13 @@ corresponding to samples, with the alignment output.  Sometimes, one might want 
 chromosomes, which can be accomplished by the \Rcode{seqnames} argument.  Also, the default values
 of \Rcode{qualityCutoff = 20} ensures that we do not use methylation evidence with a base quality
 strictly lower than 20 (since we may not be confident whether the read really supports methylation
-or not).
+or not).  The function \Rcode{read.bsmooth} allows for both gzipped and non-gzipped input files. It
+is faster to read gzipped files, so we recommend gzipping post-alignment.
 
 During the development of BSmooth we experimented with a number of different output formats.  These
 legacy formats can be read with \Rcode{read.umtab} and \Rcode{read.umtab2}.
 
-\subsubsection{Alignment output from other aligners}
+\subsubsection*{Alignment output from other aligners}
 
 We are interested in adding additional parsers to the package; if your favorite alignment software
 is not supported, feel free to get in touch.
@@ -339,7 +349,7 @@ file may be found by
 system.file("scripts", "get_BS.chr22.R", package = "bsseq")
 @ 
 
-\section{Analysis}
+\section*{Analysis}
 
 Computing smoothed methylation levels is simple.  We subset \Rcode{BS.chr22} so we only smooth 1
 sample, for run-time purpose

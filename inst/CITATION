@@ -6,10 +6,11 @@ bibentry("Article",
          person(c("Rafael", "A."), "Irizarry")),
          journal = "Genome Biology",
          year = 2012,
-	 note = "In press",  
-         textVersion = 
-         paste("KD Hansen, B Langmead, and RA Irizarry",
-               "BSmooth: from whole genome bisulfite sequencing reads to differentially methylated regions", 
-"Genome Biology, In press (2012)")
+	 volume = "13",
+	 pages = "R83",
+  	 textVersion = 
+         paste("KD Hansen, B Langmead, and RA Irizarry.",
+               "BSmooth: from whole genome bisulfite sequencing reads to differentially methylated regions.", 
+"Genome Biology, 13:R83 (2012)")
 )
 
