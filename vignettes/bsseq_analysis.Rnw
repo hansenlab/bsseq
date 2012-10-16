@@ -22,6 +22,7 @@ options(width=70)
 \newcommand{\Rpackage}[1]{{\texttt{#1}}}
 \newcommand{\software}[1]{\textsf{#1}}
 \newcommand{\R}{\software{R}}
+\newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
 
 \title{Analyzing WGBS with the bsseq package}
 \author{Kasper Daniel Hansen\\ \texttt{khansen@jhsph.edu}}
