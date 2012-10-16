@@ -2,7 +2,14 @@
 \title{bsseq news}
 \encoding{UTF-8}
 
-\section{Version 0.7}{
+\section{Version 0.7.x}{
+  \itemize{
+    \item Exposed combineList as a faster alternative to Reduce(combine,
+    list). 
+  }
+}
+
+\section{Version 0.6.x}{
   \itemize{
     \item Fixed a bug in getMeth, where type="raw" resulted in an error
     for non-smoothed data objects.
