@@ -62,7 +62,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
 
 .bsHighlightRegions <- function(regions, gr, ylim, regionCol, highlightMain) {
     if(is.data.frame(regions))
-        regions <- data.frame2Granges(regions)
+        regions <- data.frame2GRanges(regions)
     if(highlightMain)
         regions <- c(regions, gr)
     if(is.null(regions)) return(NULL)
@@ -77,29 +77,56 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
 
 .bsGetCol <- function(object, col, lty, lwd) {
     ## Assumes that object has pData and sampleNames methods
-    if(is.null(col) & "col" %in% names(pData(object)))
+    if(is.null(col) && "col" %in% names(pData(object)))
         col <- pData(object)[["col"]]
     else
-        col <- rep("black", ncol(pData(object)))
+        col <- rep("black", nrow(pData(object)))
     if(is.null(names(col)))
         names(col) <- sampleNames(object)
     
-    if(is.null(lty) & "lty" %in% names(pData(object)))
+    if(is.null(lty) && "lty" %in% names(pData(object)))
         lty <- pData(object)[["lty"]]
     else
-        lty <- rep(1, ncol(pData(object)))
+        lty <- rep(1, nrow(pData(object)))
     if(is.null(names(lty)))
         names(lty) <- sampleNames(object)
     
-    if(is.null(lwd) & "lwd" %in% names(pData(object)))
+    if(is.null(lwd) && "lwd" %in% names(pData(object)))
         lwd <- pData(object)[["lwd"]]
     else
-        lwd <- rep(1, ncol(object))
+        lwd <- rep(1, nrow(pData(object)))
     if(is.null(names(lwd)))
         names(lwd) <- sampleNames(object)
                    
     return(list(col = col, lty = lty, lwd = lwd))
 }
+
+.bsPlotTitle <- function(gr, extend, main, mainWithWidth) {
+    if(is.data.frame(gr))
+        gr <- data.frame2GRanges(gr)
+    if(length(gr) > 1) {
+        warning("plotTitle: gr has more than one element")
+        gr <- gr[1]
+    }
+    plotChr <- as.character(seqnames(gr))
+    plotRange <- c(start(gr), end(gr))
+    regionCoord <- sprintf("%s: %s - %s", plotChr, 
+                           format(plotRange[1], big.mark = ",", scientific = FALSE),
+                           format(plotRange[2], big.mark = ",", scientific = FALSE))
+    if(mainWithWidth) {
+        regionWidth <- sprintf("width = %s, extended = %s", 
+                               format(width(gr) - 2*extend, big.mark = ",", scientific = FALSE),
+                               format(extend, big.mark = ",", scientific = FALSE))
+        regionCoord <- sprintf("%s (%s)", regionCoord, regionWidth)
+    }
+    if(main != "") {
+        main <- sprintf("%s\n%s", main, regionCoord)
+    } else {
+        main <- regionCoord
+    }
+    main
+}
+
 
 .plotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd, regionCol,
                             addTicks, addPoints, pointsMinCov, highlightMain) {
@@ -128,8 +155,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     smoothPs <- getMeth(BSseq, type = "smooth")
     rawPs <- getMeth(BSseq, type = "raw")
     coverage <- getCoverage(BSseq)
-    plotRange
-    
+        
     ## get col, lwd, lty
     colEtc <- bsseq:::.bsGetCol(object = BSseq, col = col, lty = lty, lwd = lwd)
     
@@ -140,7 +166,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     if(addTicks)
         rug(positions)
 
-    .bsHighlightRegions(regions = regions, gr = gr, ylim = c(0,1),
+    .bsHighlightRegions(regions = addRegions, gr = gr, ylim = c(0,1),
                         regionCol = regionCol, highlightMain = highlightMain)
     
     if(addPoints) {
@@ -164,7 +190,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
 }
 
 
-newPlotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions = NULL, annoTrack = NULL,
+plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions = NULL, annoTrack = NULL,
                           col = NULL, lty = NULL, lwd = NULL, BSseqTstat = NULL, mainWithWidth = TRUE,
                           regionCol = alpha("red", 0.1), addTicks = TRUE, addPoints = FALSE,
                           pointsMinCov = 5, highlightMain = FALSE) {
@@ -200,198 +226,14 @@ newPlotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegion
         bsseq:::plotAnnoTrack(gr, annoTrack)
 
     if(!is.null(main)) {
-        main <- makePlotTitle(gr = gr, extend = extend, main = main, mainWithWidth = mainWithWidth)
+        main <- bsseq:::.bsPlotTitle(gr = region, extend = extend, main = main,
+                                     mainWithWidth = mainWithWidth)
         mtext(side = 3, text = main, outer = TRUE, cex = 1)
     }
     return(invisible(NULL))
 }
 
-    
-
-plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions = NULL, annoTrack = NULL,
-                       col = NULL, lty = NULL, lwd = NULL, BSseqTstat = NULL, mainWithWidth = TRUE,
-                       regionCol = alpha("red", 0.1), addTicks = TRUE, addPoints = FALSE,
-                       pointsMinCov = 5, highlightMain = FALSE) {
-    makeTitle <- function(gr, extend, main, mainWithWidth) {
-        if(length(gr) > 1) {
-            warning("plotTitle: gr has more than one element")
-            gr <- gr[1]
-        }
-        plotChr <- as.character(seqnames(gr))
-        plotRange <- c(start(gr), end(gr))
-        regionCoord <- sprintf("%s: %s - %s", plotChr, 
-                               format(plotRange[1], big.mark = ",", scientific = FALSE),
-                               format(plotRange[2], big.mark = ",", scientific = FALSE))
-        if(mainWithWidth) {
-            regionWidth <- sprintf("width = %s, extended = %s", 
-                                   format(width(gr) - 2*extend, big.mark = ",", scientific = FALSE),
-                                   format(extend, big.mark = ",", scientific = FALSE))
-            regionCoord <- sprintf("%s (%s)", regionCoord, regionWidth)
-        }
-        if(main != "") {
-            main <- sprintf("%s\n%s", main, regionCoord)
-        } else {
-            main <- regionCoord
-        }
-        main
-    }
-    plotRects <- function(ylim) {
-        if(!is.null(addRegions))
-            rect(xleft = addRegions$start, xright = addRegions$end, ybottom = ylim[1],
-                 ytop = ylim[2], col = regionCol, border = NA)
-    }
-    restrictRegions <- function(regions, plotRange, plotChr) {
-        if(is.null(regions)) return(NULL)
-        regions <- regions[regions$chr == plotChr &
-                           ((regions$start >= plotRange[1] &
-                             regions$start <= plotRange[2]) |
-                           (regions$end >= plotRange[1] &
-                            regions$end <= plotRange[2])),, drop = FALSE]
-        if(nrow(regions) == 0)
-            regions <- NULL
-        regions
-    }
-    plotLines <- function(x, y, lty, col, lwd, plotRange) {
-        if(sum(!is.na(y)) <= 1)
-            return(NULL)
-        xx <- seq(from = plotRange[1], to = plotRange[2], length.out = 2000)
-        yy <- approxfun(x, y)(xx)
-        lines(xx, yy, col = col, lty = lty, lwd = lwd)
-    }
-    plotPoints <- function(x, y, z, col) {
-        points(x[z>pointsMinCov], y[z>pointsMinCov], col = col, pch = 16, cex = 0.5)
-        ## sample, label = "", col) {
-        ## plot(positions[1], 0.5, type = "n", xaxt = "n", yaxt = "n",
-        ##      ylim = c(0,1), xlim = plotRange, xlab = "", ylab = "")
-        ## plotRects(c(0,1))
-        ## rawp <- getP(BSseq, sample = sample, type = "raw", addPositions = TRUE, addConfint = TRUE)
-        ## cols <- rep(alpha("black", 0.5), nrow(rawp))
-        ## segments(x0 = rawp$pos, y0 = rawp$lower, y1 = rawp$upper, col = cols)
-        ## points(positions, rawp$p, col = cols)
-        ## if(nrow(BSseq$coef) > 0) {
-        ##     fitp <- getP(BSseq, sample = sample, type = "fit", addPosition = TRUE, addConfint = FALSE) 
-        ##     lines(fitp$pos, fitp$p, col = col,, lty = 1)
-        ##     ## lines(fitp$pos, fitp$lower, col = col, lty = 2)
-        ##     ## lines(fitp$pos, fitp$upper, col = col, lty = 2)
-        ##     text(plotRange[1], 0.1, labels = label)
-        ## }
-    }
-    
-    ## First we create a basic GRanges which will be the plotting region
-    if(!is.null(region)) {
-        if(is(region, "data.frame"))
-            gr <- data.frame2GRanges(region, keepColumns = FALSE)
-        else
-            gr <- region
-        if(!is(gr, "GRanges") || length(gr) != 1)
-            stop("'region' needs to be either a 'data.frame' (with a single row) or a 'GRanges' (with a single element)")
-    } else {
-        gr <- GRanges(seqnames = seqnames(BSseq)[1],
-                      ranges = IRanges(start = min(start(BSseq)),
-                      end = max(start(BSseq))))
-    }
-    origWidth <- width(gr)
-    gr <- resize(gr, width = 2*extend + width(gr), fix = "center")
-    plotRange <- c(start(gr), end(gr))
-    plotChr <- as.character(seqnames(gr))[1]
-    BSseq <- subsetByOverlaps(BSseq, gr)
-    if(!is.null(BSseqTstat))
-        BSseqTstat <- subsetByOverlaps(BSseqTstat, gr)
-    positions <- start(BSseq)
-    if(length(positions) == 0) {
-        warning("No overlap between BSseq data and region")
-        return(NULL)
-    }
-        
-    ## Now for some plotting
-    opar <- par(mar = c(0,4.1,0,0), oma = c(5,0,4,2), mfrow = c(1,1))
-    on.exit(par(opar))
-    if(is.null(BSseqTstat))
-        layout(matrix(1:2, ncol = 1), heights = c(2,1))
-    else
-        layout(matrix(1:3, ncol = 1), heights = c(2,2,1))
-       
-    sampleNames <- sampleNames(BSseq)
-    names(sampleNames) <- sampleNames
-    plot(positions[1], 0.5, type = "n", xaxt = "n", yaxt = "n",
-         ylim = c(0,1), xlim = plotRange, xlab = "", ylab = "Methylation")
-    axis(side = 2, at = c(0.2, 0.5, 0.8))
-    if(addTicks)
-        rug(positions)
-
-    addRegions <- restrictRegions(addRegions, plotRange = plotRange, plotChr = plotChr)
-    if(highlightMain)
-        addRegions <- rbind(region[, c("chr", "start", "end")],
-                            addRegions[, c("chr", "start", "end")])
-    if(!is.null(addRegions))
-        plotRects(c(0,1))
-
-    smoothPs <- getMeth(BSseq, type = "smooth")
-    rawPs <- getMeth(BSseq, type = "raw")
-    coverage <- getCoverage(BSseq)
-    
-    if(is.null(col) & "col" %in% names(pData(BSseq)))
-        col <- pData(BSseq)[["col"]]
-    else
-        col <- rep("black", ncol(BSseq))
-    if(is.null(names(col)))
-        names(col) <- sampleNames(BSseq)
-    if(is.null(lty) & "lty" %in% names(pData(BSseq)))
-        lty <- pData(BSseq)[["lty"]]
-    else
-        lty <- rep(1, ncol(BSseq))
-    if(is.null(names(lty)))
-        names(lty) <- sampleNames(BSseq)
-    if(is.null(lwd) & "lwd" %in% names(pData(BSseq)))
-        lwd <- pData(BSseq)[["lwd"]]
-    else
-        lwd <- rep(1, ncol(BSseq))
-    if(is.null(names(lwd)))
-        names(lwd) <- sampleNames(BSseq)
-
-    if(addPoints) {
-        sapply(sampleNames(BSseq), function(samp) {
-            abline(v = positions[rawPs[, samp] > 0.1], col = "grey80", lty = 1)
-        })
-    }
-
-    sapply(sampleNames(BSseq), function(samp) {
-        plotLines(positions, smoothPs[, samp], col = col[samp],
-                  lty = lty[samp], lwd = lwd[samp], plotRange = plotRange)
-    })
-
-    if(addPoints) {
-        sapply(sampleNames(BSseq), function(samp) {
-            plotPoints(positions, rawPs[, samp], coverage[, samp], col = col[samp])
-        })
-    }
-    
-    if(!is.null(BSseqTstat)) {
-        plot(positions[1], 0.5, type = "n", xaxt = "n", yaxt = "n",
-             ylim = c(-8,8), xlim = plotRange, xlab = "", ylab = "t-stat")
-        axis(side = 2, at = c(-5,0,5))
-        abline(h = 0, col = "grey60")
-        plotLines(start(BSseqTstat), BSseqTstat@stats[, "tstat"],
-                  lty = 1, plotRange = plotRange, col = "red", lwd = 1)
-        plotLines(start(BSseqTstat), BSseqTstat@stats[, "tstat.corrected"],
-                  lty = 2, plotRange = plotRange, col = "red", lwd = 1)
-        plotLines(start(BSseqTstat), 100*BSseqTstat@stats[, "tstat.sd"],
-                  lty = 2, plotRange = plotRange, col = "blue", lwd = 1)
-    }
-    
-
-    if(!is.null(annoTrack))
-        bsseq:::plotAnnoTrack(gr, annoTrack)
-
-    if(!is.null(main)) {
-        main <- makePlotTitle(gr = gr, extend = extend, main = main, mainWithWidth = mainWithWidth)
-        mtext(side = 3, text = main, outer = TRUE, cex = 1)
-    }
-    return(invisible(NULL))
-}
-
-
-
+ 
 ##     plotP <- function(sample, label = "", col) {
 ##         plot(positions[1], 0.5, type = "n", xaxt = "n", yaxt = "n",
 ##              ylim = c(0,1), xlim = plotRange, xlab = "", ylab = "")
