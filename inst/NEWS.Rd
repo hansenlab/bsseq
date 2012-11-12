@@ -5,7 +5,9 @@
 \section{Version 0.7.x}{
   \itemize{
     \item Exposed combineList as a faster alternative to Reduce(combine,
-    list). 
+    list).
+    \item Updated the code for the plotting routines (plotRegion).  This
+    should not have an impact on user-visible code.
   }
 }
 
