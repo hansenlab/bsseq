@@ -245,14 +245,15 @@ setMethod("combine", signature(x = "BSseq", y = "BSseq"), function(x, y, ...) {
           phenoData = phenoData, trans = trans, rmZeroCov = FALSE)
 })
 
-combineList <- function(...) {
-    x <- list(...)
+combineList <- function(x, ...) {
+    if(class(x) == "BSseq")
+        x <- list(x, ...)
     stopifnot(all(sapply(x, class) == "BSseq"))
-    gr <- getBSseq(x[[1]], "granges")
+    gr <- getBSseq(x[[1]], "gr")
     trans <- getBSseq(x[[1]], "trans")
     ok <- sapply(x[-1], function(xx) {
-        identical(gr, getBSseq(xx, "granges")) &&
-            identical(transgr, getBSseq(xx, "trans"))
+        identical(gr, getBSseq(xx, "gr")) &&
+            identical(trans, getBSseq(xx, "trans"))
     })
     if(!all(ok))
         stop("all elements of '...' in combineList needs to have the same granges and trans")
