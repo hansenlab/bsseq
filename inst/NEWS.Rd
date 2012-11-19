@@ -8,6 +8,7 @@
     list).
     \item Updated the code for the plotting routines (plotRegion).  This
     should not have an impact on user-visible code.
+	\item Added read.bismark() function to parse output from the Bismark alignment suit.
   }
 }
 
