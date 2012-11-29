@@ -127,25 +127,27 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     main
 }
 
-
-.plotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd, regionCol,
-                            addTicks, addPoints, pointsMinCov, highlightMain) {
-    if(is.data.frame(region))
-        region <- data.frame2GRanges(region)
-
-    if(!is.null(region)) {
+.bsGetGr <- function(object, region, extend) {
+    if(is.null(region)) {
+        gr <- GRanges(seqnames = seqnames(object)[1],
+                      ranges = IRanges(start = min(start(object)),
+                      end = max(start(object))))
+    } else {
         if(is(region, "data.frame"))
             gr <- data.frame2GRanges(region, keepColumns = FALSE)
         else
             gr <- region
         if(!is(gr, "GRanges") || length(gr) != 1)
             stop("'region' needs to be either a 'data.frame' (with a single row) or a 'GRanges' (with a single element)")
-    } else {
-        gr <- GRanges(seqnames = seqnames(BSseq)[1],
-                      ranges = IRanges(start = min(start(BSseq)),
-                      end = max(start(BSseq))))
+        gr <- resize(gr, width = 2*extend + width(gr), fix = "center")
     }
-    gr <- resize(gr, width = 2*extend + width(gr), fix = "center")
+    gr
+}
+
+
+.plotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd, regionCol,
+                            addTicks, addPoints, pointsMinCov, highlightMain) {
+    gr <- .bsGetGr(Bsseq, region, extend)
     BSseq <- subsetByOverlaps(BSseq, gr)
     
     ## Extract basic information
@@ -206,7 +208,8 @@ plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions =
                             col = col, lty = lty, lwd = lwd, regionCol = regionCol,
                             addTicks = addTicks, addPoints = addPoints,
                             pointsMinCov = pointsMinCov, highlightMain = highlightMain)
-
+    gr <- .bsGetGr(BSseq, region, extend)
+    
     if(!is.null(BSseqTstat)) {
         if(!is.null(BSseqTstat))
             BSseqTstat <- subsetByOverlaps(BSseqTstat, gr)
