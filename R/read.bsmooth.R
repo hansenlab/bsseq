@@ -401,20 +401,17 @@ read.bsmoothDirRaw <- function(dir, seqnames = NULL, keepCycle = FALSE, keepFilt
 
 
 sampleRawToBSseq <- function(gr, qualityCutoff = 20, sampleName = NULL, rmZeroCov = FALSE) {
-    numberQualsGreaterThan.old <- function(char) {
-        quals <- as.integer(charToRaw(char)) - 33L
-        sum(quals >= qualityCutoff)
-    }
     numberQualsGreaterThan <- function(cvec) {
         onestring <- paste(cvec, collapse = "")
         greater <- (as.integer(charToRaw(onestring)) - 33L >= qualityCutoff)
-        tapply(greater, rep(1:length(cvec), times = nchar(cvec)), sum)
+        out <- tapply(greater, rep(1:length(cvec), times = nchar(cvec)), sum)
+        out
     }
     strToCov <- function(vec) {
         Cov <- rep(0, length(vec))
         wh <- which(! vec %in% c("", "0"))
-        ## Cov[wh] <- sapply(vec[wh], numberQualsGreaterThan.old)
-        Cov[wh] <- numberQualsGreaterThan(vec[wh])
+        if(length(wh) > 0)
+            Cov[wh] <- numberQualsGreaterThan(vec[wh])
         Cov
     }
     M <- matrix(strToCov(elementMetadata(gr)[, "Mstr"]), ncol = 1)
@@ -456,8 +453,7 @@ read.bsmooth <- function(dirs, sampleNames = NULL, seqnames = NULL, returnRaw = 
     if(!returnRaw) {
         if(verbose) cat(sprintf("Joining samples ... "))
         stime <- system.time({
-            ## FIXME: we can do much better than this ... need to write combineList
-            allOut <- Reduce("combine", allOut)
+            allOut <- combineList(allOut)
         })[3]
         if(verbose) cat(sprintf("in %.1f secs\n", stime))
     }

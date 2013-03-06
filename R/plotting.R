@@ -56,7 +56,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     lines(xx, yy, col = col, lty = lty, lwd = lwd)
 }
 
-.bsPlotPoints <- function(x, y, z, col) {
+.bsPlotPoints <- function(x, y, z, col, pointsMinCov) {
     points(x[z>pointsMinCov], y[z>pointsMinCov], col = col, pch = 16, cex = 0.5)
 }
 
@@ -147,7 +147,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
 
 .plotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd, regionCol,
                             addTicks, addPoints, pointsMinCov, highlightMain) {
-    gr <- .bsGetGr(Bsseq, region, extend)
+    gr <- .bsGetGr(BSseq, region, extend)
     BSseq <- subsetByOverlaps(BSseq, gr)
     
     ## Extract basic information
@@ -186,7 +186,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     if(addPoints) {
         sapply(sampleNames(BSseq), function(samp) {
             .bsPlotPoints(positions, rawPs[, samp], coverage[, samp],
-                          col = colEtc$col[samp])
+                          col = colEtc$col[samp], pointsMinCov = pointsMinCov)
         })
     }
 }

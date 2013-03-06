@@ -251,15 +251,32 @@ combineList <- function(x, ...) {
     stopifnot(all(sapply(x, class) == "BSseq"))
     gr <- getBSseq(x[[1]], "gr")
     trans <- getBSseq(x[[1]], "trans")
-    ok <- sapply(x[-1], function(xx) {
-        identical(gr, getBSseq(xx, "gr")) &&
-            identical(trans, getBSseq(xx, "trans"))
+    sameTrans <- sapply(x[-1], function(xx) {
+        identical(trans, getBSseq(xx, "trans"))
     })
-    if(!all(ok))
-        stop("all elements of '...' in combineList needs to have the same granges and trans")
-    M <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "M")))
-    Cov <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "Cov")))
-    if(any(!sapply(x, hasBeenSmoothed))) {
+    if(!all(sameTrans))
+        stop("all elements of '...' in combineList needs to have the same trans")
+    sameGr <- sapply(x[-1], function(xx) {
+        identical(trans, getBSseq(xx, "gr"))
+    })
+    if(all(sameGr)) {
+        M <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "M")))
+        Cov <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "Cov")))
+    } else {
+        gr <- sort(reduce(do.call(c, unname(lapply(x, granges))), min.gapwidth = 0L))
+        sampleNames <- do.call(c, lapply(x, sampleNames))
+        M <- matrix(0, ncol = length(sampleNames), nrow = length(gr))
+        colnames(M) <- sampleNames
+        Cov <- M
+        idxes <- split(seq(along = sampleNames), rep(seq(along = x), times = sapply(x, ncol)))
+        for(ii in seq(along = idxes)) {
+            ov <- findOverlaps(gr, granges(x[[ii]]))
+            idx <- idxes[[ii]]
+            M[queryHits(ov), idx] <- getBSseq(x[[ii]], "M")[subjectHits(ov),]
+            Cov[queryHits(ov), idx] <- getBSseq(x[[ii]], "Cov")[subjectHits(ov),]
+        }
+    }
+    if(any(!sapply(x, hasBeenSmoothed)) || !(all(sameGr))) {
         coef <- NULL
         se.coef <- NULL
         trans <- NULL

@@ -4,8 +4,15 @@
 
 \section{Version 0.7.x}{
   \itemize{
-    \item Exposed combineList as a faster alternative to Reduce(combine,
-    list).
+    \item Removed the returnRaw argument to read.bismark() as it was
+    unnecessary (Bismark output files does not have additional
+    information beyond M and Cov and genomic positions, unlike BSmooth).
+    \item Moved the Bismark example data from data to inst/extdata.
+    \item combineList() now deals with the case where the list of BSseq
+    objects have different genomic locations.  This speeds up
+    read.bismark() substantially.
+    \item Exposed combineList() as a faster alternative to
+    Reduce(combine, list).
     \item Updated the code for the plotting routines (plotRegion).  This
     should not have an impact on user-visible code.
     \item Added read.bismark() function to parse output from the Bismark
