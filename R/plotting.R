@@ -13,10 +13,10 @@ plotAnnoTrack <- function(gr, annoTrack) {
         })
 }
 
-plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addRegions = NULL, annoTrack = NULL, 
-                            col = NULL, lty = NULL, lwd = NULL, BSseqTstat = NULL, mainWithWidth = TRUE,
-                            regionCol = alpha("red", 0.1), addTicks = TRUE, addPoints = FALSE,
-                            pointsMinCov = 5, highlightMain = FALSE, verbose = TRUE) {
+plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addRegions = NULL,
+                            annoTrack = NULL, col = NULL, lty = NULL, lwd = NULL, BSseqTstat = NULL,
+                            mainWithWidth = TRUE, regionCol = alpha("red", 0.1), addTicks = TRUE,
+                            addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE, verbose = TRUE) {
     cat("preprocessing ...")
     if(!is.null(regions)) {
         if(is(regions, "data.frame"))
@@ -69,6 +69,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     ## regions <- pintersect(region, rep(gr, length(regions)))
     ## regions <- regions[width(regions) == 0]
     regions <- subsetByOverlaps(regions, gr)
+    regions <- pintersect(regions, rep(gr, length(regions)))
     if(length(regions) == 0)
         return(NULL)
     rect(xleft = start(regions), xright = end(regions), ybottom = ylim[1],
@@ -115,7 +116,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
                            format(plotRange[2], big.mark = ",", scientific = FALSE))
     if(mainWithWidth) {
         regionWidth <- sprintf("width = %s, extended = %s", 
-                               format(width(gr) - 2*extend, big.mark = ",", scientific = FALSE),
+                               format(width(gr), big.mark = ",", scientific = FALSE),
                                format(extend, big.mark = ",", scientific = FALSE))
         regionCoord <- sprintf("%s (%s)", regionCoord, regionWidth)
     }

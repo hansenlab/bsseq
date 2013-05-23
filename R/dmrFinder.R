@@ -23,22 +23,25 @@ dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
     regions
 }
 
-clusterMaker <- function(chr,pos,order.it=TRUE,maxGap=300){
-  nonaIndex=which(!is.na(chr) & !is.na(pos))
-  Indexes=split(nonaIndex,chr[nonaIndex])
-  clusterIDs=rep(NA,length(chr))
-  LAST=0
-  for(i in seq(along=Indexes)){
-    Index=Indexes[[i]]
-    x=pos[Index]
-    if(order.it){ Index=Index[order(x)];x=pos[Index] }
-    y=as.numeric(diff(x)>maxGap)
-    z=cumsum(c(1,y))
-    clusterIDs[Index]=z+LAST
-    LAST=max(z)+LAST
-  }
-  clusterIDs
-}  
+clusterMaker <- function(chr, pos, order.it=TRUE, maxGap=300){
+    nonaIndex <- which(!is.na(chr) & !is.na(pos))
+    Indexes <- split(nonaIndex, chr[nonaIndex])
+    clusterIDs <- rep(NA, length(chr))
+    LAST <- 0
+    for(i in seq(along = Indexes)){
+        Index <- Indexes[[i]]
+        x <- pos[Index]
+        if(order.it){
+            Index <- Index[order(x)]
+            x <- pos[Index]
+        }
+        y <- as.numeric(diff(x) > maxGap)
+        z <- cumsum(c(1, y))
+        clusterIDs[Index] <- z + LAST
+        LAST <- max(z) + LAST
+    }
+    clusterIDs
+}
 
 
 regionFinder3 <- function(x, chr, positions, keep, maxGap = 300, verbose = TRUE) {
