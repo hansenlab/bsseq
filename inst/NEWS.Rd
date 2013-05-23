@@ -4,6 +4,14 @@
 
 \section{Version 0.7.x}{
   \itemize{
+    \item Fixed a problem with "width" in the title of bsseq plots.
+    \item plot.BSseqTstat now allows for BSseqTstat objects computed
+    without correction.
+  }
+}
+
+\section{Version 0.7.x}{
+  \itemize{
     \item Removed the returnRaw argument to read.bismark() as it was
     unnecessary (Bismark output files does not have additional
     information beyond M and Cov and genomic positions, unlike BSmooth).

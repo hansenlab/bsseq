@@ -237,9 +237,14 @@ print.summary.BSseqTstat <- function(x, ...) {
 
 plot.BSseqTstat <- function(x, y, ...) {
     tstat <- getStats(x)[, "tstat"]
-    tstat.cor <- getStats(x)[, "tstat.corrected"]
     plot(density(tstat), xlim = c(-10,10), col = "blue", main = "")
-    lines(density(tstat.cor), col = "black")
-    legend("topleft", legend = c("uncorrected", "corrected"), lty = c(1,1),
-           col = c("blue", "black"))
+    if("tstat.corrected" %in% colnames(getStats(x))) {
+        tstat.cor <- getStats(x)[, "tstat.corrected"]
+        lines(density(tstat.cor), col = "black")
+        legend("topleft", legend = c("uncorrected", "corrected"), lty = c(1,1),
+               col = c("blue", "black"))
+    } else {
+        legend("topleft", legend = c("uncorrected"), lty = 1,
+               col = c("blue"))
+    }
 }
