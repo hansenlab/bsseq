@@ -48,6 +48,9 @@ setValidity("BSseq", function(object) {
        !is.null(rownames(object@coef)) ||
        !is.null(rownames(object@se.coef))) warning("unnecessary rownames in object")
     ## FIXME: check samplenames
+    if(any(colnames(object@M) != rownames(object@phenoData@pData)) ||
+       any(colnames(object@M) != rownames(object@Cov)))
+        msg <- c(msg, "sample names are messed up: colnames of the M slot has to equal colnames of the Cov slot which has to equal rownames of the phenoData slot")
     if(is.null(msg)) TRUE else msg
 })
 
