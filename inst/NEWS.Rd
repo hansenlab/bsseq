@@ -7,6 +7,8 @@
     \item Fixed a problem with "width" in the title of bsseq plots.
     \item plot.BSseqTstat now allows for BSseqTstat objects computed
     without correction.
+    \item validObject(BSseq) has been extended to also check for
+    sampleNames consistency.
   }
 }
 
