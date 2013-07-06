@@ -36,7 +36,7 @@ Objects can be created by calls of the form \code{new("hasGRanges", ...)}.
 }
 \section{Slots}{
   \describe{
-    \item{\code{gr}:}{Object of class \code{"GRanges"}.}
+    \item{\code{gr}:}{Object of class \code{GRanges}.}
   }
 }
 \section{Methods}{

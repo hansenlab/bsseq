@@ -10,14 +10,14 @@ collapseBSseq <- function(BSseq, columns) {
         sp <- split(names(columns), columns)
     }
     M <- do.call(cbind, lapply(sp, function(ss) {
-        rowSums(BSseq@M[, ss, drop = FALSE])
+        rowSums(getBSseq(BSseq, "M")[, ss, drop = FALSE])
     }))
     colnames(M) <- names(sp)
     Cov <- do.call(cbind, lapply(sp, function(ss) {
-        rowSums(BSseq@Cov[, ss, drop = FALSE])
+        rowSums(getBSseq(BSseq, "M")[, ss, drop = FALSE])
     }))
     colnames(Cov) <- names(sp)
-    BSseq(gr = BSseq@gr, M = M, Cov = Cov)
+    BSseq(gr = getBSseq(BSseq, "gr"), M = M, Cov = Cov)
 }
 
 chrSelectBSseq <- function(BSseq, seqnames = NULL, order = FALSE) {

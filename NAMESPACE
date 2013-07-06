@@ -7,7 +7,7 @@ importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
            "combine", "density", "intersect", "lapply", "ncol",
            "nrow", "order", "paste", "pmax", "pmin", "rbind",
            "Reduce", "rep.int", "rownames", "sapply", "setdiff",
-           "strand", "strand<-", "union", "unique")
+           "strand", "strand<-", "union", "unique", "updateObject")
 
 importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
@@ -25,9 +25,8 @@ importFrom(scales, "alpha")
 importClassesFrom(Biobase, "AnnotatedDataFrame")
 importMethodsFrom(Biobase, "annotatedDataFrameFrom",
                   "pData", "pData<-",
-                  "phenoData", "phenoData<-",
                   "sampleNames", "sampleNames<-")
-
+importFrom(Biobase, "validMsg")
 
 ##
 ## Exporting
@@ -50,10 +49,9 @@ exportMethods("[", "show",
               "granges",
               "dim", "nrow", "ncol",
               "sampleNames", "sampleNames<-",
-              "phenoData", "phenoData<-",
               "pData", "pData<-",
               "findOverlaps", "subsetByOverlaps",
-              "combine")
+              "combine", "updateObject")
 
 export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
        "collapseBSseq", "orderBSseq", "hasBeenSmoothed", "chrSelectBSseq",

@@ -8,7 +8,7 @@
 }
 \usage{
 BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
-  trans = NULL, parameters = NULL, phenoData = NULL, gr = NULL,
+  trans = NULL, parameters = NULL, pData = NULL, gr = NULL,
   pos = NULL, chr = NULL, sampleNames = NULL, rmZeroCov = FALSE)
 }
 \arguments{
@@ -18,9 +18,9 @@ BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
   \item{se.coef}{Smoothing standard errors.}
   \item{trans}{A smoothing transformation.}
   \item{parameters}{A list of smoothing parameters.}
-  \item{phenoData}{An object of class \code{"phenoData"}.}
+  \item{pData}{An \code{data.frame} or \code{DataFrame}.}
   \item{sampleNames}{A vector of sample names.}
-  \item{gr}{An object of type \code{"GRanges"}.}
+  \item{gr}{An object of type \code{GRanges}.}
   \item{pos}{A vector of locations.}
   \item{chr}{A vector of chromosomes.}
   \item{rmZeroCov}{Should genomic locations with zero coverage in all
@@ -45,12 +45,12 @@ BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
   are added by \code{BSmooth}).
 
   \code{phenoData} is a way to specify pheno data (as known from the
-  \code{"ExpressionSet"} and \code{"eSet"} classes), at a minimum
+  \code{ExpressionSet} and \code{eSet} classes), at a minimum
   \code{sampleNames} should be given (if they are not present, the
   function uses \code{col.names(M)}).  
 }
 \value{
-  An object of class \code{"BSseq"}.
+  An object of class \code{BSseq}.
 }
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}

@@ -12,7 +12,7 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
   mc.cores = 1, keep.se = FALSE, verbose = TRUE)
 }
 \arguments{
-  \item{BSseq}{An object of class \code{"BSseq"}.}
+  \item{BSseq}{An object of class \code{BSseq}.}
   \item{ns}{The minimum number of methylation loci in a smoothing window.}
   \item{h}{The minimum smoothing window, in bases.}
   \item{maxGap}{The maximum gap between two methylation loci, before the
@@ -43,7 +43,7 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
 
 }
 \value{
-  An object of class \code{"BSseq"}, containing smoothed values and
+  An object of class \code{BSseq}, containing smoothed values and
   optionally standard errors for these.
 }
 \author{
@@ -59,6 +59,7 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
 }
 \examples{
 \dontrun{
+data(BS.chr22)
 BS.fit <- BSmooth(BS.chr22, verbose = TRUE)
 BS.fit
 }

@@ -11,9 +11,9 @@ getCoverage(BSseq, regions = NULL, type = c("Cov", "M"),
   what = c("perBase", "perRegionAverage", "perRegionTotal"))
 }
 \arguments{
-  \item{BSseq}{An object of class \code{"BSseq"}.}
-  \item{regions}{An optional \code{"data.frame"} or 
-    \code{"GenomicRanges"} object specifying a number of genomic regions.}
+  \item{BSseq}{An object of class \code{BSseq}.}
+  \item{regions}{An optional \code{data.frame} or 
+    \code{GenomicRanges} object specifying a number of genomic regions.}
   \item{type}{This returns either coverage or the total
     evidence for methylation at the loci.}
   \item{what}{The type of return object, see details.}
@@ -38,14 +38,15 @@ getCoverage(BSseq, regions = NULL, type = c("Cov", "M"),
   Kasper Daniel Hansen \email{khansen@jhsph.edu}.
 }
 \seealso{
-  \code{\linkS4class{BSseq}} for the \code{"BSseq"} class.
+  \code{\linkS4class{BSseq}} for the \code{BSseq} class.
 }
 \examples{
-  head(getCoverage(BS.chr22, type = "M"))
-  reg <- GRanges(seqnames = c("chr22", "chr22"),
-    ranges = IRanges(start = c(1, 2*10^7), end = c(2*10^7 +1, 4*10^7)))
-  getCoverage(BS.chr22, regions = reg, what = "perRegionAverage")
+data(BS.chr22)
+head(getCoverage(BS.chr22, type = "M"))
+reg <- GRanges(seqnames = c("chr22", "chr22"),
+  ranges = IRanges(start = c(1, 2*10^7), end = c(2*10^7 +1, 4*10^7)))
+getCoverage(BS.chr22, regions = reg, what = "perRegionAverage")
   cList <- getCoverage(BS.chr22, regions = reg)
-  length(cList)
-  head(cList[[1]])
+length(cList)
+head(cList[[1]])
 }

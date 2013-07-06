@@ -122,7 +122,11 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
         rownames(se.coef) <- NULL
         colnames(se.coef) <- sampleNames(BSseq)
     }
-    
+
+    if(!is.null(coef))
+        assay(BSseq, "coef") <- coef
+    if(!is.null(se.coef))
+        assay(BSseq, "se.coef") <- se.coef
     mytrans <- function(x) {
         y <- x
         ix <- which(x < 0)
@@ -133,8 +137,6 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
     }
     environment(mytrans) <- baseenv()
     BSseq@trans <- mytrans
-    BSseq@coef <- coef
-    BSseq@se.coef <- se.coef
     parameters <- list(smoothText = sprintf("BSmooth (ns = %d, h = %d, maxGap = %d)", ns, h, maxGap),
                        ns = ns, h = h, maxGap = maxGap)
     BSseq@parameters <- parameters

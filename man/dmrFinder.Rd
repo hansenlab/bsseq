@@ -63,7 +63,7 @@ dmrFinder(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
 }
 \seealso{
   \code{\link{BSmooth.tstat}} for the function constructing the input
-    object, and \code{"\linkS4class{BSseqTstat}"} for its class.  In the
+    object, and \code{\linkS4class{BSseqTstat}} for its class.  In the
     example below, we use \code{\link[bsseqData]{BS.cancer.ex.tstat}} as
     the actual input object.  Also see the package vignette(s) for a
     detailed example.  

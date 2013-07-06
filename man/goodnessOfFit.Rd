@@ -20,7 +20,7 @@ binomialGoodnessOfFit(BSseq, method = c("MLE"), nQuantiles = 10^5)
   pch = 16, cex = 0.75, \ldots)
 }
 \arguments{
-  \item{BSseq}{An object of class \code{"BSseq"}.}
+  \item{BSseq}{An object of class \code{BSseq}.}
   \item{x}{A chisqGoodnessOfFit object (as produced by
     \code{poissonGoodnessOfFit} or \code{binomialGoodnessOfFit}).} 
   \item{nQuantiles}{The number of (evenly-spaced) quantiles stored in
@@ -36,7 +36,7 @@ binomialGoodnessOfFit(BSseq, method = c("MLE"), nQuantiles = 10^5)
 \details{
   
   These functions compute and plot goodness of fit statistics for
-  \code{"BSseq"} objects.  For each methylation loci, the Poisson
+  \code{BSseq} objects.  For each methylation loci, the Poisson
   goodness of fit statistic tests whether the coverage (at that loci) is
   independent and identically Poisson distributed across the samples.
   In a similar fashion, the Binomial goodness of fit statistic tests
@@ -49,7 +49,7 @@ binomialGoodnessOfFit(BSseq, method = c("MLE"), nQuantiles = 10^5)
 \value{
   The plotting method is invoked for its side effect.  Both
   \code{poissonGoodnessOfFit} and \code{binomialGoodnessOfFit} returns
-  an object of class \code{"chisqGoodnessOfFit"} which is a list with components
+  an object of class \code{chisqGoodnessOfFit} which is a list with components
  \item{chisq}{a vector of Chisq values.}
  \item{quantiles}{a vector of quantiles (of the chisq values).}
  \item{df}{degress of freedom}
@@ -62,6 +62,8 @@ binomialGoodnessOfFit(BSseq, method = c("MLE"), nQuantiles = 10^5)
 }
 \examples{
 if(require(bsseqData)) {
+  data(BS.cancer.ex)
+  BS.cancer.ex <- updateObject(BS.cancer.ex)
   gof <- poissonGoodnessOfFit(BS.cancer.ex)
   plot(gof)
 }
