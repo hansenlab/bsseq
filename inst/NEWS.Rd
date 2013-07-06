@@ -10,6 +10,10 @@
     \item validObject(BSseq) has been extended to also check for
     sampleNames consistency.
     \item Fixed a bug related to validity checking.
+    \item The class representation for class 'BSseq' has changed
+    completely. The new class is build on 'SummarizedExperiment' from
+    GenomicRanges instead of 'hasGRanges'.  Use 'x <- updateObject(x)' to
+    update serialized (saved) objects.
   }
 }
 

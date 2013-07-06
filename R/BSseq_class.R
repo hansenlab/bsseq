@@ -1,68 +1,24 @@
-setClassUnion("matrixOrNULL", c("matrix", "NULL"))
-
-setClass("BSseq", contains = "hasGRanges", 
-         representation(M = "matrix",
-                        Cov = "matrix",
-                        coef = "matrixOrNULL",
-                        se.coef = "matrixOrNULL",
-                        trans = "function",
-                        parameters = "list",
-                        phenoData = "AnnotatedDataFrame"))
-
-
-setClass("BSseqTstat", contains = "hasGRanges", 
-         representation(stats = "matrix",
-                        parameters = "list")
-         )
-         
-
-##
-## Simple accessor and replacement functions
-##
+setClass("BSseq", contains = "SummarizedExperiment", 
+         representation(trans = "function",
+                        parameters = "list"))
 
 setValidity("BSseq", function(object) {
-    msg <- NULL
-    nCpGs <- length(object@gr)
-    nSamples <- ncol(object@M)
-    if(nCpGs != nrow(object@M) ||
-       nCpGs != nrow(object@Cov))
-        msg <- c(msg, "length of the 'gr' slot is not equal to the nrows the 'M' or 'Cov' slots")
-    if(nSamples != ncol(object@Cov))
-        msg <- c(msg, "ncols of the 'M' slot is not equal to the ncols of the 'Cov' slot")
-    if(nSamples != nrow(object@phenoData))
-        msg <- c(msg, "the 'phenoData' slot does not match the dimensions of the 'M' slot")
-    if(any(object@M < 0))
-        msg <- c(msg, "the 'M' slot has negative entries")
-    if(any(object@Cov < 0))
-        msg <- c(msg, "the 'Cov' slot has negative entries")
-    if(any(object@M > object@Cov))
-        msg <- c(msg, "the 'M' slot has at least one entry bigger than the 'Cov' slot")
-    if(!is.null(object@coef) && (nCpGs != nrow(object@coef) ||
-                                 nSamples != ncol(object@coef)))
-        msg <- c(msg, "nrows and/or ncols of the 'coef' slot does not have the same dimensions as the 'M' slot")
-    if(!is.null(object@se.coef) && (nCpGs != nrow(object@se.coef) ||
-                                    nSamples != ncol(object@se.coef)))
-        msg <- c(msg, "nrows and/or ncols of the 'se.coef' slot does not have the same dimensions as the 'M' slot")
-    if(!is.null(rownames(object@M)) ||
-       !is.null(rownames(object@Cov)) ||
-       !is.null(rownames(object@coef)) ||
-       !is.null(rownames(object@se.coef))) warning("unnecessary rownames in object")
-    ## FIXME: check samplenames
-    if(any(colnames(object@M) != rownames(pData(object))) ||
-       any(colnames(object@M) != rownames(object@Cov)))
-        msg <- c(msg, "sample names are messed up: colnames of the M slot has to equal colnames of the Cov slot which has to equal rownames of the phenoData slot")
-    if(is.null(msg)) TRUE else msg
+    msg <- validMsg(NULL, .checkAssayNames(object, c("Cov", "M")))
+    if(class(rowData(object)) != "GRanges")
+        msg <- validMsg(msg, sprintf("object of class '%s' needs to have a 'GRanges' in slot 'rowData'", class(object)))
+    if(any(assay(object, "M") < 0))
+        msg <- validMsg(msg, "the 'M' assay has negative entries")
+    if(any(assay(object, "Cov") < 0))
+        msg <- validMsg(msg, "the 'Cov' assay has negative entries")
+    if(any(assay(object, "M") > assay(object, "Cov")))
+        msg <- validMsg(msg, "the 'M' assay has at least one entry bigger than the 'Cov' assay")
+    if(!is.null(rownames(assay(object, "M"))) ||
+       !is.null(rownames(assay(object, "Cov"))) ||
+       ("coef" %in% names(assays(object)) && !is.null(rownames(assay(object, "coef")))) ||
+       ("se.coef" %in% names(assays(object)) && !is.null(rownames(assay(object, "se.coef")))))
+        warning("unnecessary rownames in object")
+    if (is.null(msg)) TRUE else msg
 })
-
-
-
-setValidity("BSseqTstat", function(object) {
-    msg <- NULL
-    if(length(object@gr) != nrow(object@stats))
-        msg <- c(msg, "length of 'gr' is different from the number of rows of 'stats'")
-    if(is.null(msg)) TRUE else msg
-})
-
 
 setMethod("show", signature(object = "BSseq"),
           function(object) {
@@ -77,251 +33,68 @@ setMethod("show", signature(object = "BSseq"),
               }
           })
 
-setMethod("show", signature(object = "BSseqTstat"),
-          function(object) {
-              cat("An object of type 'BSseqTstat' with\n")
-              cat(" ", length(object), "methylation loci\n")
-              cat("based on smoothed data:\n")
-              cat(" ", object@parameters$smoothText, "\n")
-              cat("with parameters\n")
-              cat(" ", object@parameters$tstatText, "\n")
-          })
-
-
-##
-## eSet stuff
-##
-
-setMethod("dim", "BSseq", function(x) {
-    dim(x@M)
-})
-setMethod("nrow", "BSseq", function(x) {
-    nrow(x@M)
-})
-setMethod("ncol", "BSseq", function(x) {
-    ncol(x@M)
+setMethod("pData", "BSseq", function(object) {
+    object@colData
 })
 
-setMethod("phenoData", "BSseq", function(object) {
-    object@phenoData
-})
-setReplaceMethod("phenoData", signature = signature(
-                              object = "BSseq",
-                              value = "AnnotatedDataFrame"),
+setReplaceMethod("pData",
+                 signature = signature(
+                      object = "BSseq",
+                      value = "data.frame"),
                  function(object, value) {
-                     object@phenoData <- value
+                     object@colData <- as(value, "DataFrame")
                      object
                  })
 
-setMethod("pData", "BSseq", function(object) {
-    pData(phenoData(object))
-})
-setReplaceMethod("pData", signature = signature(
-                              object = "BSseq",
-                              value = "data.frame"),
+setReplaceMethod("pData",
+                 signature = signature(
+                      object = "BSseq",
+                      value = "DataFrame"),
                  function(object, value) {
-                     pd <- object@phenoData
-                     pData(pd) <- value
-                     object@phenoData <- pd
+                     object@colData <- value
                      object
                  })
 
 setMethod("sampleNames", "BSseq", function(object) {
-    sampleNames(phenoData(object))
+    colnames(object)
 })
 
 setReplaceMethod("sampleNames",
-                 signature(object = "BSseq", value = "ANY"),
+                 signature = signature(
+                     object = "BSseq",
+                     value = "ANY"),
                  function(object, value) {
-                     sampleNames(phenoData(object)) <- value
-                     colnames(object@M) <- value
-                     colnames(object@Cov) <- value
-                     if(!is.null(object@coef))
-                         colnames(object@coef) <- value
-                     if(!is.null(object@se.coef))
-                         colnames(object@se.coef) <- value
+                     colnames(object) <- value
                      object
                  })
 
+setMethod("length", "BSseq", function(x) {
+    length(granges(x))
+})
+
 hasBeenSmoothed <- function(BSseq) {
-    !is.null(BSseq@coef)
-}
-
-##
-## Subsetting and combining
-##
-
-setMethod("[", "BSseq", function(x, i, j, ...) {
-    if(missing(drop))
-        drop <- FALSE
-    if(missing(i) && missing(j))
-        stop("need [i,j] for subsetting")
-    if(!missing(j))
-        x@phenoData <- phenoData(x)[j,, ..., drop = drop]
-    else
-        x@phenoData <- phenoData(x)
-    if(missing(i)) {
-        x@M <- getBSseq(x, "M")[, j, drop = FALSE]
-        x@Cov <- getBSseq(x, "Cov")[, j, drop = FALSE]
-        x@coef <- getBSseq(x, "coef")[, j, drop = FALSE]
-        x@se.coef <- getBSseq(x, "se.coef")[, j, drop = FALSE]
-        x@gr <- granges(x)
-    } else {
-        x@M <- getBSseq(x, "M")[i, j, drop = FALSE]
-        x@Cov <- getBSseq(x, "Cov")[i, j, drop = FALSE]
-        x@coef <- getBSseq(x, "coef")[i, j, drop = FALSE]
-        x@se.coef <- getBSseq(x, "se.coef")[i, j, drop = FALSE]
-        x@gr <- granges(x)[i]
-    }
-    x
-})
-
-setMethod("[", "BSseqTstat", function(x, i, ...) {
-    if(missing(i))
-        stop("need [i] for subsetting")
-    if(missing(i))
-        return(x)
-    x@gr <- x@gr[i]
-    x@stats <- x@stats[i,, drop = FALSE]
-    x
-})
-
-setMethod("combine", signature(x = "BSseq", y = "BSseq"), function(x, y, ...) {
-    ## All of this assumes that we are place x and y "next" to each other,
-    ##  ie. we are not combining the same set of samples sequenced at different times
-    if (class(x) != class(y))
-        stop(paste("objects must be the same class, but are ",
-                   class(x), ", ", class(y), sep=""))
-    if(hasBeenSmoothed(x) && hasBeenSmoothed(y) && !all.equal(x@trans, y@trans))
-        stop("'x' and 'y' need to be smoothed on the same scale")
-    phenoData <- combine(phenoData(x), phenoData(y))
-    if(identical(granges(x), granges(y))) {
-        gr <- granges(x)
-        M <- cbind(getBSseq(x, "M"), getBSseq(y, "M"))
-        Cov <- cbind(getBSseq(x, "Cov"), getBSseq(y, "Cov"))
-        if(!hasBeenSmoothed(x) || !hasBeenSmoothed(y)) {
-            coef <- NULL
-            se.coef <- NULL
-            trans <- NULL
-        } else {
-            coef <- cbind(getBSseq(x, "coef"), getBSseq(y, "coef"))
-            se.coef <- cbind(getBSseq(x, "se.coef"), getBSseq(y, "se.coef"))
-            trans <- getBSseq(x, "trans")
-        }
-    } else {
-        gr <- reduce(c(granges(x), granges(y)), min.gapwidth = 0L)
-        mm.x <- as.matrix(findOverlaps(gr, granges(x)))
-        mm.y <- as.matrix(findOverlaps(gr, granges(y)))
-        sampleNames <- c(sampleNames(x), sampleNames(y))
-        ## FIXME: there is no check that the two sampleNames are disjoint.
-        M <- Cov <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
-        colnames(M) <- colnames(Cov) <- sampleNames
-        M[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "M")[mm.x[,2],]
-        M[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "M")[mm.y[,2],]
-        Cov[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "Cov")[mm.x[,2],]
-        Cov[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "Cov")[mm.y[,2],]
-        if(!hasBeenSmoothed(x) || !hasBeenSmoothed(y)) {
-            coef <- NULL
-            se.coef <- NULL
-            trans <- NULL
-        } else {
-            trans <- x@trans
-            coef <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
-            colnames(coef) <- sampleNames(phenoData)
-            if(hasBeenSmoothed(x))
-                coef[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "coef")[mm.x[,2],]
-            if(hasBeenSmoothed(y))
-                coef[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "coef")[mm.y[,2],]
-            if(is.null(getBSseq(x, "se.coef")) && is.null(getBSseq(x, "se.coef")))
-                se.coef <- NULL
-            else {
-                se.coef <- matrix(0, nrow = length(gr), ncol = length(sampleNames))
-                colnames(se.coef) <- sampleNames(phenoData)
-                if(!is.null(getBSseq(x, "se.coef")))
-                    se.coef[mm.x[,1], 1:ncol(x)] <- getBSseq(x, "se.coef")[mm.x[,2],]
-                if(!is.null(getBSseq(y, "se.coef")))
-                    se.coef[mm.y[,1], ncol(x) + 1:ncol(y)] <- getBSseq(y, "se.coef")[mm.y[,2],]
-            }
-        }
-    }
-    BSseq(gr = gr, M = M, Cov = Cov, coef = coef, se.coef = se.coef,
-          phenoData = phenoData, trans = trans, rmZeroCov = FALSE)
-})
-
-combineList <- function(x, ...) {
-    if(class(x) == "BSseq")
-        x <- list(x, ...)
-    stopifnot(all(sapply(x, class) == "BSseq"))
-    gr <- getBSseq(x[[1]], "gr")
-    trans <- getBSseq(x[[1]], "trans")
-    sameTrans <- sapply(x[-1], function(xx) {
-        identical(trans, getBSseq(xx, "trans"))
-    })
-    if(!all(sameTrans))
-        stop("all elements of '...' in combineList needs to have the same trans")
-    sameGr <- sapply(x[-1], function(xx) {
-        identical(trans, getBSseq(xx, "gr"))
-    })
-    if(all(sameGr)) {
-        M <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "M")))
-        Cov <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "Cov")))
-    } else {
-        gr <- sort(reduce(do.call(c, unname(lapply(x, granges))), min.gapwidth = 0L))
-        sampleNames <- do.call(c, lapply(x, sampleNames))
-        M <- matrix(0, ncol = length(sampleNames), nrow = length(gr))
-        colnames(M) <- sampleNames
-        Cov <- M
-        idxes <- split(seq(along = sampleNames), rep(seq(along = x), times = sapply(x, ncol)))
-        for(ii in seq(along = idxes)) {
-            ov <- findOverlaps(gr, granges(x[[ii]]))
-            idx <- idxes[[ii]]
-            M[queryHits(ov), idx] <- getBSseq(x[[ii]], "M")[subjectHits(ov),]
-            Cov[queryHits(ov), idx] <- getBSseq(x[[ii]], "Cov")[subjectHits(ov),]
-        }
-    }
-    if(any(!sapply(x, hasBeenSmoothed)) || !(all(sameGr))) {
-        coef <- NULL
-        se.coef <- NULL
-        trans <- NULL
-    } else {
-        coef <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "coef")))
-        se.coef <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "se.coef")))
-    }
-    phenoData <- Reduce(combine, lapply(x, phenoData))
-    BSseq(gr = gr, M = M, Cov = Cov, coef = coef, se.coef = se.coef,
-          phenoData = phenoData, trans = trans, rmZeroCov = FALSE)
+    "coef" %in% names(assays(BSseq))
 }
 
 getBSseq <- function(BSseq, type = c("Cov", "M", "gr", "coef", "se.coef", "trans", "parameters")) {
     type <- match.arg(type)
-    switch(type,
-           "Cov" = {
-               return(BSseq@Cov)
-           },
-           "M" = {
-               return(BSseq@M)
-           },
-           "gr" = {
-               return(BSseq@gr)
-           },
-           "coef" = {
-               return(BSseq@coef)
-           },
-           "se.coef" = {
-               return(BSseq@se.coef)
-           },
-           "trans" = {
-               return(BSseq@trans)
-           },
-           "parameters" = {
-               return(BSseq@parameters)
-           })
+    if(type %in% c("M", "Cov"))
+        return(assay(BSseq, type))
+    if(type %in% c("coef", "se.coef") && type %in% names(assays(BSseq)))
+        return(assay(BSseq, type))
+    if(type %in% c("coef", "se.coef"))
+       return(NULL)
+    if(type == "trans")
+        return(BSseq@trans)
+    if(type == "parameters")
+        return(BSseq@parameters)
+    if(type == "gr")
+        return(BSseq@rowData)
+    
 }
 
-
-
 BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
-                  trans = NULL, parameters = NULL, phenoData = NULL,
+                  trans = NULL, parameters = NULL, pData = NULL,
                   gr = NULL, pos = NULL, chr = NULL, sampleNames = NULL,
                   rmZeroCov = FALSE) {
     if(is.null(gr)) {
@@ -350,8 +123,10 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     if(!is.null(names(gr)))
         names(gr) <- NULL
     ## deal with sampleNames
-    if(is.null(sampleNames) && !is.null(phenoData) && !is.null(sampleNames(phenoData)))
-        sampleNames <- sampleNames(phenoData)
+    if(!is(pData, "DataFrame"))
+        pData <- as(pData, "DataFrame")
+    if(is.null(sampleNames) && !is.null(pData) && !is.null(rownames(pData)))
+        sampleNames <- rownames(pData)
     if(is.null(sampleNames) && !is.null(colnames(M)))
         sampleNames <- colnames(M)
     if(is.null(sampleNames) && !is.null(colnames(Cov)))
@@ -401,31 +176,33 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
         colnames(M) <- sampleNames
     if(is.null(colnames(Cov)) || any(sampleNames != colnames(Cov)))
         colnames(Cov) <- sampleNames
-    if(is.null(phenoData))
-        phenoData <- annotatedDataFrameFrom(M, byrow = FALSE)
-    BSseq <- new("BSseq", gr = gr, M = M, Cov = Cov, phenoData = phenoData)
     if(!is.null(coef)) {
         if(!is.matrix(coef) ||
-           nrow(coef) != nrow(BSseq) ||
-           ncol(coef) != ncol(BSseq))
+           nrow(coef) != nrow(M) ||
+           ncol(coef) != ncol(M))
             stop("'coef' does not have the right dimensions")
         if(is.null(colnames(coef)) || any(sampleNames != colnames(coef)))
             colnames(coef) <- sampleNames
         if(!is.null(rownames(coef)))
             rownames(coef) <- NULL
-        BSseq@coef <- coef
     }
     if(!is.null(se.coef)) {
         if(!is.matrix(se.coef) ||
-           nrow(se.coef) != nrow(BSseq) ||
-           ncol(se.coef) != ncol(BSseq))
+           nrow(se.coef) != nrow(M) ||
+           ncol(se.coef) != ncol(M))
             stop("'se.coef' does not have the right dimensions")
         if(is.null(colnames(se.coef)) || any(sampleNames != colnames(se.coef)))
             colnames(se.coef) <- sampleNames
         if(!is.null(rownames(se.coef)))
             rownames(se.coef) <- NULL
-        BSseq@se.coef <- se.coef
     }
+    assays <- SimpleList(M = M, Cov = Cov, coef = coef, se.coef = se.coef)
+    assays <- assays[!sapply(assays, is.null)]
+    if(is.null(pData) || all(dim(pData) == c(0,0)))
+        BSseq <- SummarizedExperiment(assays = assays, rowData = gr)
+    else
+        BSseq <- SummarizedExperiment(assays = assays, rowData = gr, colData = pData)
+    BSseq <- as(BSseq, "BSseq")
     if(is.function(trans))
         BSseq@trans <- trans
     if(is.list(parameters))
@@ -434,13 +211,15 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
 }
 
 
-BSseqTstat <- function(gr = NULL, stats = NULL, parameters = NULL) {
-    out <- new("BSseqTstat")
-    out@gr <- gr
-    out@stats <- stats
-    out@parameters <- parameters
-    out
-}
+setMethod("updateObject", "BSseq",
+          function(object, ...) {
+               if(!is(try(object@assays, silent = TRUE), "try-error"))
+                   return(object)
+               BSseq(gr = object@gr, M = object@M, Cov = object@Cov,
+                     coef = object@coef, se.coef = object@se.coef,
+                     trans = object@trans, parameters = object@parameters,
+                     pData = object@phenoData@data)
+           })
 
 
 

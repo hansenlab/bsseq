@@ -26,7 +26,7 @@ data.frame2GRanges(df, keepColumns = FALSE, ignoreStrand = FALSE)
   \code{names} for the return object.
 }
 \value{
-  An object of class \code{"GRanges"}
+  An object of class \code{GRanges}
 }
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}

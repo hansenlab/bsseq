@@ -13,7 +13,7 @@
 }
 \usage{data(BS.chr22)}
 \format{
-  An object of class \code{"BSseq"}.
+  An object of class \code{BSseq}.
 }
 \details{
   All coordinates are in hg18.

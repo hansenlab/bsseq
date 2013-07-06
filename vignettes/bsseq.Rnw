@@ -127,6 +127,7 @@ We can have a look at some data from \cite{Lister:2009}, specifically chromosome
 cell line.
 
 <<BSchr22>>=
+data(BS.chr22)
 BS.chr22
 @ 
 

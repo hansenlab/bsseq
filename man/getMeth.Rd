@@ -11,9 +11,9 @@ getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
   what = c("perBase", "perRegion"), confint = FALSE, alpha = 0.95)
 }
 \arguments{
-  \item{BSseq}{An object of class \code{"BSseq"}.}
-  \item{regions}{An optional \code{"data.frame"} or 
-    \code{"GenomicRanges"} object specifying a number of genomic regions.}
+  \item{BSseq}{An object of class \code{BSseq}.}
+  \item{regions}{An optional \code{data.frame} or 
+    \code{GenomicRanges} object specifying a number of genomic regions.}
   \item{type}{This returns either smoothed or raw estimates of the methylation level.}
   \item{what}{The type of return object, see details.}
   \item{confint}{Should a confidence interval be return for the
@@ -22,15 +22,15 @@ getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
   \item{alpha}{alpha value for the confidence interval.}
 }
 \note{
-  A \code{"BSseq"} object needs to be smoothed by the function
+  A \code{BSseq} object needs to be smoothed by the function
   \code{BSmooth} in order to support \code{type = "smooth"}.
 }
 \value{
   If \code{region = NULL} the \code{what} argument is ignored.  This is
   also the only situation in which \code{confint = TRUE} is supported.
   The return value is either a matrix (\code{confint = FALSE} or a list
-  with three components \code{confint = TRUE} (\code{"meth"},
-  \code{"upper"} and \code{"lower"}), giving the methylation estimates
+  with three components \code{confint = TRUE} (\code{meth},
+  \code{upper} and \code{lower}), giving the methylation estimates
   and (optionally) confidence intervals.
 
   Confidence intervals for \code{type = "smooth"} is based on standard
@@ -55,12 +55,13 @@ Statistician 52, 119-126.
   Kasper Daniel Hansen \email{khansen@jhsph.edu}.
 }
 \seealso{
-  \code{\linkS4class{BSseq}} for the \code{"BSseq"} class and
+  \code{\linkS4class{BSseq}} for the \code{BSseq} class and
   \code{\link{BSmooth}} for smoothing such an object.
 }
 \examples{
-  head(getMeth(BS.chr22, type = "raw"))
-  reg <- GRanges(seqnames = c("chr22", "chr22"),
-    ranges = IRanges(start = c(1, 2*10^7), end = c(2*10^7 +1, 4*10^7)))
-  head(getMeth(BS.chr22, regions = reg, type = "raw", what = "perBase"))
+data(BS.chr22)
+head(getMeth(BS.chr22, type = "raw"))
+reg <- GRanges(seqnames = c("chr22", "chr22"),
+  ranges = IRanges(start = c(1, 2*10^7), end = c(2*10^7 +1, 4*10^7)))
+head(getMeth(BS.chr22, regions = reg, type = "raw", what = "perBase"))
 }

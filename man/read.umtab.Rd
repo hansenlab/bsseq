@@ -37,7 +37,7 @@ read.umtab2(dirs, sampleNames = NULL, rmZeroCov = FALSE,
 }
 \value{
   Both functions returns lists, the components are
-  \item{BSdata}{An object of class \code{"BSseq"} containing the
+  \item{BSdata}{An object of class \code{BSseq} containing the
     methylation evidence.}
   \item{GC}{A vector of local GC content values.}
   \item{Map}{A vector of local mapability values.}

@@ -27,14 +27,14 @@ not constructed by the user..
   \describe{
     \item{\code{stats}:}{This is a matrix with columns representing
       various statistics for methylation loci along the genome.}
-    \item{\code{parameters}:}{Object of class \code{"list"}.  A list of
+    \item{\code{parameters}:}{Object of class \code{list}.  A list of
       parameters representing how the t-statistics were computed.}
-    \item{\code{gr}:}{Object of class \code{"GRanges"} giving genomic
+    \item{\code{gr}:}{Object of class \code{GRanges} giving genomic
       locations.} 
   }
 }
 \section{Extends}{
-Class \code{"\linkS4class{hasGRanges}"}, directly.
+Class \code{\linkS4class{hasGRanges}}, directly.
 }
 \section{Methods}{
   \describe{
@@ -55,7 +55,7 @@ Class \code{"\linkS4class{hasGRanges}"}, directly.
 \seealso{
   The package vignette(s).  \code{\linkS4class{hasGRanges}} for accessing
   the genomic locations.  \code{\link{BSmooth.tstat}} for a function
-  that objects of class \code{"BSseqTstat"}, and \code{\link{dmrFinder}}
+  that objects of class \code{BSseqTstat}, and \code{\link{dmrFinder}}
   for a function that computes DMRs based on the t-statistics.  Also see
   \code{\link[bsseqData]{BS.cancer.ex.tstat}} for an example of the
   class in the \pkg{bsseqData} package.

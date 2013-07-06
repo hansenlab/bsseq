@@ -14,7 +14,7 @@ BSmooth.tstat(BSseq, group1, group2,
   maxGap = NULL, qSd = 0.75, k = 101, mc.cores = 1, verbose = TRUE)
 }
 \arguments{
-  \item{BSseq}{An object of class \code{"BSseq"}.}
+  \item{BSseq}{An object of class \code{BSseq}.}
   \item{group1}{A vector of sample names or indexes for the \sQuote{treatment}
     group.} 
   \item{group2}{A vector of sample names or indexes for the \sQuote{control}
@@ -48,7 +48,7 @@ BSmooth.tstat(BSseq, group1, group2,
   Additional details in the reference.
 }
 \value{
-  An object of class \code{"BSseqTstat"}.
+  An object of class \code{BSseqTstat}.
 }
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}
@@ -70,6 +70,7 @@ BSmooth.tstat(BSseq, group1, group2,
 if(require(bsseqData)) {
   data(keepLoci.ex)
   data(BS.cancer.ex.fit)
+  BS.cancer.ex.fit <- updateObject(BS.cancer.ex.fit)
   ## Remember to subset the BSseq object, see vignette for explanation
   BS.tstat <- BSmooth.tstat(BS.cancer.ex.fit[keepLoci.ex,],
                             group1 = c("C1", "C2", "C3"),

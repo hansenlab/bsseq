@@ -40,8 +40,8 @@ read.bsmooth(dirs, sampleNames = NULL, seqnames = NULL,
   We are working on making this function faster and less memory hungry.
 }
 \value{
-  Either an object of class \code{"BSseq"} (if \code{returnRaw = FALSE})
-  or a list of \code{"GRanges"} which each component coming from a
+  Either an object of class \code{BSseq} (if \code{returnRaw = FALSE})
+  or a list of \code{GRanges} which each component coming from a
   directory. 
 }
 \seealso{

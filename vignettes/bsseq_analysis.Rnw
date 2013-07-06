@@ -59,6 +59,8 @@ the current version of the BSmooth pipeline uses a slightly different alignment 
 
 The following object contains the unsmoothed ``raw'' summarized alignment data.
 <<showData>>=
+data(BS.cancer.ex)
+BS.cancer.ex <- updateObject(BS.cancer.ex)
 BS.cancer.ex
 pData(BS.cancer.ex)
 @ 
@@ -83,6 +85,7 @@ support on MS Windows due to a limitation of the operating system.
 For ease of use, the \Rpackage{bsseqData} includes the result of this command:
 <<showDataFit>>=
 data(BS.cancer.ex.fit)
+BS.cancer.ex.fit <- updateObject(BS.cancer.ex.fit)
 BS.cancer.ex.fit
 @ 
 

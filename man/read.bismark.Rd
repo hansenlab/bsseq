@@ -48,7 +48,7 @@
   (\url{http://www.bioinformatics.babraham.ac.uk/projects/download.html#bismark}) 
 }
 \value{
-  An object of class \code{"BSseq"}.
+  An object of class \code{BSseq}.
 }
 
 \seealso{

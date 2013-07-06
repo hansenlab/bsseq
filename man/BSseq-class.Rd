@@ -5,15 +5,13 @@
 \alias{[,BSseq-method}
 \alias{combine,BSseq,BSseq-method}
 \alias{combineList}
-\alias{dim,BSseq-method}
-\alias{ncol,BSseq-method}
-\alias{nrow,BSseq-method}
+\alias{length,BSseq-method}
 \alias{pData,BSseq-method}
-\alias{phenoData,BSseq-method}
-\alias{phenoData<-,BSseq,AnnotatedDataFrame-method}
 \alias{pData<-,BSseq,data.frame-method}
+\alias{pData<-,BSseq,DataFrame-method}
 \alias{sampleNames,BSseq-method}
 \alias{sampleNames<-,BSseq,ANY-method}
+\alias{updateObject,BSseq-method}
 \alias{show,BSseq-method}
 \alias{getBSseq}
 \alias{collapseBSseq}
@@ -31,30 +29,16 @@ An object from the class links together several pieces of information.
 (1) genomic locations stored as a \code{GRanges} object, a location by
 samples matrix of M values, a location by samples matrix of Cov
 (coverage) values and phenodata information.  In addition, there are
-slots for representing smoothed data.  Objects can be created by calls
-of the form \code{BSseq(...)}.   
+slots for representing smoothed data. This class is an extension of
+\code{SummarizedExperiment}.
 }
 \section{Slots}{
   \describe{
-    \item{\code{gr}:}{Object of class \code{"GRanges"} giving genomic
-      locations.}
-    \item{\code{M}:}{Object of class \code{"matrix"}.  This is a
-      location by sample matrix of the number of reads supporting
-      methylation.} 
-    \item{\code{Cov}:}{Object of class \code{"matrix"}.  This is a
-      location by sample matrix of the coverage.}
-    \item{\code{coef}:}{Object of class \code{"matrixOrNULL"}.  This is
-      an optional slot representing smoothed data.}
-    \item{\code{se.coef}:}{Object of class \code{"matrixOrNULL"}.  This
-      is an optional slot representing standard errors of the
-      smoothing.} 
-    \item{\code{trans}:}{Object of class \code{"function"}.  This
+    \item{\code{trans}:}{Object of class \code{function}.  This
       function transforms the \code{coef} slot from the scale the
       smoothing was done to the 0-1 methylation scale.}
-    \item{\code{parameters}:}{Object of class \code{"list"}.  A list of
+    \item{\code{parameters}:}{Object of class \code{list}.  A list of
       parameters representing for example how the data was smoothed.}
-    \item{\code{phenoData}:}{Object of class
-      \code{"AnnotatedDataFrame"}.  Sample information.}
   }
 }
 \section{Methods}{
@@ -62,17 +46,13 @@ of the form \code{BSseq(...)}.
     \item{[}{\code{signature(x = "BSseq")}: Subsetting by location
       (using integer indices) or sample (using integers or sample
       names).}
-    \item{dim}{The dimensions of the object (number of locations by
-      number of samples).}
-    \item{ncol}{The number of columns (equal to the number of samples).} 
-    \item{nrow}{The number of rows (equal to the number of genomic
-      locations).} 
+    \item{length}{Unlike for \code{SummarizedExperiment},
+      \code{length()} is the number of methylation loci (equal to
+      \code{length(granges(x))}).} 
     \item{sampleNames,sampleNames<-}{Sample names and its replacement
-      function for the object.}
-    \item{phenoData,phenoData<-}{Obtain and replace the \code{phenoData}
-      slot.}
+      function for the object.  This is an alias for \code{colnames}.}
     \item{pData,pData<-}{Obtain and replace the \code{pData} slot of the
-      \code{phenoData} slot.}
+      \code{phenoData} slot. This is an alias for \code{colData}.}
     \item{show}{The show method.}
     \item{combine}{This function combines two \code{BSSeq} objects.
       The genomic locations of the new object is the union of the
@@ -88,13 +68,13 @@ of the form \code{BSseq(...)}.
   \code{subsetByOverlaps}. 
   
   There are a number of almost methods-like functions for operating on
-  objects of class \code{"BSseq"}, including \code{getBSseq},
+  objects of class \code{BSseq}, including \code{getBSseq},
   \code{collapseBSseq}, and \code{orderBSseq}.  They are detailed below.
 
   \describe{
     \item{\code{collapseBSseq(BSseq, columns)}}{
     
-      is used to collapse an object of class \code{"BSseq"}.  By
+      is used to collapse an object of class \code{BSseq}.  By
       collapsing we simply mean that certain columns (samples) are merge
       together by summing up the methylation evidence and coverage.
       This is a useful function if you start by reading in a dataset
@@ -110,7 +90,7 @@ of the form \code{BSseq(...)}.
 
     \item{\code{orderBSseq(BSseq, seqOrder = NULL)}}{
 
-      simply orders an object of class \code{"BSseq"} according to
+      simply orders an object of class \code{BSseq} according to
       (increasing) genomic locations.  The \code{seqOrder} vector is a
       character vector of \code{seqnames(BSseq)} describing the order of
       the chromosomes.  This is useful for ordering \code{chr1} before
@@ -118,7 +98,7 @@ of the form \code{BSseq(...)}.
 
     \item{\code{chrSelectBSseq(BSseq, seqnames = NULL, order = FALSE)}}{
 
-      subsets and optionally reorders an object of class \code{"BSseq"}.
+      subsets and optionally reorders an object of class \code{BSseq}.
       The \code{seqnames} vector is a character vector of
       \code{seqnames(BSseq)} describing which chromosomes should be
       retained.  If \code{order} is \code{TRUE}, the chromosomes are
@@ -128,7 +108,7 @@ of the form \code{BSseq(...)}.
 	"se.coef", "trans",  "parameters"))}}{
 
       is a general accessor: is used to obtain a specific slot of an
-      object of class \code{"BSseq"}.  It is primarily intended for
+      object of class \code{BSseq}.  It is primarily intended for
       internal use in the package, for users we recommend \code{granges}
       to get the genomic locations, \code{getCoverage} to get the
       coverage slots and \code{getMeth} to get the smoothed values (if
@@ -148,17 +128,23 @@ of the form \code{BSseq(...)}.
       \code{Reduce(combine, list)}. }
   }
 }
-
+\section{Coercion}{
+  Package version 0.9.4 introduced a new version of representing
+  \sQuote{BSseq} objects.  You can update old serialized (saved)
+  objects by invoking \code{x <- udateObject(x)}.
+}
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}
 }
 \seealso{
+  
   The package vignette.  \code{\link{BSseq}} for the constructor
-  function.  \code{\linkS4class{hasGRanges}} for accessing the genomic
-  locations.  \code{\link{getBSseq}}, \code{\link{getCoverage}}, and
-  \code{\link{getMeth}} for accessing the data stored in the object and
-  finally \code{\link{BSmooth}} for smoothing the bisulfite sequence
-  data. 
+  function.  \code{\linkS4class{SummarizedExperiment}}
+  for the underlying class.  \code{\link{getBSseq}},
+  \code{\link{getCoverage}}, and \code{\link{getMeth}} for accessing the
+  data stored in the object and finally \code{\link{BSmooth}} for
+  smoothing the bisulfite sequence data.
+
 }
 \examples{
 M <- matrix(1:9, 3,3)

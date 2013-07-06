@@ -23,12 +23,12 @@ plotManyRegions(BSseq, regions = NULL, extend = 0, main = "",
   verbose = TRUE)
 }
 \arguments{
-  \item{BSseq}{An object of class \code{"BSseq"}.}
-  \item{region}{A \code{"data.frame"} (with start, end and chr columns)
-    with 1 row or \code{"GRanges"} of length 1.  If \code{region} is
+  \item{BSseq}{An object of class \code{BSseq}.}
+  \item{region}{A \code{data.frame} (with start, end and chr columns)
+    with 1 row or \code{GRanges} of length 1.  If \code{region} is
     \code{NULL} the entire \code{BSseq} argument is plotted.}
-  \item{regions}{A \code{"data.frame"} (with start, end and chr columns)
-    or \code{"GRanges"}.}
+  \item{regions}{A \code{data.frame} (with start, end and chr columns)
+    or \code{GRanges}.}
   \item{extend}{Describes how much the plotting region should be
   extended in either direction.  The total width of the plot is equal to
   the width of the region plus twice \code{extend}.}
@@ -36,14 +36,14 @@ plotManyRegions(BSseq, regions = NULL, extend = 0, main = "",
   information about which genomic region is being plotted.}
   \item{addRegions}{A set of additional regions to be highlighted on the
   plots.  As the \code{regions} argument.}
-  \item{annoTrack}{A named list of \code{"GRanges"} objects.  Each
+  \item{annoTrack}{A named list of \code{GRanges} objects.  Each
   component is a track and the names of the list are the track names.
   Each track will be plotted as solid bars, and we routinely display
   information such as CpG islands, exons, etc.}
   \item{col}{The color of the methylation estimates, see details.}
   \item{lty}{The line type of the methylation estimates, see details.}
   \item{lwd}{The line width of the methylation estimates, see details.}
-  \item{BSseqTstat}{An object of class \code{"BSseqTstat"}.  If present,
+  \item{BSseqTstat}{An object of class \code{BSseqTstat}.  If present,
   a new panel will be shown with the t-statistics.}
   \item{mainWithWidth}{Should the default title include information
   about width of the plot region.}

@@ -4,14 +4,14 @@
   Compute Fisher-tests for a BSseq object
 }
 \description{
-  A function to compute Fisher-tests for an object of class \code{"BSseq"}.
+  A function to compute Fisher-tests for an object of class \code{BSseq}.
 }
 \usage{
 fisherTests(BSseq, group1, group2, lookup = NULL,
   returnLookup = TRUE, mc.cores = 1, verbose = TRUE)
 }
 \arguments{
-  \item{BSseq}{An object of class \code{"BSseq"}.}
+  \item{BSseq}{An object of class \code{BSseq}.}
   \item{group1}{A vector of sample names or indexes for the
     \sQuote{treatment} group.} 
   \item{group2}{A vector of sample names or indexes for the
