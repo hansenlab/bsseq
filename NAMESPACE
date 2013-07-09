@@ -70,6 +70,6 @@ S3method("plot", "BSseqTstat")
 
 ## Fixes, to be removed
 
-exportMethod("assays")
+exportMethods("assays")
 export("assayNames")
 
