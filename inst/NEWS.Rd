@@ -15,6 +15,9 @@
     GenomicRanges instead of 'hasGRanges'.  Use 'x <- updateObject(x)' to
     update serialized (saved) objects.
     \item Fixing a problem in orderBSseq related to chromosome names.
+    \item Increased maxk from 10,000 to 50,000 in calls to locfit, to
+    allowing fitting the model on genomes with unusally long chromosomes
+    (Thanks to Brian Herb for reporting).
   }
 }
 
