@@ -41,5 +41,5 @@ setMethod("assays", "BSseq",
           })
 
 assayNames <- function(object) {
-    names(x@assays$field("data"))
+    names(object@assays$field("data"))
 }
