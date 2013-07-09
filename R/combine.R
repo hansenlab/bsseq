@@ -99,7 +99,7 @@ combineList <- function(x, ...) {
         coef <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "coef")))
         se.coef <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "se.coef")))
     }
-    pData <- Reduce(combine, lapply(x, pData))
+    pData <- as(Reduce(combine, lapply(x, function(xx) as.data.frame(pData(xx)))), "DataFrame")
     BSseq(gr = gr, M = M, Cov = Cov, coef = coef, se.coef = se.coef,
           pData = pData, trans = trans, rmZeroCov = FALSE)
 }
