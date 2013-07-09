@@ -34,3 +34,12 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
     else
         NULL
 }
+
+setMethod("assays", "BSseq",
+          function(x, ..., withDimnames = TRUE) {
+              x@assays$field("data")
+          })
+
+assayNames <- function(object) {
+    names(x@assays$field("data"))
+}
