@@ -14,6 +14,7 @@
     completely. The new class is build on 'SummarizedExperiment' from
     GenomicRanges instead of 'hasGRanges'.  Use 'x <- updateObject(x)' to
     update serialized (saved) objects.
+    \item Fixing a problem in orderBSseq related to chromosome names.
   }
 }
 

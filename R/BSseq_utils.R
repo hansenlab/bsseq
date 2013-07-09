@@ -37,7 +37,7 @@ orderBSseq <- function(BSseq, seqOrder = NULL) {
     if(is.null(seqOrder))
         seqOrder <- names(splitNames)
     else
-        stopifnot(all(seqOrder %in% names(splitNames)))
+        seqOrder <- seqOrder[seqOrder %in% names(splitNames)]
     splitOd <- lapply(seqOrder, function(nam) {
         seqRanges <- seqselect(ranges(granges(BSseq)), splitNames[[nam]]) 
         as.integer(unlist(splitNames[[nam]])[order(start(seqRanges))])
