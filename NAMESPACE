@@ -67,3 +67,9 @@ S3method("plot", "chisqGoodnessOfFit")
 S3method("print", "summary.BSseqTstat")
 S3method("summary", "BSseqTstat")
 S3method("plot", "BSseqTstat")
+
+## Fixes, to be removed
+
+exportMethod("assays")
+export("assayNames")
+
