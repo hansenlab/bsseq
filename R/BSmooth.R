@@ -47,7 +47,7 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
                             M = pmin(pmax(M[wh], 0.01), Cov[wh] - 0.01),
                             Cov = Cov[wh])
         fit <- locfit(M ~ lp(pos, nn = nn, h = h), data = sdata,
-                      weights = Cov, family = "binomial", maxk = 10000)
+                      weights = Cov, family = "binomial", maxk = 50000)
         pp <- preplot(fit, where = "data", band = "local",
                       newdata = data.frame(pos = pos))
         if(keep.se) {
@@ -166,7 +166,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         xx.reg <- seq(from = min(xx), to = max(xx), by = 2000)
         yy.reg <- tstat.function(xx.reg)
         fit <- locfit(yy.reg ~ lp(xx.reg, h = 25000, deg = 2, nn = 0),
-                      family = "huber", maxk = 10000) 
+                      family = "huber", maxk = 50000) 
         correction <- predict(fit, newdata = data.frame(xx.reg = xx))
         yy - correction 
     }
