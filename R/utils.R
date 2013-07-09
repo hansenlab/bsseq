@@ -27,7 +27,7 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
 }
 
 .checkAssayNames <- function(object, names) {
-    nms <- names(assays(object, withDimnames = FALSE))
+    nms <- assayNames(object)
     if(!all(names %in% nms))
         return(sprintf("object of class '%s' needs to have assay slots with names '%s'",
                        class(object), paste0(names, collapse = ", ")))

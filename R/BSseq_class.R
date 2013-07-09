@@ -14,8 +14,8 @@ setValidity("BSseq", function(object) {
         msg <- validMsg(msg, "the 'M' assay has at least one entry bigger than the 'Cov' assay")
     if(!is.null(rownames(assay(object, "M"))) ||
        !is.null(rownames(assay(object, "Cov"))) ||
-       ("coef" %in% names(assays(object)) && !is.null(rownames(assay(object, "coef")))) ||
-       ("se.coef" %in% names(assays(object)) && !is.null(rownames(assay(object, "se.coef")))))
+       ("coef" %in% assayNames(object) && !is.null(rownames(assay(object, "coef")))) ||
+       ("se.coef" %in% assayNames(object) && !is.null(rownames(assay(object, "se.coef")))))
         warning("unnecessary rownames in object")
     if (is.null(msg)) TRUE else msg
 })
@@ -73,14 +73,14 @@ setMethod("length", "BSseq", function(x) {
 })
 
 hasBeenSmoothed <- function(BSseq) {
-    "coef" %in% names(assays(BSseq))
+    "coef" %in% assayNames(BSseq)
 }
 
 getBSseq <- function(BSseq, type = c("Cov", "M", "gr", "coef", "se.coef", "trans", "parameters")) {
     type <- match.arg(type)
     if(type %in% c("M", "Cov"))
         return(assay(BSseq, type))
-    if(type %in% c("coef", "se.coef") && type %in% names(assays(BSseq)))
+    if(type %in% c("coef", "se.coef") && type %in% assayNames(BSseq))
         return(assay(BSseq, type))
     if(type %in% c("coef", "se.coef"))
        return(NULL)
