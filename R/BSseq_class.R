@@ -3,14 +3,15 @@ setClass("BSseq", contains = "SummarizedExperiment",
                         parameters = "list"))
 
 setValidity("BSseq", function(object) {
-    msg <- validMsg(NULL, .checkAssayNames(object, c("Cov", "M")))
+    msg <- validMsg(NULL, bsseq:::.checkAssayNames(object, c("Cov", "M")))
     if(class(rowData(object)) != "GRanges")
         msg <- validMsg(msg, sprintf("object of class '%s' needs to have a 'GRanges' in slot 'rowData'", class(object)))
-    if(any(assay(object, "M") < 0))
+    ## benchmarking shows that min(assay()) < 0 is faster than any(assay() < 0) if it is false
+    if(min(assay(object, "M")) < 0)
         msg <- validMsg(msg, "the 'M' assay has negative entries")
-    if(any(assay(object, "Cov") < 0))
+    if(min(assay(object, "Cov")) < 0)
         msg <- validMsg(msg, "the 'Cov' assay has negative entries")
-    if(any(assay(object, "M") > assay(object, "Cov")))
+    if(max(assay(object, "M") - assay(object, "Cov")) > 0.5)
         msg <- validMsg(msg, "the 'M' assay has at least one entry bigger than the 'Cov' assay")
     if(!is.null(rownames(assay(object, "M"))) ||
        !is.null(rownames(assay(object, "Cov"))) ||
