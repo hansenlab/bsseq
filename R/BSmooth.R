@@ -12,7 +12,7 @@ makeClusters <- function(hasGRanges, maxGap = 10^8, mc.cores = 1) {
     }))) # are the clusters ordered within the chromosome? This is probably guranteed
     clusters <- Reduce(c, clusters.sp[chrOrder])
     stopifnot(all(chrOrder == runValue(seqnames(clusters))))
-    ov <- findOverlaps_mclapply(grBase, clusters, mc.cores = mc.cores)
+    ov <- bsseq:::findOverlaps_mclapply(grBase, clusters, mc.cores = mc.cores)
     clusterIdx <- split(as.matrix(ov)[,1], as.matrix(ov)[,2])
     names(clusterIdx) <- NULL
     clusterIdx
@@ -24,11 +24,11 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
     smooth <- function(idxes, sampleIdx) {
         ## Assuming that idxes is a set of indexes into the BSseq object
         ## sampleIdx is a single character
-        if(verbose >= 3)
-            cat(sprintf("    beginning: sample:%s, chr:%s, nLoci:%s\n",
-                        sampleNames(BSseq)[sampleIdx],
-                        as.character(seqnames(BSseq)[idxes[1]]),
-                        length(idxes)))
+        this_sample_chr <- c(sampleNames(BSseq)[sampleIdx],
+                             as.character(seqnames(BSseq)[idxes[1]]))
+        if(verbose >= 2)
+            cat(sprintf("[BSmooth]   smoothing start: sample:%s, chr:%s, nLoci:%s\n",
+                        this_sample_chr[1], this_sample_chr[2], length(idxes)))
         Cov <- getCoverage(BSseq, type = "Cov")[idxes, sampleIdx]
         M <- getCoverage(BSseq, type = "M")[idxes, sampleIdx]
         pos <- start(BSseq)[idxes]
@@ -48,7 +48,7 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
                             M = pmin(pmax(M[wh], 0.01), Cov[wh] - 0.01),
                             Cov = Cov[wh])
         fit <- locfit(M ~ lp(pos, nn = nn, h = h), data = sdata,
-                      weights = Cov, family = "binomial", maxk = 50000)
+                      weights = Cov, family = "binomial", maxk = 10000)
         pp <- preplot(fit, where = "data", band = "local",
                       newdata = data.frame(pos = pos))
         if(keep.se) {
@@ -57,15 +57,14 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
             se.coef <- NULL
         }
         if(verbose >= 2)
-            cat(sprintf("    sample:%s, chr:%s, nLoci:%s, nCoveredLoci:%s, done\n",
-                        sampleIdx, as.character(seqnames(BSseq)[idxes[1]]),
-                        length(idxes), nrow(sdata)))
+            cat(sprintf("[BSmooth]   smoothing end: sample:%s, chr:%s, nLoci:%s, nCoveredLoci:%s\n",
+                        this_sample_chr[1], this_sample_chr[2], length(idxes), nrow(sdata)))
         return(list(coef = pp$fit, se.coef = se.coef,
                     trans = pp$trans, h = h, nn = nn))
     }
     stopifnot(class(BSseq) == "BSseq")
     parallelBy <- match.arg(parallelBy)
-    if(verbose) cat("preprocessing ... ")
+    if(verbose) cat("[BSmooth] preprocessing ... ")
     stime <- system.time({
         clusterIdx <- makeClusters(BSseq, maxGap = maxGap, mc.cores = mc.cores)
     })[3]
@@ -76,26 +75,28 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
 
     stimeAll <- system.time({
         switch(parallelBy, "sample" = {
-            if(verbose) cat(sprintf("smoothing by 'sample' (mc.cores = %d, mc.preschedule = %s)\n",
+            if(verbose) cat(sprintf("[BSmooth] smoothing by 'sample' (mc.cores = %d, mc.preschedule = %s)\n",
                                     mc.cores, mc.preschedule))
             out <- mclapply(seq(along = sampleNames), function(sIdx) {
                 stime <- system.time({
                     tmp <- lapply(clusterIdx, function(jj) {
-                        smooth(idxes = jj, sampleIdx = sIdx)
+                        try(smooth(idxes = jj, sampleIdx = sIdx))
                     })
                     coef <- do.call(c, lapply(tmp, function(xx) xx$coef))
                     se.coef <- do.call(c, lapply(tmp, function(xx) xx$se.coef))
                 })[3]
                 if(verbose) {
-                    cat(sprintf("  sample %s (out of %d), done in %.1f sec\n",
+                    cat(sprintf("[BSmooth] sample %s (out of %d), done in %.1f sec\n",
                                 sampleNames[sIdx], length(sampleNames), stime))
                 }
                 return(list(coef = coef, se.coef = se.coef))
             }, mc.preschedule = mc.preschedule, mc.cores = mc.cores)
+            if(any(sapply(out, is, class2 = "try-error")))
+                stop("BSmooth encountered smoothing errors")
             coef <- do.call(cbind, lapply(out, function(xx) xx$coef))
             se.coef <- do.call(cbind, lapply(out, function(xx) xx$se.coef))
         }, "chromosome" = {
-            if(verbose) cat(sprintf("smoothing by 'chromosome' (mc.cores = %d, mc.preschedule = %s)\n",
+            if(verbose) cat(sprintf("[BSmooth] smoothing by 'chromosome' (mc.cores = %d, mc.preschedule = %s)\n",
                                     mc.cores, mc.preschedule))
             out <- mclapply(1:length(clusterIdx), function(ii) {
                 stime <- system.time({
@@ -106,16 +107,18 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
                     se.coef <- do.call(cbind, lapply(tmp, function(xx) xx$se.coef))
                 })[3]
                 if(verbose)
-                    cat(sprintf("  chr idx %d (out of %d), done in %.1f sec\n",
+                    cat(sprintf("[BSmooth] chr idx %d (out of %d), done in %.1f sec\n",
                                 ii, length(clusterIdx), stime))
                 return(list(coef = coef, se.coef = se.coef))
             }, mc.preschedule = mc.preschedule, mc.cores = mc.cores)
+            if(any(sapply(out, is, class2 = "try-error")))
+                stop("BSmooth encountered smoothing errors")
             coef <- do.call(rbind, lapply(out, function(xx) xx$coef))
             se.coef <- do.call(rbind, lapply(out, function(xx) xx$se.coef))
         })
     })[3]
     if(verbose)
-        cat(sprintf("smoothing done in %.1f sec\n", stimeAll))
+        cat(sprintf("[BSmooth] smoothing done in %.1f sec\n", stimeAll))
 
     rownames(coef) <- NULL
     colnames(coef) <- sampleNames(BSseq)
