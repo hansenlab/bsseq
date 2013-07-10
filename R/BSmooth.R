@@ -21,15 +21,16 @@ makeClusters <- function(hasGRanges, maxGap = 10^8, mc.cores = 1) {
 
 BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sample", "chromosome"),
                     mc.preschedule = FALSE, mc.cores = 1, keep.se = FALSE, verbose = TRUE) {
-    smooth <- function(idxes, sname) {
+    smooth <- function(idxes, sampleIdx) {
         ## Assuming that idxes is a set of indexes into the BSseq object
-        ## sname is a single character
+        ## sampleIdx is a single character
         if(verbose >= 3)
             cat(sprintf("    beginning: sample:%s, chr:%s, nLoci:%s\n",
-                        sname, as.character(seqnames(BSseq)[idxes[1]]),
+                        sampleNames(BSseq)[sampleIdx],
+                        as.character(seqnames(BSseq)[idxes[1]]),
                         length(idxes)))
-        Cov <- getCoverage(BSseq, type = "Cov")[idxes, sname]
-        M <- getCoverage(BSseq, type = "M")[idxes, sname]
+        Cov <- getCoverage(BSseq, type = "Cov")[idxes, sampleIdx]
+        M <- getCoverage(BSseq, type = "M")[idxes, sampleIdx]
         pos <- start(BSseq)[idxes]
         stopifnot(all(diff(pos) > 0))
         wh <- which(Cov != 0)
@@ -57,7 +58,7 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
         }
         if(verbose >= 2)
             cat(sprintf("    sample:%s, chr:%s, nLoci:%s, nCoveredLoci:%s, done\n",
-                        sname, as.character(seqnames(BSseq)[idxes[1]]),
+                        sampleIdx, as.character(seqnames(BSseq)[idxes[1]]),
                         length(idxes), nrow(sdata)))
         return(list(coef = pp$fit, se.coef = se.coef,
                     trans = pp$trans, h = h, nn = nn))
@@ -77,17 +78,17 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
         switch(parallelBy, "sample" = {
             if(verbose) cat(sprintf("smoothing by 'sample' (mc.cores = %d, mc.preschedule = %s)\n",
                                     mc.cores, mc.preschedule))
-            out <- mclapply(sampleNames, function(nam) {
+            out <- mclapply(seq(along = sampleNames), function(sIdx) {
                 stime <- system.time({
                     tmp <- lapply(clusterIdx, function(jj) {
-                        smooth(idxes = jj, sname = nam)
+                        smooth(idxes = jj, sampleIdx = sIdx)
                     })
                     coef <- do.call(c, lapply(tmp, function(xx) xx$coef))
                     se.coef <- do.call(c, lapply(tmp, function(xx) xx$se.coef))
                 })[3]
                 if(verbose) {
                     cat(sprintf("  sample %s (out of %d), done in %.1f sec\n",
-                                nam, length(sampleNames), stime))
+                                sampleNames[sIdx], length(sampleNames), stime))
                 }
                 return(list(coef = coef, se.coef = se.coef))
             }, mc.preschedule = mc.preschedule, mc.cores = mc.cores)
@@ -98,8 +99,8 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
                                     mc.cores, mc.preschedule))
             out <- mclapply(1:length(clusterIdx), function(ii) {
                 stime <- system.time({
-                    tmp <- lapply(sampleNames, function(nam) {
-                        smooth(idxes = clusterIdx[[ii]], sname = nam)
+                    tmp <- lapply(seq(along = sampleNames), function(sIdx) {
+                        smooth(idxes = clusterIdx[[ii]], sampleIdx = sIdx)
                     })
                     coef <- do.call(cbind, lapply(tmp, function(xx) xx$coef))
                     se.coef <- do.call(cbind, lapply(tmp, function(xx) xx$se.coef))
