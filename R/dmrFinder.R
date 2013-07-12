@@ -1,24 +1,29 @@
 dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
-                             maxGap = 300, column = c("tstat.corrected", "tstat"), verbose = TRUE) {
-    column <- match.arg(column)
-    if(! column %in% colnames(BSseqTstat@stats))
-        stop("'column' needs to be a column of 'BSseqTstat@stats'")
+                             maxGap = 300, stat = "tstat.corrected", verbose = TRUE) {
+    subverbose <- max(as.integer(verbose) - 1L, 0L)
+    if(! stat %in% colnames(BSseqTstat@stats))
+        stop("'stat' needs to be a column of 'BSseqTstat@stats'")
     if(is.null(cutoff))
-        cutoff <- quantile(BSseqTstat@stats[, column], qcutoff)
-    direction <- as.integer(BSseqTstat@stats[, column] >= cutoff[2])
-    direction[BSseqTstat@stats[, column] <= cutoff[1]] <- -1L
+        cutoff <- quantile(BSseqTstat@stats[, stat], qcutoff)
+    if(length(cutoff) == 1)
+        cutoff <- c(-cutoff, cutoff)
+    direction <- as.integer(BSseqTstat@stats[, stat] >= cutoff[2])
+    direction[BSseqTstat@stats[, stat] <= cutoff[1]] <- -1L
     direction[is.na(direction)] <- 0L
     chrs <- as.character(seqnames(BSseqTstat@gr))
     positions <- start(BSseqTstat)
-    regions <- bsseq:::regionFinder3(direction, chr = chrs, pos = positions, maxGap = maxGap, verbose = verbose)
-    if(verbose) cat("creating dmr data.frame\n")
+    regions <- bsseq:::regionFinder3(direction, chr = chrs, pos = positions,
+                                     maxGap = maxGap, verbose = subverbose)
+    if(verbose) cat("[dmrFinder] creating dmr data.frame\n")
     regions <- do.call(rbind, regions)
     rownames(regions) <- NULL
-    stats <- getStats(BSseqTstat, regions, column = column)
-    regions <- cbind(regions, stats)
-    regions$direction <- ifelse(regions$meanDiff > 0, "hyper", "hypo")
     regions$width <- regions$end - regions$start + 1
     regions$invdensity <- regions$width / regions$n
+    stats <- getStats(BSseqTstat, regions, column = stat)
+    regions <- cbind(regions, stats)
+    if(stat %in% c("tstat.corrected", "tstat")) {
+        regions$direction <- ifelse(regions$meanDiff > 0, "hyper", "hypo")
+    }
     regions <- regions[order(abs(regions$areaStat), decreasing = TRUE),]
     regions
 }
@@ -46,11 +51,11 @@ clusterMaker <- function(chr, pos, order.it=TRUE, maxGap=300){
 
 regionFinder3 <- function(x, chr, positions, keep, maxGap = 300, verbose = TRUE) {
     getSegments3 <- function(x, cid, verbose = TRUE){
-        if(verbose) cat("segmenting\n")
+        if(verbose) cat("[regionFinder3] segmenting\n")
         segments <- cumsum(c(1, diff(x) != 0)) +
             cumsum(c(1, diff(cid) != 0))
         names(segments) <- NULL
-        if(verbose) cat("splitting\n")
+        if(verbose) cat("[regionFinder3] splitting\n")
         out <- list(up = split(which(x > 0), segments[x > 0]),
                     down = split(which(x < 0), segments[x < 0]),
                     nochange = split(which(x == 0), segments[x == 0]))

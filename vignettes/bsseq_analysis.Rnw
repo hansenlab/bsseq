@@ -204,8 +204,8 @@ we will only keep CpGs where at least 2 cancer samples and at least 2 normal sam
 line breaks in Sweave)
 <<keepLoci>>=
 BS.cov <- getCoverage(BS.cancer.ex.fit)
-keepLoci.ex <- which(rowSums(BS.cov[, c("C1", "C2", "C3")] >= 2) >= 2 &
-                  rowSums(BS.cov[, c("N1", "N2", "N3")] >= 2) >= 2)
+keepLoci.ex <- which(rowSums(BS.cov[, BS.cancer.ex$Type == "cancer"] >= 2) >= 2 &
+                     rowSums(BS.cov[, BS.cancer.ex$Type == "normal"] >= 2) >= 2)
 length(keepLoci.ex)
 BS.cancer.ex.fit <- BS.cancer.ex.fit[keepLoci.ex,]
 @ 
