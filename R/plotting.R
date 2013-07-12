@@ -14,10 +14,12 @@ plotAnnoTrack <- function(gr, annoTrack) {
 }
 
 plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addRegions = NULL,
-                            annoTrack = NULL, col = NULL, lty = NULL, lwd = NULL, BSseqTstat = NULL,
+                            annoTrack = NULL, col = NULL, lty = NULL, lwd = NULL, 
+                            BSseqTstat = NULL, stat = "tstat.corrected", stat.col = "black",
+                            stat.lwd = 1, stat.lty = 1, stat.ylim = c(-8,8),
                             mainWithWidth = TRUE, regionCol = alpha("red", 0.1), addTicks = TRUE,
                             addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE, verbose = TRUE) {
-    cat("preprocessing ...")
+    cat("[plotManyRegions] preprocessing ...")
     if(!is.null(regions)) {
         if(is(regions, "data.frame"))
             gr <- data.frame2GRanges(regions, keepColumns = FALSE)
@@ -39,9 +41,11 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
         main <- rep(main, length = length(gr))
     cat("done\n")
     for(ii in seq(along = gr)) {
-        if(verbose) cat(sprintf("plotting region %d (out of %d)\n", ii, nrow(regions)))
+        if(verbose) cat(sprintf("[plotManyRegions]   plotting region %d (out of %d)\n", ii, nrow(regions)))
         plotRegion(BSseq = BSseq, region = regions[ii,], extend = extend,
                    col = col, lty = lty, lwd = lwd, main = main[ii], BSseqTstat = BSseqTstat,
+                   stat = stat, stat.col = stat.col, stat.lwd = stat.lwd,
+                   stat.lty = stat.lty, stat.ylim = stat.ylim,
                    addRegions = addRegions, regionCol = regionCol, mainWithWidth = mainWithWidth,
                    annoTrack = annoTrack, addTicks = addTicks, addPoints = addPoints,
                    pointsMinCov = pointsMinCov, highlightMain = highlightMain)
@@ -173,30 +177,33 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
                         regionCol = regionCol, highlightMain = highlightMain)
     
     if(addPoints) {
-        sapply(sampleNames(BSseq), function(samp) {
-            abline(v = positions[rawPs[, samp] > 0.1], col = "grey80", lty = 1)
+        sapply(1:ncol(BSseq), function(sampIdx) {
+            abline(v = positions[rawPs[, sampIdx] > 0.1], col = "grey80", lty = 1)
         })
     } # This adds vertical grey lines so we can see where points are plotted
 
-    sapply(sampleNames(BSseq), function(samp) {
-        .bsPlotLines(positions, smoothPs[, samp], col = colEtc$col[samp],
-                     lty = colEtc$lty[samp], lwd = colEtc$lwd[samp],
+    sapply(1:ncol(BSseq), function(sampIdx) {
+        .bsPlotLines(positions, smoothPs[, sampIdx], col = colEtc$col[sampIdx],
+                     lty = colEtc$lty[sampIdx], lwd = colEtc$lwd[sampIdx],
                      plotRange = c(start(gr), end(gr)))
     })
 
     if(addPoints) {
-        sapply(sampleNames(BSseq), function(samp) {
-            .bsPlotPoints(positions, rawPs[, samp], coverage[, samp],
-                          col = colEtc$col[samp], pointsMinCov = pointsMinCov)
+        sapply(1:ncol(BSseq), function(sampIdx) {
+            .bsPlotPoints(positions, rawPs[, sampIdx], coverage[, sampIdx],
+                          col = colEtc$col[sampIdx], pointsMinCov = pointsMinCov)
         })
     }
 }
 
 
 plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions = NULL, annoTrack = NULL,
-                          col = NULL, lty = NULL, lwd = NULL, BSseqTstat = NULL, mainWithWidth = TRUE,
-                          regionCol = alpha("red", 0.1), addTicks = TRUE, addPoints = FALSE,
-                          pointsMinCov = 5, highlightMain = FALSE) {
+                       col = NULL, lty = NULL, lwd = NULL,
+                       BSseqTstat = NULL, stat = "tstat.corrected", stat.col = "black",
+                       stat.lwd = 1, stat.lty = 1, stat.ylim = c(-8,8),
+                       mainWithWidth = TRUE,
+                       regionCol = alpha("red", 0.1), addTicks = TRUE, addPoints = FALSE,
+                       pointsMinCov = 5, highlightMain = FALSE) {
     
     opar <- par(mar = c(0,4.1,0,0), oma = c(5,0,4,2), mfrow = c(1,1))
     on.exit(par(opar))
@@ -214,16 +221,14 @@ plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions =
     if(!is.null(BSseqTstat)) {
         if(!is.null(BSseqTstat))
             BSseqTstat <- subsetByOverlaps(BSseqTstat, gr)
-        plot(positions[1], 0.5, type = "n", xaxt = "n", yaxt = "n",
-             ylim = c(-8,8), xlim = plotRange, xlab = "", ylab = "t-stat")
+        plot(start(gr), 0.5, type = "n", xaxt = "n", yaxt = "n",
+             ylim = stat.ylim, xlim = c(start(gr), end(gr)), xlab = "", ylab = "t-stat")
         axis(side = 2, at = c(-5,0,5))
         abline(h = 0, col = "grey60")
-        bsseq:::.bsPlotLines(start(BSseqTstat), BSseqTstat@stats[, "tstat"],
-                             lty = 1, plotRange = plotRange, col = "red", lwd = 1)
-        bsseq:::.bsPlotLines(start(BSseqTstat), BSseqTstat@stats[, "tstat.corrected"],
-                             lty = 2, plotRange = plotRange, col = "red", lwd = 1)
-        bsseq:::.bsPlotLines(start(BSseqTstat), 100*BSseqTstat@stats[, "tstat.sd"],
-                             lty = 2, plotRange = plotRange, col = "blue", lwd = 1)
+        mapply(function(stat, col, lty, lwd) {
+            bsseq:::.bsPlotLines(start(BSseqTstat), BSseqTstat@stats[, stat],
+                                 lty = lty, plotRange = c(start(gr), end(gr)), col = col, lwd = lwd)
+        }, stat = stat, col = stat.col, lty = stat.lty, lwd = stat.lwd)
     }
     
     if(!is.null(annoTrack))

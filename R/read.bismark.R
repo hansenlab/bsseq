@@ -11,7 +11,7 @@ read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, verbose = TRUE){
     names(idxes) <- sampleNames
     allOut <- lapply(idxes, function(ii){
         if (verbose) {
-            cat(sprintf("Reading file '%s' ... ", files[ii]))
+            cat(sprintf("[read.bismark] Reading file '%s' ... ", files[ii]))
         }
         stime <- system.time({
             raw <- read.bismarkFileRaw(thisfile = files[ii])
@@ -22,18 +22,18 @@ read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, verbose = TRUE){
                          sampleNames = sampleNames[ii], rmZeroCov = rmZeroCov)
         })[3]
         if (verbose) {
-            cat(sprintf("in %.1f secs\n", stime))  
+            cat(sprintf("done in %.1f secs\n", stime))  
         }
         out  
     })
     if (verbose) {
-        cat(sprintf("Joining samples ... "))
+        cat(sprintf("[read.bismark] Joining samples ... "))
     }
     stime <- system.time({
         allOut <- combineList(allOut)
     })[3]
     if (verbose) {
-        cat(sprintf("in %.1f secs\n", stime))
+        cat(sprintf("done in %.1f secs\n", stime))
     }
     allOut
 }

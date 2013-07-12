@@ -20,8 +20,8 @@ test_BSseq <- function() {
     checkEquals(dim(BStest), c(3,3))
     checkEquals(nrow(BStest), 3)
     checkEquals(ncol(BStest), 3)
-    checkEquals(getCoverage(BStest, type = "M"), M)
-    checkEquals(getCoverage(BStest, type = "Cov"), M + 2)
+    checkEquals(getCoverage(BStest, type = "M"), unname(M))
+    checkEquals(getCoverage(BStest, type = "Cov"), unname(M + 2))
     checkEquals(sampleNames(BStest), colnames(M))
 
     BStest2 <- BSseq(pos = 3:1, chr = rep("chr1", 3), M = M[3:1,],

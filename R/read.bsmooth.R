@@ -79,7 +79,7 @@ read.umtab2.chr <- function(files, sampleNames = NULL,
     if(!keepFilt) {
         what0 <- what0[!grepl("^filt", what0)]
     }
-    if(verbose) cat("reading", files[1], "\n")
+    if(verbose) cat("[read.umtab2.chr] reading", files[1], "\n")
     scanPars <- list(sep = "", quote = "", quiet = TRUE, skip = 1,
                      what = what0, na.strings = c("NA", "?"))
     intab <- do.call(scan, c(scanPars, file = files[1]))
@@ -158,7 +158,7 @@ read.umtab2.chr2 <- function(files, sampleNames = NULL,
     what0[["ref"]] <- character(0)
     if(stranded)
         what0[["strand"]] <- character(0)
-    if(verbose) cat("parsing all samples first\n")
+    if(verbose) cat("[read.umtab2.chr] parsing all samples first\n")
     scanPars <- list(sep = "", quote = "", quiet = TRUE, skip = 1,
                      what = what0, na.strings = c("NA", "?"))
     ## First we get the locations of everything in all files
@@ -202,7 +202,7 @@ read.umtab2.chr2 <- function(files, sampleNames = NULL,
     stopifnot(all(c(keepM, keepU) %in% c(allMnames, allUnames)))
 
     for(ii in seq_along(files)) {
-        if(verbose) cat("reading", files[ii], "\n")
+        if(verbose) cat("[read.umtab2.chr] reading", files[ii], "\n")
         intab <- do.call(scan, c(scanPars, file = files[ii]))
         if(length(intab[[1]]) == 0)
             next
@@ -290,7 +290,7 @@ read.umtab.chr <- function(files, sampleNames = NULL,
         return(list())
     line1 <- strsplit(line1, "\t")[[1]]
     stopifnot(all(line1 == columnHeaders))
-    if(verbose) cat("reading", files[1], "\n")
+    if(verbose) cat("[read.umtab.chr] reading", files[1], "\n")
     scanPars <- list(sep = "", quote = "", quiet = TRUE, skip = 1,
                   what = what0, na.strings = c("NA", "?"))
     intab <- do.call(scan, c(scanPars, file = files[1]))
@@ -318,7 +318,7 @@ read.umtab.chr <- function(files, sampleNames = NULL,
     Ucy[,1] <- intab[["Ucy"]]
     csums[,1] <- as.integer(sapply(intab[c(allMnames, allUnames)], sum))
     for(ii in seq_along(files[-1]) + 1) {
-        if(verbose) cat("reading", files[ii], "\n")
+        if(verbose) cat("[read.umtab2] reading", files[ii], "\n")
         intab <- do.call(scan, c(scanPars, file = files[ii]))
         if(length(intab[[1]]) == 0)
             next
@@ -373,7 +373,7 @@ read.bsmoothDirRaw <- function(dir, seqnames = NULL, keepCycle = FALSE, keepFilt
         what0[grep("^filt", names(what0))] <- replicate(length(grep("^filt", names(what0))), NULL)
     outList <- lapply(allChrFiles, function(thisfile) {
         if(verbose)
-            cat(sprintf("Reading '%s'\n", thisfile))
+            cat(sprintf("[read.bsmoothDirRaw] Reading '%s'\n", thisfile))
         if(grepl("\\.gz$", thisfile))
             con <- gzfile(thisfile)
         else
@@ -436,7 +436,7 @@ read.bsmooth <- function(dirs, sampleNames = NULL, seqnames = NULL, returnRaw = 
     idxes <- seq_along(dirs)
     names(idxes) <- sampleNames
     allOut <- lapply(idxes, function(ii) {
-        if(verbose) cat(sprintf("Reading dir '%s' ... ", dirs[ii]))
+        if(verbose) cat(sprintf("[read.bsmooth] Reading dir '%s' ... ", dirs[ii]))
         stime <- system.time({
             if(returnRaw) {
                 out <- read.bsmoothDirRaw(dir = dirs[ii], seqnames = seqnames, keepCycle = TRUE,
@@ -447,15 +447,15 @@ read.bsmooth <- function(dirs, sampleNames = NULL, seqnames = NULL, returnRaw = 
                 out <- sampleRawToBSseq(raw, qualityCutoff = qualityCutoff, rmZeroCov, sampleName = sampleNames[ii])
             }
         })[3]
-        if(verbose) cat(sprintf("in %.1f secs\n", stime)) 
+        if(verbose) cat(sprintf("done in %.1f secs\n", stime)) 
         out
     })
     if(!returnRaw) {
-        if(verbose) cat(sprintf("Joining samples ... "))
+        if(verbose) cat(sprintf("[read.bsmooth] Joining samples ... "))
         stime <- system.time({
             allOut <- combineList(allOut)
         })[3]
-        if(verbose) cat(sprintf("in %.1f secs\n", stime))
+        if(verbose) cat(sprintf("done in %.1f secs\n", stime))
     }
     allOut
 }
@@ -464,9 +464,9 @@ parsingPipeline <- function(dirs, qualityCutoff = 20, outDir, seqnames = NULL,
                             subdir = "ev_bt2_cpg_tab", timing = FALSE) {
     if(!all(file.exists(dirs)))
         stop("not all directories in 'dirs' exists.")
-    cat("Parsing all files.\n")
+    cat("[parsingPipeline] Parsing all files.\n")
     oneDir <- function(dir) {
-        cat("  dir", basename(dir), ": ")
+        cat("[parsingPipeline]  dir", basename(dir), ": ")
         base <- basename(dir)
         cat("parsing, ")
         stime <- system.time({
@@ -476,7 +476,7 @@ parsingPipeline <- function(dirs, qualityCutoff = 20, outDir, seqnames = NULL,
             assign(paste0(base, ".raw"), raw)
         })[3]
         if(timing) {
-            cat(sprintf("\nIn %.1f secs\n", stime))
+            cat(sprintf("\ndone in %.1f secs\n", stime))
             print(gc())
         }
         cat("saving, ")
@@ -489,7 +489,7 @@ parsingPipeline <- function(dirs, qualityCutoff = 20, outDir, seqnames = NULL,
             seqlevels(bsseq)[seqlevels(bsseq) == "chrgi|9626243|ref|NC_001416.1|"] <- "chrLambda"
         })[3]
         if(timing) {
-            cat(sprintf("\nIn %.1f secs\n", stime))
+            cat(sprintf("\ndone in %.1f secs\n", stime))
             print(gc())
         }
         cat("ordering, ")
