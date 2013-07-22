@@ -98,7 +98,7 @@ getStats <- function(BSseqTstat, regions = NULL, column = "tstat.corrected") {
     }
     stats_ttest<- matrix(NA, ncol = 4, nrow = length(regions))
     colnames(stats_ttest) <- c("meanDiff", "group1.mean", "group2.mean", "tstat.sd")
-    tmp <- lapply(ov.sp, getRegionStats)
+    tmp <- lapply(ov.sp, getRegionStats_ttest)
     stats_ttest[as.integer(names(tmp)),] <- do.call(rbind, tmp)
     out <- cbind(out, as.data.frame(stats_ttest))
     out
