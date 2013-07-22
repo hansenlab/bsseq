@@ -12,8 +12,7 @@
 }
 \usage{
 dmrFinder(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
-  maxGap=300, column = c("tstat.corrected", "tstat"),
-  verbose = TRUE)
+  maxGap=300, stat = "tstat.corrected", verbose = TRUE)
 }
 \arguments{
   \item{BSseqTstat}{An object of class \code{BSseqTstat}.}
@@ -25,7 +24,7 @@ dmrFinder(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
   \item{maxGap}{If two methylation loci are separated by this distance,
     break a possible DMR.  This guarantees that the return DMRs have CpGs
     that are this distance from each other.}
-  \item{column}{Which t-statistic column should be used?}
+  \item{stat}{Which statistic should be used?}
   \item{verbose}{Should the function be verbose?}
 }
 \details{
