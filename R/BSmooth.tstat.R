@@ -53,57 +53,60 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         maxGap <- BSseq@parameters$maxGap
     
     if(verbose) cat("[BSmooth.tstat] preprocessing ... ")
-    stime <- system.time({
-        clusterIdx <- makeClusters(BSseq, maxGap = maxGap, mc.cores = mc.cores)
-    })[3]
+    ptime1 <- proc.time()
+    clusterIdx <- makeClusters(BSseq, maxGap = maxGap, mc.cores = mc.cores)
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
         
     if(verbose) cat("[BSmooth.tstat] computing stats within groups ... ")
-    stime <- system.time({
-        allPs <- getMeth(BSseq, type = "smooth", what = "perBase",
-                         confint = FALSE)[, c(group1, group2)]
-        group1.means <- rowMeans(allPs[, group1, drop = FALSE], na.rm = TRUE)
-        group2.means <- rowMeans(allPs[, group2, drop = FALSE], na.rm = TRUE)
-        })[3]                               
+    ptime1 <- proc.time()
+    allPs <- getMeth(BSseq, type = "smooth", what = "perBase",
+                     confint = FALSE)
+    group1.means <- rowMeans(allPs[, group1, drop = FALSE], na.rm = TRUE)
+    group2.means <- rowMeans(allPs[, group2, drop = FALSE], na.rm = TRUE)
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
     
     if(verbose) cat("[BSmooth.tstat] computing stats across groups ... ")
-    stime <- system.time({
-        switch(estimate.var,
-               "group2" = {
-                   rawSds <- rowSds(allPs[, group2, drop = FALSE], na.rm = TRUE)
-                   smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
-                       smoothSd(rawSds[idx], k = k)
-                   }, mc.cores = mc.cores))
-                   scale <- sqrt(1/length(group1) + 1/length(group2))
-                   tstat.sd <- smoothSds * scale
-               },
-               "same" = {
-                   rawSds <- sqrt( ((length(group1) - 1) * rowVars(allPs[, group1, drop = FALSE]) +
-                                    (length(group2) - 1) * rowVars(allPs[, group2, drop = FALSE])) /
-                                  (length(group1) + length(group2) - 2))
-                   smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
-                       smoothSd(rawSds[idx], k = k)
-                   }, mc.cores = mc.cores))
-                   scale <- sqrt(1/length(group1) + 1/length(group2))
-                   tstat.sd <- smoothSds * scale
-               },
-               "paired" = {
-                   rawSds <- rowSds(allPs[, group1, drop = FALSE] - allPs[, group2, drop = FALSE])
-                   smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
-                       smoothSd(rawSds[idx], k = k)
-                   }, mc.cores = mc.cores))
-                   scale <- sqrt(1/length(group1))
-                   tstat.sd <- smoothSds * scale
-               })
-        tstat <- (group1.means - group2.means) / tstat.sd
-        is.na(tstat)[tstat.sd == 0] <- TRUE
-        if(local.correct) {
-            tstat.corrected <- do.call(c, mclapply(clusterIdx,
-                                                   compute.correction, qSd = qSd,
-                                                   mc.cores = mc.cores))
-        }
-    })[3]
+    ptime1 <- proc.time()
+    switch(estimate.var,
+           "group2" = {
+               rawSds <- rowSds(allPs[, group2, drop = FALSE], na.rm = TRUE)
+               smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
+                   smoothSd(rawSds[idx], k = k)
+               }, mc.cores = mc.cores))
+               scale <- sqrt(1/length(group1) + 1/length(group2))
+               tstat.sd <- smoothSds * scale
+           },
+           "same" = {
+               rawSds <- sqrt( ((length(group1) - 1) * rowVars(allPs[, group1, drop = FALSE]) +
+                                (length(group2) - 1) * rowVars(allPs[, group2, drop = FALSE])) /
+                              (length(group1) + length(group2) - 2))
+               smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
+                   smoothSd(rawSds[idx], k = k)
+               }, mc.cores = mc.cores))
+               scale <- sqrt(1/length(group1) + 1/length(group2))
+               tstat.sd <- smoothSds * scale
+           },
+           "paired" = {
+               rawSds <- rowSds(allPs[, group1, drop = FALSE] - allPs[, group2, drop = FALSE])
+               smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
+                   smoothSd(rawSds[idx], k = k)
+               }, mc.cores = mc.cores))
+               scale <- sqrt(1/length(group1))
+               tstat.sd <- smoothSds * scale
+           })
+    tstat <- (group1.means - group2.means) / tstat.sd
+    is.na(tstat)[tstat.sd == 0] <- TRUE
+    if(local.correct) {
+        tstat.corrected <- do.call(c, mclapply(clusterIdx,
+                                               compute.correction, qSd = qSd,
+                                               mc.cores = mc.cores))
+    }
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
     
     if(local.correct) {

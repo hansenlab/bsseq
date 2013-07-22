@@ -219,8 +219,7 @@ plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions =
     gr <- .bsGetGr(BSseq, region, extend)
     
     if(!is.null(BSseqTstat)) {
-        if(!is.null(BSseqTstat))
-            BSseqTstat <- subsetByOverlaps(BSseqTstat, gr)
+        BSseqTstat <- subsetByOverlaps(BSseqTstat, gr)
         plot(start(gr), 0.5, type = "n", xaxt = "n", yaxt = "n",
              ylim = stat.ylim, xlim = c(start(gr), end(gr)), xlab = "", ylab = "t-stat")
         axis(side = 2, at = c(-5,0,5))
