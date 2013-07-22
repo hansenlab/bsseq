@@ -13,14 +13,15 @@ read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, verbose = TRUE){
         if (verbose) {
             cat(sprintf("[read.bismark] Reading file '%s' ... ", files[ii]))
         }
-        stime <- system.time({
-            raw <- read.bismarkFileRaw(thisfile = files[ii])
-            M <- matrix(elementMetadata(raw)[, "mCount"], ncol = 1)
-            Cov <- M + elementMetadata(raw)[, "uCount"]
-            elementMetadata(raw) <- NULL
-            out <- BSseq(gr = raw, M = M, Cov = Cov,
-                         sampleNames = sampleNames[ii], rmZeroCov = rmZeroCov)
-        })[3]
+        ptime1 <- proc.time()
+        raw <- read.bismarkFileRaw(thisfile = files[ii])
+        M <- matrix(elementMetadata(raw)[, "mCount"], ncol = 1)
+        Cov <- M + elementMetadata(raw)[, "uCount"]
+        elementMetadata(raw) <- NULL
+        out <- BSseq(gr = raw, M = M, Cov = Cov,
+                     sampleNames = sampleNames[ii], rmZeroCov = rmZeroCov)
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
         if (verbose) {
             cat(sprintf("done in %.1f secs\n", stime))  
         }
@@ -29,9 +30,10 @@ read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, verbose = TRUE){
     if (verbose) {
         cat(sprintf("[read.bismark] Joining samples ... "))
     }
-    stime <- system.time({
-        allOut <- combineList(allOut)
-    })[3]
+    ptime1 <- proc.time()
+    allOut <- combineList(allOut)
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
     if (verbose) {
         cat(sprintf("done in %.1f secs\n", stime))
     }

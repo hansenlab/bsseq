@@ -65,61 +65,65 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
     stopifnot(class(BSseq) == "BSseq")
     parallelBy <- match.arg(parallelBy)
     if(verbose) cat("[BSmooth] preprocessing ... ")
-    stime <- system.time({
-        clusterIdx <- makeClusters(BSseq, maxGap = maxGap, mc.cores = mc.cores)
-    })[3]
+    ptime1 <- proc.time()
+    clusterIdx <- makeClusters(BSseq, maxGap = maxGap, mc.cores = mc.cores)
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
 
     sampleNames <- sampleNames(BSseq)
     names(sampleNames) <- sampleNames
 
-    stimeAll <- system.time({
-        switch(parallelBy, "sample" = {
-            if(verbose) cat(sprintf("[BSmooth] smoothing by 'sample' (mc.cores = %d, mc.preschedule = %s)\n",
-                                    mc.cores, mc.preschedule))
-            out <- mclapply(seq(along = sampleNames), function(sIdx) {
-                stime <- system.time({
-                    tmp <- lapply(clusterIdx, function(jj) {
-                        try(smooth(idxes = jj, sampleIdx = sIdx))
-                    })
-                    coef <- do.call(c, lapply(tmp, function(xx) xx$coef))
-                    se.coef <- do.call(c, lapply(tmp, function(xx) xx$se.coef))
-                })[3]
-                if(verbose) {
-                    cat(sprintf("[BSmooth] sample %s (out of %d), done in %.1f sec\n",
-                                sampleNames[sIdx], length(sampleNames), stime))
-                }
-                return(list(coef = coef, se.coef = se.coef))
-            }, mc.preschedule = mc.preschedule, mc.cores = mc.cores)
-            if(any(sapply(out, is, class2 = "try-error")))
-                stop("BSmooth encountered smoothing errors")
-            coef <- do.call(cbind, lapply(out, function(xx) xx$coef))
-            se.coef <- do.call(cbind, lapply(out, function(xx) xx$se.coef))
-        }, "chromosome" = {
-            if(verbose) cat(sprintf("[BSmooth] smoothing by 'chromosome' (mc.cores = %d, mc.preschedule = %s)\n",
-                                    mc.cores, mc.preschedule))
-            out <- mclapply(1:length(clusterIdx), function(ii) {
-                stime <- system.time({
-                    tmp <- lapply(seq(along = sampleNames), function(sIdx) {
-                        smooth(idxes = clusterIdx[[ii]], sampleIdx = sIdx)
-                    })
-                    coef <- do.call(cbind, lapply(tmp, function(xx) xx$coef))
-                    se.coef <- do.call(cbind, lapply(tmp, function(xx) xx$se.coef))
-                })[3]
-                if(verbose)
-                    cat(sprintf("[BSmooth] chr idx %d (out of %d), done in %.1f sec\n",
-                                ii, length(clusterIdx), stime))
-                return(list(coef = coef, se.coef = se.coef))
-            }, mc.preschedule = mc.preschedule, mc.cores = mc.cores)
-            if(any(sapply(out, is, class2 = "try-error")))
-                stop("BSmooth encountered smoothing errors")
-            coef <- do.call(rbind, lapply(out, function(xx) xx$coef))
-            se.coef <- do.call(rbind, lapply(out, function(xx) xx$se.coef))
-        })
-    })[3]
+    ptime.outer1 <- proc.time()
+    switch(parallelBy, "sample" = {
+        if(verbose) cat(sprintf("[BSmooth] smoothing by 'sample' (mc.cores = %d, mc.preschedule = %s)\n",
+                                mc.cores, mc.preschedule))
+        out <- mclapply(seq(along = sampleNames), function(sIdx) {
+            ptime1 <- proc.time()
+            tmp <- lapply(clusterIdx, function(jj) {
+                try(smooth(idxes = jj, sampleIdx = sIdx))
+            })
+            coef <- do.call(c, lapply(tmp, function(xx) xx$coef))
+            se.coef <- do.call(c, lapply(tmp, function(xx) xx$se.coef))
+            ptime2 <- proc.time()
+            stime <- (ptime2 - ptime1)[3]
+            if(verbose) {
+                cat(sprintf("[BSmooth] sample %s (out of %d), done in %.1f sec\n",
+                            sampleNames[sIdx], length(sampleNames), stime))
+            }
+            return(list(coef = coef, se.coef = se.coef))
+        }, mc.preschedule = mc.preschedule, mc.cores = mc.cores)
+        if(any(sapply(out, is, class2 = "try-error")))
+            stop("BSmooth encountered smoothing errors")
+        coef <- do.call(cbind, lapply(out, function(xx) xx$coef))
+        se.coef <- do.call(cbind, lapply(out, function(xx) xx$se.coef))
+    }, "chromosome" = {
+        if(verbose) cat(sprintf("[BSmooth] smoothing by 'chromosome' (mc.cores = %d, mc.preschedule = %s)\n",
+                                mc.cores, mc.preschedule))
+        out <- mclapply(1:length(clusterIdx), function(ii) {
+            ptime1 <- proc.time()
+            tmp <- lapply(seq(along = sampleNames), function(sIdx) {
+                smooth(idxes = clusterIdx[[ii]], sampleIdx = sIdx)
+            })
+            coef <- do.call(cbind, lapply(tmp, function(xx) xx$coef))
+            se.coef <- do.call(cbind, lapply(tmp, function(xx) xx$se.coef))
+            ptime2 <- proc.time()
+            stime <- (ptime2 - ptime1)[3]
+            if(verbose)
+                cat(sprintf("[BSmooth] chr idx %d (out of %d), done in %.1f sec\n",
+                            ii, length(clusterIdx), stime))
+            return(list(coef = coef, se.coef = se.coef))
+        }, mc.preschedule = mc.preschedule, mc.cores = mc.cores)
+        if(any(sapply(out, is, class2 = "try-error")))
+            stop("BSmooth encountered smoothing errors")
+        coef <- do.call(rbind, lapply(out, function(xx) xx$coef))
+        se.coef <- do.call(rbind, lapply(out, function(xx) xx$se.coef))
+    })
+    ptime.outer2 <- proc.time()
+    stime.outer <- (ptime.outer2 - ptime.outer1)[3]
     if(verbose)
-        cat(sprintf("[BSmooth] smoothing done in %.1f sec\n", stimeAll))
-
+        cat(sprintf("[BSmooth] smoothing done in %.1f sec\n", stime.outer))
+    
     rownames(coef) <- NULL
     colnames(coef) <- sampleNames(BSseq)
     if(!is.null(se.coef)) {

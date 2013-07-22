@@ -437,24 +437,26 @@ read.bsmooth <- function(dirs, sampleNames = NULL, seqnames = NULL, returnRaw = 
     names(idxes) <- sampleNames
     allOut <- lapply(idxes, function(ii) {
         if(verbose) cat(sprintf("[read.bsmooth] Reading dir '%s' ... ", dirs[ii]))
-        stime <- system.time({
-            if(returnRaw) {
-                out <- read.bsmoothDirRaw(dir = dirs[ii], seqnames = seqnames, keepCycle = TRUE,
-                                          keepFilt = TRUE, header = TRUE, verbose = FALSE)
-            } else {
-                raw <- read.bsmoothDirRaw(dir = dirs[ii], seqnames = seqnames, keepCycle = FALSE,
-                                          keepFilt = FALSE, header = TRUE, verbose = FALSE)
-                out <- sampleRawToBSseq(raw, qualityCutoff = qualityCutoff, rmZeroCov, sampleName = sampleNames[ii])
-            }
-        })[3]
+        ptime1 <- proc.time()
+        if(returnRaw) {
+            out <- read.bsmoothDirRaw(dir = dirs[ii], seqnames = seqnames, keepCycle = TRUE,
+                                      keepFilt = TRUE, header = TRUE, verbose = FALSE)
+        } else {
+            raw <- read.bsmoothDirRaw(dir = dirs[ii], seqnames = seqnames, keepCycle = FALSE,
+                                      keepFilt = FALSE, header = TRUE, verbose = FALSE)
+            out <- sampleRawToBSseq(raw, qualityCutoff = qualityCutoff, rmZeroCov, sampleName = sampleNames[ii])
+        }
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
         if(verbose) cat(sprintf("done in %.1f secs\n", stime)) 
         out
     })
     if(!returnRaw) {
         if(verbose) cat(sprintf("[read.bsmooth] Joining samples ... "))
-        stime <- system.time({
-            allOut <- combineList(allOut)
-        })[3]
+        ptime1 <- proc.time()
+        allOut <- combineList(allOut)
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
         if(verbose) cat(sprintf("done in %.1f secs\n", stime))
     }
     allOut
@@ -469,12 +471,13 @@ parsingPipeline <- function(dirs, qualityCutoff = 20, outDir, seqnames = NULL,
         cat("[parsingPipeline]  dir", basename(dir), ": ")
         base <- basename(dir)
         cat("parsing, ")
-        stime <- system.time({
-            raw <- bsseq:::read.bsmoothDirRaw(file.path(dir, subdir),
-                                              keepCycle = TRUE, keepFilt = TRUE,
-                                              verbose = FALSE)
-            assign(paste0(base, ".raw"), raw)
-        })[3]
+        ptime1 <- proc.time()
+        raw <- bsseq:::read.bsmoothDirRaw(file.path(dir, subdir),
+                                          keepCycle = TRUE, keepFilt = TRUE,
+                                          verbose = FALSE)
+        assign(paste0(base, ".raw"), raw)
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
         if(timing) {
             cat(sprintf("\ndone in %.1f secs\n", stime))
             print(gc())
@@ -483,21 +486,23 @@ parsingPipeline <- function(dirs, qualityCutoff = 20, outDir, seqnames = NULL,
         save(list = paste0(base, ".raw"),
              file = file.path(outDir, paste0(base, ".raw.rda")))
         cat("converting, ")
-        stime <- system.time({
-            bsseq <- bsseq:::sampleRawToBSseq(raw, qualityCutoff = qualityCutoff,
-                                              sampleName = base)
-            seqlevels(bsseq)[seqlevels(bsseq) == "chrgi|9626243|ref|NC_001416.1|"] <- "chrLambda"
-        })[3]
+        ptime1 <- proc.time()
+        bsseq <- bsseq:::sampleRawToBSseq(raw, qualityCutoff = qualityCutoff,
+                                          sampleName = base)
+        seqlevels(bsseq)[seqlevels(bsseq) == "chrgi|9626243|ref|NC_001416.1|"] <- "chrLambda"
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
         if(timing) {
             cat(sprintf("\ndone in %.1f secs\n", stime))
             print(gc())
         }
         cat("ordering, ")
-        stime <- system.time({
-            bsseq <- chrSelectBSseq(bsseq, order = TRUE,
-                                    seqnames = seqnames)
-            assign(paste0(base, ".bsseq"), bsseq)
-        })[3]
+        ptime1 <- proc.time()
+        bsseq <- chrSelectBSseq(bsseq, order = TRUE,
+                                seqnames = seqnames)
+        assign(paste0(base, ".bsseq"), bsseq)
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
         if(timing) {
             cat(sprintf("\nIn %.1f secs\n", stime))
             print(gc())
