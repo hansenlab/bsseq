@@ -43,7 +43,7 @@ setReplaceMethod("pData",
                       object = "BSseq",
                       value = "data.frame"),
                  function(object, value) {
-                     object@colData <- as(value, "DataFrame")
+                     colData(object) <- as(value, "DataFrame")
                      object
                  })
 
@@ -52,7 +52,7 @@ setReplaceMethod("pData",
                       object = "BSseq",
                       value = "DataFrame"),
                  function(object, value) {
-                     object@colData <- value
+                     colData(object) <- value
                      object
                  })
 
