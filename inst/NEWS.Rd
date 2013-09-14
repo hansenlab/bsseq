@@ -21,6 +21,7 @@
     \item Allowed user specification of maxk, with a default of 10,000
     in BSmooth.
     \item Many bugfixes made necessary by the new class representation.
+    \item Better argument checking in BSmooth.tstat.
   }
 }
 

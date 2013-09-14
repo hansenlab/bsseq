@@ -14,12 +14,14 @@ dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
     positions <- start(BSseqTstat)
     regions <- bsseq:::regionFinder3(direction, chr = chrs, pos = positions,
                                      maxGap = maxGap, verbose = subverbose)
+    if(is.null(regions$down) && is.null(regions$up))
+        return(NULL)
     if(verbose) cat("[dmrFinder] creating dmr data.frame\n")
     regions <- do.call(rbind, regions)
     rownames(regions) <- NULL
     regions$width <- regions$end - regions$start + 1
     regions$invdensity <- regions$width / regions$n
-    stats <- getStats(BSseqTstat, regions, column = stat)
+    stats <- getStats(BSseqTstat, regions, stat = stat)
     regions <- cbind(regions, stats)
     if(stat %in% c("tstat.corrected", "tstat")) {
         regions$direction <- ifelse(regions$meanDiff > 0, "hyper", "hypo")

@@ -65,20 +65,21 @@ plot.BSseqTstat <- function(x, y, ...) {
     }
 }
 
-getStats <- function(BSseqTstat, regions = NULL, column = "tstat.corrected") {
+getStats <- function(BSseqTstat, regions = NULL, stat = "tstat.corrected") {
     stopifnot(is(BSseqTstat, "BSseqTstat"))
-    stopifnot(column %in% colnames(BSseqTstat@stats))
-    if(class(regions) == "data.frame")
-        regions <- data.frame2GRanges(regions)
     if(is.null(regions))
         return(BSseqTstat@stats)
+    if(class(regions) == "data.frame")
+        regions <- data.frame2GRanges(regions)
+    stopifnot(stat %in% colnames(BSseqTstat@stats))
+    stopifnot(length(stat) == 1)
     stopifnot(is(regions, "GenomicRanges"))
     ov <- findOverlaps(BSseqTstat, regions)
     ov.sp <- split(queryHits(ov), subjectHits(ov))
     getRegionStats <- function(idx) {
         mat <- BSseqTstat@stats[idx,, drop=FALSE]
-        areaStat <- sum(mat[, column])
-        maxStat <- max(mat[, column])
+        areaStat <- sum(mat[, stat])
+        maxStat <- max(mat[, stat])
         c(areaStat, maxStat)
     }
     stats <- matrix(NA, ncol = 2, nrow = length(regions))
@@ -86,7 +87,7 @@ getStats <- function(BSseqTstat, regions = NULL, column = "tstat.corrected") {
     tmp <- lapply(ov.sp, getRegionStats)
     stats[as.integer(names(tmp)),] <- do.call(rbind, tmp)
     out <- as.data.frame(stats)
-    if(! column %in% c("tstat.corrected", "tstat"))
+    if(! stat %in% c("tstat.corrected", "tstat"))
         return(out)
     getRegionStats_ttest <- function(idx) {
         mat <- BSseqTstat@stats[idx,, drop=FALSE]
