@@ -43,6 +43,9 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         stopifnot(min(group2) >= 1 & max(group2) <= ncol(BSseq))
     } else stop("problems with argument 'group2'")
     stopifnot(length(intersect(group1, group2)) == 0)
+    stopifnot(length(group1) > 0)
+    stopifnot(length(group2) > 0)
+    stopifnot(length(group1) + length(group2) >= 3)
     if(estimate.var == "paired")
         stopifnot(length(group1) == length(group2))
     
@@ -51,6 +54,8 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
     
     if(is.null(maxGap))
         maxGap <- BSseq@parameters$maxGap
+    if(is.null(maxGap))
+        stop("need to set argument 'maxGap'")
     
     if(verbose) cat("[BSmooth.tstat] preprocessing ... ")
     ptime1 <- proc.time()
