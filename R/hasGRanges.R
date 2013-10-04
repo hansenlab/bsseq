@@ -86,10 +86,10 @@ setMethod("subsetByOverlaps",
           function(query, subject, maxgap = 0L, minoverlap = 1L,
                    type = c("any", "start", "end", "within", "equal"),
                    ignore.strand = FALSE, ...) {
-              ov <- findOverlaps_mclapply(query = granges(query), subject = subject,
-                                          maxgap = maxgap, minoverlap = minoverlap,
-                                          type = match.arg(type), select = "first",
-                                          ignore.strand = ignore.strand, ... )
+              ov <- findOverlaps(query = granges(query), subject = subject,
+                                 maxgap = maxgap, minoverlap = minoverlap,
+                                 type = match.arg(type), select = "first",
+                                 ignore.strand = ignore.strand, ... )
               query[!is.na(ov)]
           })
 
@@ -98,10 +98,10 @@ setMethod("subsetByOverlaps",
           function(query, subject, maxgap = 0L, minoverlap = 1L,
                    type = c("any", "start", "end", "within", "equal"),
                    ignore.strand = FALSE, ...) {
-              ov <- findOverlaps_mclapply(query = granges(query), subject = granges(subject),
-                                          maxgap = maxgap, minoverlap = minoverlap,
-                                          type = match.arg(type), select = "first",
-                                          ignore.strand = ignore.strand, ... )
+              ov <- findOverlaps(query = granges(query), subject = granges(subject),
+                                 maxgap = maxgap, minoverlap = minoverlap,
+                                 type = match.arg(type), select = "first",
+                                 ignore.strand = ignore.strand, ... )
               query[!is.na(ov)]
           })
 
@@ -110,10 +110,10 @@ setMethod("subsetByOverlaps",
           function(query, subject, maxgap = 0L, minoverlap = 1L,
                    type = c("any", "start", "end", "within", "equal"),
                    ignore.strand = FALSE, ...) {
-              ov <- findOverlaps_mclapply(query = query, subject = granges(subject),
-                                          maxgap = maxgap, minoverlap = minoverlap,
-                                          type = match.arg(type), select = "first",
-                                          ignore.strand = ignore.strand, ... )
+              ov <- findOverlaps(query = query, subject = granges(subject),
+                                 maxgap = maxgap, minoverlap = minoverlap,
+                                 type = match.arg(type), select = "first",
+                                 ignore.strand = ignore.strand, ... )
               query[!is.na(ov)]
           })
 
@@ -122,10 +122,10 @@ setMethod("findOverlaps",
           function (query, subject, maxgap = 0L, minoverlap = 1L,
                     type = c("any", "start", "end", "within", "equal"),
                     select = c("all", "first"), ignore.strand = FALSE, ...) {
-              findOverlaps_mclapply(query = granges(query), subject = subject,
-                                    maxgap = maxgap, minoverlap = minoverlap,
-                                    type = match.arg(type), select = match.arg(select),
-                                    ignore.strand = ignore.strand, ...)
+              findOverlaps(query = granges(query), subject = subject,
+                           maxgap = maxgap, minoverlap = minoverlap,
+                           type = match.arg(type), select = match.arg(select),
+                           ignore.strand = ignore.strand, ...)
           })
 
 setMethod("findOverlaps",
@@ -133,10 +133,10 @@ setMethod("findOverlaps",
           function (query, subject, maxgap = 0L, minoverlap = 1L,
                     type = c("any", "start", "end", "within", "equal"),
                     select = c("all", "first"), ignore.strand = FALSE, ...) {
-              findOverlaps_mclapply(query = granges(query), subject = granges(subject),
-                                    maxgap = maxgap, minoverlap = minoverlap,
-                                    type = match.arg(type), select = match.arg(select),
-                                    ignore.strand = ignore.strand, ...)
+              findOverlaps(query = granges(query), subject = granges(subject),
+                           maxgap = maxgap, minoverlap = minoverlap,
+                           type = match.arg(type), select = match.arg(select),
+                           ignore.strand = ignore.strand, ...)
           })
 
 setMethod("findOverlaps",
@@ -144,10 +144,10 @@ setMethod("findOverlaps",
           function (query, subject, maxgap = 0L, minoverlap = 1L,
                     type = c("any", "start", "end", "within", "equal"),
                     select = c("all", "first"), ignore.strand = FALSE, ...) {
-              findOverlaps_mclapply(query = query, subject = granges(subject),
-                                    maxgap = maxgap, minoverlap = minoverlap,
-                                    type = match.arg(type), select = match.arg(select),
-                                    ignore.strand = ignore.strand, ...)
+              findOverlaps(query = query, subject = granges(subject),
+                           maxgap = maxgap, minoverlap = minoverlap,
+                           type = match.arg(type), select = match.arg(select),
+                           ignore.strand = ignore.strand, ...)
           })
 
 setMethod("[", "hasGRanges", function(x, i, ...) {

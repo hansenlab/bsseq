@@ -20,11 +20,7 @@ collapseBSseq <- function(BSseq, columns) {
 }
 
 chrSelectBSseq <- function(BSseq, seqnames = NULL, order = FALSE) {
-    gr <- GRanges(seqnames = seqnames,
-                  ranges = IRanges(start = rep(1, length(seqnames)),
-                  end = rep(10^9, length(seqnames))))
-    BSseq <- subsetByOverlaps(BSseq, gr)
-    seqlevels(BSseq) <- seqlevels(BSseq)[seqlevels(BSseq) %in% seqnames]
+    seqlevels(BSseq, force = TRUE) <- seqnames
     if(order)
         BSseq <- orderBSseq(BSseq, seqOrder = seqnames)
     BSseq
@@ -32,18 +28,9 @@ chrSelectBSseq <- function(BSseq, seqnames = NULL, order = FALSE) {
 
 
 orderBSseq <- function(BSseq, seqOrder = NULL) {
-    splitNames <- splitRanges(seqnames(BSseq))
-    if(is.null(seqOrder))
-        seqOrder <- names(splitNames)
-    else
-        seqOrder <- seqOrder[seqOrder %in% names(splitNames)]
-    splitOd <- lapply(seqOrder, function(nam) {
-        seqRanges <- seqselect(ranges(granges(BSseq)), splitNames[[nam]]) 
-        as.integer(unlist(splitNames[[nam]])[order(start(seqRanges))])
-    })
-    BSseq <- BSseq[do.call(c, splitOd)]
-    seqlevels(BSseq) <- seqOrder
-    BSseq
+    if(!is.null(seqOrder))
+        seqlevels(BSseq, force = TRUE) <- seqOrder
+    BSseq[order(granges(BSseq))]
 }
 
 

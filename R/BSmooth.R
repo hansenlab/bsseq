@@ -1,4 +1,4 @@
-makeClusters <- function(hasGRanges, maxGap = 10^8, mc.cores = 1) {
+makeClusters <- function(hasGRanges, maxGap = 10^8) {
     chrOrder <- as.character(runValue(seqnames(hasGRanges)))
     if(anyDuplicated(chrOrder))
         stop("argument 'hasGRanges' is not properly order")
@@ -12,7 +12,7 @@ makeClusters <- function(hasGRanges, maxGap = 10^8, mc.cores = 1) {
     }))) # are the clusters ordered within the chromosome? This is probably guranteed
     clusters <- Reduce(c, clusters.sp[chrOrder])
     stopifnot(all(chrOrder == runValue(seqnames(clusters))))
-    ov <- bsseq:::findOverlaps_mclapply(grBase, clusters, mc.cores = mc.cores)
+    ov <- findOverlaps(grBase, clusters)
     clusterIdx <- split(as.matrix(ov)[,1], as.matrix(ov)[,2])
     names(clusterIdx) <- NULL
     clusterIdx
@@ -66,7 +66,7 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
     parallelBy <- match.arg(parallelBy)
     if(verbose) cat("[BSmooth] preprocessing ... ")
     ptime1 <- proc.time()
-    clusterIdx <- makeClusters(BSseq, maxGap = maxGap, mc.cores = mc.cores)
+    clusterIdx <- makeClusters(BSseq, maxGap = maxGap)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))

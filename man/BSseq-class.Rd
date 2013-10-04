@@ -12,6 +12,8 @@
 \alias{sampleNames,BSseq-method}
 \alias{sampleNames<-,BSseq,ANY-method}
 \alias{updateObject,BSseq-method}
+\alias{assays,BSseq-method}
+\alias{assayNames}
 \alias{show,BSseq-method}
 \alias{getBSseq}
 \alias{collapseBSseq}
@@ -133,6 +135,15 @@ slots for representing smoothed data. This class is an extension of
   \sQuote{BSseq} objects.  You can update old serialized (saved)
   objects by invoking \code{x <- udateObject(x)}.
 }
+\section{Assays}{
+  This class overrides the default implementation of \code{assays} to
+  make it faster.  Per default, no names are added to the returned data
+  matrices.
+
+  Assay names can conveniently be obtained by the function
+  \code{assayNames}
+}
+  
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}
 }
