@@ -11,14 +11,16 @@
 \usage{
 plotRegion(BSseq, region = NULL, extend = 0, main = "",
   addRegions = NULL, annoTrack = NULL, col = NULL, lty = NULL,
-  lwd = NULL, BSseqTstat = NULL, mainWithWidth = TRUE,
-  regionCol = alpha("red", 0.1), addTicks = TRUE,
+  lwd = NULL, BSseqTstat = NULL,  stat = "tstat.corrected",
+  stat.col = "black", stat.lwd = 1, stat.lty = 1, stat.ylim = c(-8, 8),
+  mainWithWidth = TRUE, regionCol = alpha("red", 0.1), addTicks = TRUE,
   addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE)
 
 plotManyRegions(BSseq, regions = NULL, extend = 0, main = "",
   addRegions = NULL, annoTrack = NULL, col = NULL, lty = NULL,
-  lwd = NULL, BSseqTstat = NULL, mainWithWidth = TRUE,
-  regionCol = alpha("red", 0.1), addTicks = TRUE,
+  lwd = NULL, BSseqTstat = NULL, stat = "tstat.corrected",
+  stat.col = "black", stat.lwd = 1, stat.lty = 1, stat.ylim = c(-8, 8),
+  mainWithWidth = TRUE, regionCol = alpha("red", 0.1), addTicks = TRUE,
   addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE,
   verbose = TRUE)
 }
@@ -44,7 +46,13 @@ plotManyRegions(BSseq, regions = NULL, extend = 0, main = "",
   \item{lty}{The line type of the methylation estimates, see details.}
   \item{lwd}{The line width of the methylation estimates, see details.}
   \item{BSseqTstat}{An object of class \code{BSseqTstat}.  If present,
-  a new panel will be shown with the t-statistics.}
+    a new panel will be shown with the t-statistics.}
+  \item{stat}{Which statistics will be plotted (only used is
+    \code{BSseqTstat} is not \code{NULL}.)}
+  \item{stat.col}{color for the statistics plot.}
+  \item{stat.lwd}{line width for the statistics plot.}
+  \item{stat.lty}{line type for the statistics plot.}
+  \item{stat.ylim}{y-limits for the statistics plot.}
   \item{mainWithWidth}{Should the default title include information
   about width of the plot region.}
   \item{regionCol}{The color used for highlighting the region.}

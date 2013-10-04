@@ -22,6 +22,8 @@
     in BSmooth.
     \item Many bugfixes made necessary by the new class representation.
     \item Better argument checking in BSmooth.tstat.
+    \item A few undocumented functions are now documented.
+    \item Rewrote orderBSseq
   }
 }
 

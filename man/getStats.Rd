@@ -8,14 +8,14 @@
   object.
 }
 \usage{
-getStats(BSseqTstat, regions = NULL, column = "tstat.corrected")
+getStats(BSseqTstat, regions = NULL, stat = "tstat.corrected")
 }
 \arguments{
   \item{BSseqTstat}{An object of class \code{BSseqTstat}.}
   \item{regions}{An optional \code{data.frame} or
     \code{GenomicRanges} object specifying a number of genomic
     regions.} 
-  \item{column}{Which statistics column should be obtained.}
+  \item{stat}{Which statistics column should be obtained.}
 }
 \value{
   An object of class \code{data.frame} possible restricted to the
