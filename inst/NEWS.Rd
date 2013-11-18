@@ -2,6 +2,12 @@
 \title{bsseq news}
 \encoding{UTF-8}
 
+\section{Version 0.11.x}{
+  \itemize{
+    \item Converted to using Authors@R in the DESCRIPTIOn file.
+  }
+}
+
 \section{Version 0.9.x}{
   \itemize{
     \item Fixed a problem with "width" in the title of bsseq plots.
