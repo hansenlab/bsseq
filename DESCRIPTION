@@ -1,9 +1,9 @@
 Package: bsseq
-Version: 0.11.0
+Version: 0.11.1
 Title: Analyze, manage and store bisulfite sequencing data
 Description: Tools for analyzing and visualizing bisulfite sequencing data
-Author: Kasper Daniel Hansen
-Maintainer: Kasper Daniel Hansen <khansen@jhsph.edu>
+Authors@R: c(person(c("Kasper", "Daniel"), "Hansen", role = c("aut", "cre"),
+                    email = "khansen@jhsph.edu"))
 Depends: R (>= 2.15), methods, BiocGenerics, IRanges, GenomicRanges,
         parallel, matrixStats
 Imports: scales, stats, graphics, Biobase, locfit
@@ -14,4 +14,3 @@ Collate: hasGRanges.R BSseq_class.R BSseqTstat_class.R BSseq_utils.R combine.R
 License: Artistic-2.0
 LazyData: yes
 biocViews: DNAMethylation
-Packaged: 2012-07-10 04:15:29 UTC; khansen
