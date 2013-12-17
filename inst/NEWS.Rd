@@ -5,6 +5,9 @@
 \section{Version 0.11.x}{
   \itemize{
     \item Converted to using Authors@R in the DESCRIPTIOn file.
+    \item plotRegion did not respect the col/lty/lwd argument if given
+    explicitely as opposed to through pData().  Reported by Karen
+    Conneely <kconnee@emory.edu>. 
   }
 }
 

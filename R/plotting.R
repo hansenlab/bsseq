@@ -82,24 +82,36 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
 
 .bsGetCol <- function(object, col, lty, lwd) {
     ## Assumes that object has pData and sampleNames methods
-    if(is.null(col) && "col" %in% names(pData(object)))
-        col <- pData(object)[["col"]]
-    else
-        col <- rep("black", nrow(pData(object)))
+    if(is.null(col)) {
+        if("col" %in% names(pData(object)))
+            col <- pData(object)[["col"]]
+        else
+            col <- rep("black", nrow(pData(object)))
+    }
+    if(length(col) != nrow(object))
+        col <- rep(col, length.out = nrow(object))
     if(is.null(names(col)))
         names(col) <- sampleNames(object)
     
-    if(is.null(lty) && "lty" %in% names(pData(object)))
-        lty <- pData(object)[["lty"]]
-    else
-        lty <- rep(1, nrow(pData(object)))
+    if(is.null(lty)) {
+        if("lty" %in% names(pData(object)))
+            lty <- pData(object)[["lty"]]
+        else
+            lty <- rep(1, nrow(pData(object)))
+    }
+    if(length(lty) != nrow(object))
+        lty <- rep(lty, length.out = nrow(object))
     if(is.null(names(lty)))
         names(lty) <- sampleNames(object)
     
-    if(is.null(lwd) && "lwd" %in% names(pData(object)))
-        lwd <- pData(object)[["lwd"]]
-    else
-        lwd <- rep(1, nrow(pData(object)))
+    if(is.null(lwd)) {
+        if("lwd" %in% names(pData(object)))
+            lwd <- pData(object)[["lwd"]]
+        else
+            lwd <- rep(1, nrow(pData(object)))
+    }
+    if(length(lty) != nrow(object))
+        lty <- rep(lty, length.out = nrow(object))
     if(is.null(names(lwd)))
         names(lwd) <- sampleNames(object)
                    
