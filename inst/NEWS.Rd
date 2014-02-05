@@ -7,7 +7,10 @@
     \item Converted to using Authors@R in the DESCRIPTIOn file.
     \item plotRegion did not respect the col/lty/lwd argument if given
     explicitely as opposed to through pData().  Reported by Karen
-    Conneely <kconnee@emory.edu>. 
+    Conneely <kconnee@emory.edu>.
+    \item Fixed an issue introduced by the previous change (to
+    plotRegion).  Reported (with a fix) by Tim Triche Jr
+    <tim.triche@gmail.com>.
   }
 }
 
