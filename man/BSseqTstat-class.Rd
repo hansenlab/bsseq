@@ -4,6 +4,7 @@
 \alias{BSseqTstat}
 \alias{BSseqTstat-class}
 \alias{[,BSseqTstat-method}
+\alias{[,BSseqTstat,ANY-method}
 \alias{show,BSseqTstat-method}
 \title{Class BSseqTstat}
 \description{

@@ -3,6 +3,7 @@
 \docType{class}
 \alias{hasGRanges-class}
 \alias{[,hasGRanges-method}
+\alias{[,hasGRanges,ANY-method}
 \alias{end,hasGRanges-method}
 \alias{end<-,hasGRanges-method}
 \alias{granges,hasGRanges-method}

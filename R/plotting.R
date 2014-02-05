@@ -88,8 +88,8 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
         else
             col <- rep("black", nrow(pData(object)))
     }
-    if(length(col) != nrow(object))
-        col <- rep(col, length.out = nrow(object))
+    if(length(col) != ncol(object))
+        col <- rep(col, length.out = ncol(object))
     if(is.null(names(col)))
         names(col) <- sampleNames(object)
     
@@ -97,10 +97,10 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
         if("lty" %in% names(pData(object)))
             lty <- pData(object)[["lty"]]
         else
-            lty <- rep(1, nrow(pData(object)))
+            lty <- rep(1, ncol(object))
     }
-    if(length(lty) != nrow(object))
-        lty <- rep(lty, length.out = nrow(object))
+    if(length(lty) != ncol(object))
+        lty <- rep(lty, length.out = ncol(object))
     if(is.null(names(lty)))
         names(lty) <- sampleNames(object)
     
@@ -110,8 +110,8 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
         else
             lwd <- rep(1, nrow(pData(object)))
     }
-    if(length(lty) != nrow(object))
-        lty <- rep(lty, length.out = nrow(object))
+    if(length(lty) != ncol(object))
+        lty <- rep(lty, length.out = ncol(object))
     if(is.null(names(lwd)))
         names(lwd) <- sampleNames(object)
                    
