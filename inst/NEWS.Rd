@@ -11,6 +11,11 @@
     \item Fixed an issue introduced by the previous change (to
     plotRegion).  Reported (with a fix) by Tim Triche Jr
     <tim.triche@gmail.com>.
+    \item Fixed a serious bug in collapseBSseq reported by Julien Roux
+    <jroux@uchicago.edu>: it would use the Meth values instead of Cov
+    for the final object's Cov.  However, this will result in the return
+    object having a methylation of 100 percent across all loci, so
+    hopefully users will have seen this for themselves. 
   }
 }
 

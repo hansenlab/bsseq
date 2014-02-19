@@ -14,7 +14,7 @@ collapseBSseq <- function(BSseq, columns) {
         rowSums(getBSseq(BSseq, "M")[, ss, drop = FALSE])
     }))
     Cov <- do.call(cbind, lapply(sp, function(ss) {
-        rowSums(getBSseq(BSseq, "M")[, ss, drop = FALSE])
+        rowSums(getBSseq(BSseq, "Cov")[, ss, drop = FALSE])
     }))
     BSseq(gr = getBSseq(BSseq, "gr"), M = M, Cov = Cov, sampleNames = names(sp))
 }
