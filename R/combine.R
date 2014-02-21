@@ -72,7 +72,7 @@ combineList <- function(x, ...) {
     if(!all(sameTrans))
         stop("all elements of '...' in combineList needs to have the same trans")
     sameGr <- sapply(x[-1], function(xx) {
-        identical(trans, getBSseq(xx, "gr"))
+        identical(gr, getBSseq(xx, "gr"))
     })
     if(all(sameGr)) {
         M <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "M")))
