@@ -15,7 +15,12 @@
     <jroux@uchicago.edu>: it would use the Meth values instead of Cov
     for the final object's Cov.  However, this will result in the return
     object having a methylation of 100 percent across all loci, so
-    hopefully users will have seen this for themselves. 
+    hopefully users will have seen this for themselves.
+    \item Fixed a bug in combineList which made combineList use "slow"
+    code even in a special case where a faster shortcut was possible.
+    This bug fix does not change the output of the function under any
+    input, it only makes it faster.  Reported by Julien Roux
+    <jroux@uchicago.edu>.
   }
 }
 
