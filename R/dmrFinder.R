@@ -12,8 +12,8 @@ dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
     direction[is.na(direction)] <- 0L
     chrs <- as.character(seqnames(BSseqTstat@gr))
     positions <- start(BSseqTstat)
-    regions <- bsseq:::regionFinder3(direction, chr = chrs, pos = positions,
-                                     maxGap = maxGap, verbose = subverbose)
+    regions <- regionFinder3(direction, chr = chrs, positions = positions,
+                             maxGap = maxGap, verbose = subverbose)
     if(is.null(regions$down) && is.null(regions$up))
         return(NULL)
     if(verbose) cat("[dmrFinder] creating dmr data.frame\n")
