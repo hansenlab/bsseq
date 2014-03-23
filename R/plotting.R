@@ -176,7 +176,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     coverage <- getCoverage(BSseq)
         
     ## get col, lwd, lty
-    colEtc <- bsseq:::.bsGetCol(object = BSseq, col = col, lty = lty, lwd = lwd)
+    colEtc <- .bsGetCol(object = BSseq, col = col, lty = lty, lwd = lwd)
     
     ## The actual plotting
     plot(positions[1], 0.5, type = "n", xaxt = "n", yaxt = "n",
@@ -224,10 +224,10 @@ plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions =
     else
         layout(matrix(1:3, ncol = 1), heights = c(2,2,1))
 
-    bsseq:::.plotSmoothData(BSseq = BSseq, region = region, extend = extend, addRegions = addRegions,
-                            col = col, lty = lty, lwd = lwd, regionCol = regionCol,
-                            addTicks = addTicks, addPoints = addPoints,
-                            pointsMinCov = pointsMinCov, highlightMain = highlightMain)
+    .plotSmoothData(BSseq = BSseq, region = region, extend = extend, addRegions = addRegions,
+                    col = col, lty = lty, lwd = lwd, regionCol = regionCol,
+                    addTicks = addTicks, addPoints = addPoints,
+                    pointsMinCov = pointsMinCov, highlightMain = highlightMain)
     gr <- .bsGetGr(BSseq, region, extend)
     
     if(!is.null(BSseqTstat)) {
@@ -237,17 +237,17 @@ plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions =
         axis(side = 2, at = c(-5,0,5))
         abline(h = 0, col = "grey60")
         mapply(function(stat, col, lty, lwd) {
-            bsseq:::.bsPlotLines(start(BSseqTstat), BSseqTstat@stats[, stat],
-                                 lty = lty, plotRange = c(start(gr), end(gr)), col = col, lwd = lwd)
+            .bsPlotLines(start(BSseqTstat), BSseqTstat@stats[, stat],
+                         lty = lty, plotRange = c(start(gr), end(gr)), col = col, lwd = lwd)
         }, stat = stat, col = stat.col, lty = stat.lty, lwd = stat.lwd)
     }
     
     if(!is.null(annoTrack))
-        bsseq:::plotAnnoTrack(gr, annoTrack)
+        plotAnnoTrack(gr, annoTrack)
 
     if(!is.null(main)) {
-        main <- bsseq:::.bsPlotTitle(gr = region, extend = extend, main = main,
-                                     mainWithWidth = mainWithWidth)
+        main <- .bsPlotTitle(gr = region, extend = extend, main = main,
+                             mainWithWidth = mainWithWidth)
         mtext(side = 3, text = main, outer = TRUE, cex = 1)
     }
     return(invisible(NULL))

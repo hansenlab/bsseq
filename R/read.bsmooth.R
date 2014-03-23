@@ -472,9 +472,9 @@ parsingPipeline <- function(dirs, qualityCutoff = 20, outDir, seqnames = NULL,
         base <- basename(dir)
         cat("parsing, ")
         ptime1 <- proc.time()
-        raw <- bsseq:::read.bsmoothDirRaw(file.path(dir, subdir),
-                                          keepCycle = TRUE, keepFilt = TRUE,
-                                          verbose = FALSE)
+        raw <- read.bsmoothDirRaw(file.path(dir, subdir),
+                                  keepCycle = TRUE, keepFilt = TRUE,
+                                  verbose = FALSE)
         assign(paste0(base, ".raw"), raw)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
@@ -487,8 +487,8 @@ parsingPipeline <- function(dirs, qualityCutoff = 20, outDir, seqnames = NULL,
              file = file.path(outDir, paste0(base, ".raw.rda")))
         cat("converting, ")
         ptime1 <- proc.time()
-        bsseq <- bsseq:::sampleRawToBSseq(raw, qualityCutoff = qualityCutoff,
-                                          sampleName = base)
+        bsseq <- sampleRawToBSseq(raw, qualityCutoff = qualityCutoff,
+                                  sampleName = base)
         seqlevels(bsseq)[seqlevels(bsseq) == "chrgi|9626243|ref|NC_001416.1|"] <- "chrLambda"
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
