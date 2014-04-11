@@ -1,0 +1,75 @@
+##
+## Importing
+##
+
+import(methods)
+importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
+           "combine", "density", "intersect", "lapply", "ncol",
+           "nrow", "order", "paste", "pmax", "pmin", "rbind",
+           "Reduce", "rep.int", "rownames", "sapply", "setdiff",
+           "strand", "strand<-", "union", "unique", "updateObject")
+
+importFrom(stats, "approxfun", "fisher.test", "ppoints",
+           "predict", "preplot", "qchisq",
+           "qnorm", "qqplot", "qunif")
+
+importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
+           "mtext", "par", "plot", "points", "rect", "rug")
+
+import(parallel)
+importFrom(locfit, "locfit", "lp")
+importFrom(matrixStats, "rowSds", "rowVars")
+import(IRanges)
+import(GenomicRanges)
+importFrom(scales, "alpha")
+importClassesFrom(Biobase, "AnnotatedDataFrame")
+importMethodsFrom(Biobase, "annotatedDataFrameFrom",
+                  "pData", "pData<-",
+                  "sampleNames", "sampleNames<-")
+importFrom(Biobase, "validMsg")
+
+##
+## Exporting
+##
+
+
+exportClasses("hasGRanges",
+              "BSseq",
+              "BSseqTstat",
+              "matrixOrNULL")
+
+exportMethods("[", "show",
+              "seqnames", "seqnames<-",
+              "seqlevels", "seqlevels<-",
+              "seqlengths", "seqlengths<-",
+              "start", "start<-",
+              "end", "end<-",
+              "width", "width<-",
+              "strand", "strand<-",
+              "granges",
+              "dim", "nrow", "ncol",
+              "sampleNames", "sampleNames<-",
+              "pData", "pData<-",
+              "findOverlaps", "subsetByOverlaps",
+              "combine", "updateObject")
+
+export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
+       "collapseBSseq", "orderBSseq", "hasBeenSmoothed", "chrSelectBSseq",
+       "BSmooth", "BSmooth.tstat", "dmrFinder", "fisherTests",
+       "combineList",
+       "plotRegion", "plotManyRegions", 
+       "read.umtab", "read.umtab2", "read.bsmooth", "read.bismark",
+       "poissonGoodnessOfFit", "binomialGoodnessOfFit",
+       "data.frame2GRanges", "BSseqTstat")
+
+S3method("print", "chisqGoodnessOfFit")
+S3method("plot", "chisqGoodnessOfFit")
+S3method("print", "summary.BSseqTstat")
+S3method("summary", "BSseqTstat")
+S3method("plot", "BSseqTstat")
+
+## Fixes, to be removed
+
+exportMethods("assays")
+export("assayNames")
+
