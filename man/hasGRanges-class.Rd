@@ -18,6 +18,7 @@
 \alias{start<-,hasGRanges-method}
 \alias{strand,hasGRanges-method}
 \alias{strand<-,hasGRanges-method}
+\alias{strand<-,hasGRanges,ANY-method}
 \alias{subsetByOverlaps,GenomicRanges,hasGRanges-method}
 \alias{subsetByOverlaps,hasGRanges,GenomicRanges-method}
 \alias{subsetByOverlaps,hasGRanges,hasGRanges-method}

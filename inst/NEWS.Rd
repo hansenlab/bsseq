@@ -21,6 +21,11 @@
     This bug fix does not change the output of the function under any
     input, it only makes it faster.  Reported by Julien Roux
     <jroux@uchicago.edu>.
+    \item validity now checks for the presence of colnames (sampleNames)
+    which was assumed to be set.  Reported by Kevin Rue-Albrecht
+    <kevin.rue@ucdconnect.ie>.
+    \item Fixed a man page issue.
+    \item SLightly changed CITATION.
   }
 }
 
