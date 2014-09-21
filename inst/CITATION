@@ -1,16 +1,13 @@
 bibentry("Article",
          title = "{BSmooth: from whole genome bisulfite sequencing reads to differentially methylated regions}",
-         author = personList(
-         person(c("Kasper", "D."), "Hansen"),
-         person("Benjamin", "Langmead"),
-         person(c("Rafael", "A."), "Irizarry")),
+         author = "Hansen, Kasper D. and Langmead, Benjamin and Irizarry, Rafael A.",
          journal = "Genome Biology",
-         year = 2012,
+         year = "2012",
 	 volume = "13",
 	 pages = "R83",
   	 textVersion = 
-         paste("KD Hansen, B Langmead, and RA Irizarry.",
+         paste("KD Hansen, B Langmead and RA Irizarry.",
                "BSmooth: from whole genome bisulfite sequencing reads to differentially methylated regions.", 
-"Genome Biology, 13:R83 (2012)")
+               "Genome Biology, 13:R83 (2012)")
 )
 
