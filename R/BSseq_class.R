@@ -7,6 +7,8 @@ setValidity("BSseq", function(object) {
     if(class(rowData(object)) != "GRanges")
         msg <- validMsg(msg, sprintf("object of class '%s' needs to have a 'GRanges' in slot 'rowData'", class(object)))
     ## benchmarking shows that min(assay()) < 0 is faster than any(assay() < 0) if it is false
+    if(is.null(colnames(object)))
+        msg <- validMsg(msg, "colnames (aka sampleNames) need to be set")
     if(min(assay(object, "M")) < 0)
         msg <- validMsg(msg, "the 'M' assay has negative entries")
     if(min(assay(object, "Cov")) < 0)
