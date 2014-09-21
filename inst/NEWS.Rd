@@ -25,7 +25,8 @@
     which was assumed to be set.  Reported by Kevin Rue-Albrecht
     <kevin.rue@ucdconnect.ie>.
     \item Fixed a man page issue.
-    \item SLightly changed CITATION.
+    \item Slightly changed CITATION.
+    \item Added GitHub URL to DESCRIPTION.
   }
 }
 

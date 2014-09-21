@@ -12,5 +12,6 @@ Collate: hasGRanges.R BSseq_class.R BSseqTstat_class.R BSseq_utils.R combine.R
         utils.R read.bsmooth.R read.bismark.R BSmooth.R BSmooth.tstat.R dmrFinder.R
         gof_stats.R plotting.R fisher.R
 License: Artistic-2.0
+URL: https://github.com/kasperdanielhansen/bsseq
 LazyData: yes
 biocViews: DNAMethylation
