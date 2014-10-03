@@ -7,4 +7,4 @@ biocLite(bsseq')
 ```
 
 ## R CMD check results
-Bioconductor: Multiple platform build/check [report](http://master.bioconductor.org/checkResults/devel/bioc-LATEST/bsseq/)
+Bioconductor: [Multiple platform build/check report](http://master.bioconductor.org/checkResults/devel/bioc-LATEST/bsseq/)
