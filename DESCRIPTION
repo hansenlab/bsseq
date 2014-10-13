@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.1.2
+Version: 1.2.0
 Title: Analyze, manage and store bisulfite sequencing data
 Description: Tools for analyzing and visualizing bisulfite sequencing data
 Authors@R: c(person(c("Kasper", "Daniel"), "Hansen", role = c("aut", "cre"),
