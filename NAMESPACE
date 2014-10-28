@@ -8,14 +8,11 @@ importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
            "nrow", "order", "paste", "pmax", "pmin", "rbind",
            "Reduce", "rep.int", "rownames", "sapply", "setdiff",
            "strand", "strand<-", "union", "unique", "updateObject")
-
 importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
            "qnorm", "qqplot", "qunif")
-
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "rect", "rug")
-
 import(parallel)
 importFrom(locfit, "locfit", "lp")
 importFrom(matrixStats, "rowSds", "rowVars")
@@ -27,6 +24,9 @@ importMethodsFrom(Biobase, "annotatedDataFrameFrom",
                   "pData", "pData<-",
                   "sampleNames", "sampleNames<-")
 importFrom(Biobase, "validMsg")
+importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo", "seqinfo<-",
+                  "seqnames", "seqnames<-", "seqlevels", "seqlevels<-")
+import(S4Vectors)
 
 ##
 ## Exporting
