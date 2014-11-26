@@ -13,7 +13,7 @@
 \alias{sampleNames<-,BSseq,ANY-method}
 \alias{updateObject,BSseq-method}
 \alias{assays,BSseq-method}
-\alias{assayNames}
+\alias{assayNames,BSseq-method}
 \alias{show,BSseq-method}
 \alias{getBSseq}
 \alias{collapseBSseq}
@@ -133,7 +133,7 @@ slots for representing smoothed data. This class is an extension of
 \section{Coercion}{
   Package version 0.9.4 introduced a new version of representing
   \sQuote{BSseq} objects.  You can update old serialized (saved)
-  objects by invoking \code{x <- udateObject(x)}.
+  objects by invoking \code{x <- updateObject(x)}.
 }
 \section{Assays}{
   This class overrides the default implementation of \code{assays} to
@@ -141,7 +141,7 @@ slots for representing smoothed data. This class is an extension of
   matrices.
 
   Assay names can conveniently be obtained by the function
-  \code{assayNames}
+  \code{assayNames(x)}
 }
   
 \author{
