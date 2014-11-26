@@ -40,6 +40,7 @@ setMethod("assays", "BSseq",
               x@assays$field("data")
           })
 
-assayNames <- function(object) {
-    names(object@assays$field("data"))
-}
+setMethod("assayNames", "BSseq",
+          function(x, ...) {
+              names(x@assays$field("data"))
+          })
