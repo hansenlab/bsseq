@@ -47,30 +47,18 @@ getFWER <- function(null, type = "blocks") {
     reference <- null[[1]]
     null <- null[-1]
     better <- sapply(1:nrow(reference), function(ii) {
-        meanDiff <- reference$meanDiff[ii]
+        meanDiff <- abs(reference$meanDiff[ii])
         width <- reference$width[ii]
         n <- reference$n[ii]
-        if(meanDiff < 0 && type == "blocks") {
+        if(type == "blocks") {
             out <- sapply(null, function(nulldist) {
-                any(nulldist$meanDiff <= meanDiff &
-                    nulldist$width >= width)
+                any(abs(nulldist$meanDiff) >= meanDiff &
+                        nulldist$width >= width)
             })
         }
-        if(meanDiff > 0 && type == "blocks") {
+        if(type == "dmrs") {
             out <- sapply(null, function(nulldist) {
-                any(nulldist$meanDiff <= meanDiff &
-                    nulldist$width >= width)
-            })
-        }
-        if(meanDiff < 0 && type == "dmrs") {
-            out <- sapply(null, function(nulldist) {
-                any(nulldist$meanDiff <= meanDiff &
-                    nulldist$n >= n)
-            })
-        }
-        if(meanDiff > 0 && type == "dmrs") {
-            out <- sapply(null, function(nulldist) {
-                any(nulldist$meanDiff <= meanDiff &
+                any(abs(nulldist$meanDiff) >= meanDiff &
                     nulldist$n >= n)
             })
         }
