@@ -27,6 +27,7 @@ importFrom(Biobase, "validMsg")
 importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo", "seqinfo<-",
                   "seqnames", "seqnames<-", "seqlevels", "seqlevels<-")
 import(S4Vectors)
+importFrom(gtools, "combinations")
 
 ##
 ## Exporting
