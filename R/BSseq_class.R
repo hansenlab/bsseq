@@ -4,8 +4,8 @@ setClass("BSseq", contains = "SummarizedExperiment",
 
 setValidity("BSseq", function(object) {
     msg <- validMsg(NULL, .checkAssayNames(object, c("Cov", "M")))
-    if(class(rowData(object)) != "GRanges")
-        msg <- validMsg(msg, sprintf("object of class '%s' needs to have a 'GRanges' in slot 'rowData'", class(object)))
+    if(class(rowRanges(object)) != "GRanges")
+        msg <- validMsg(msg, sprintf("object of class '%s' needs to have a 'GRanges' in slot 'rowRanges'", class(object)))
     ## benchmarking shows that min(assay()) < 0 is faster than any(assay() < 0) if it is false
     if(is.null(colnames(object)))
         msg <- validMsg(msg, "colnames (aka sampleNames) need to be set")
@@ -92,7 +92,7 @@ getBSseq <- function(BSseq, type = c("Cov", "M", "gr", "coef", "se.coef", "trans
     if(type == "parameters")
         return(BSseq@parameters)
     if(type == "gr")
-        return(BSseq@rowData)
+        return(BSseq@rowRanges)
     
 }
 
@@ -202,9 +202,9 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     assays <- SimpleList(M = M, Cov = Cov, coef = coef, se.coef = se.coef)
     assays <- assays[!sapply(assays, is.null)]
     if(is.null(pData) || all(dim(pData) == c(0,0)))
-        BSseq <- SummarizedExperiment(assays = assays, rowData = gr)
+        BSseq <- SummarizedExperiment(assays = assays, rowRanges = gr)
     else
-        BSseq <- SummarizedExperiment(assays = assays, rowData = gr, colData = pData)
+        BSseq <- SummarizedExperiment(assays = assays, rowRanges = gr, colData = pData)
     BSseq <- as(BSseq, "BSseq")
     if(is.function(trans))
         BSseq@trans <- trans
