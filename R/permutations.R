@@ -68,6 +68,7 @@ getFWER <- function(null, type = "blocks") {
 }
        
 makeIdxMatrix <- function(group1, group2, testIsSymmetric = TRUE, includeUnbalanced = TRUE) {
+    ## gtools::combinations
     groupBoth <- c(group1, group2)
     idxMatrix1 <- NULL
     subsetByMatrix <- function(vec, mat) {
@@ -80,7 +81,10 @@ makeIdxMatrix <- function(group1, group2, testIsSymmetric = TRUE, includeUnbalan
         do.call(rbind, tmp)
     }
     if(length(group1) == 1 && length(group1) == 1) {
-        idxMatrix1 <- as.matrix(group1)
+        if(testIsSymmetric)
+            idxMatrix1 <- as.matrix(group1)
+        else
+            idxMatrix1 <- as.matrix(c(group1, group2))
     }
     if(length(group1) == 2 && length(group2) == 2) {
         if(testIsSymmetric) {
@@ -93,21 +97,28 @@ makeIdxMatrix <- function(group1, group2, testIsSymmetric = TRUE, includeUnbalan
         }
     }
     if(length(group1) == 3 && length(group1) == 3) {
-        newMatrix <- combineMat(subsetByMatrix(group1, combinations(3,2)),
-                                as.matrix(group2, ncol = 1))
-        idxMatrix1 <- rbind(group1, newMatrix)
-        if(!testIsSymmetric) {
-            newMatrix <- combineMat(as.matrix(group1, ncol = 1),
-                                    subsetByMatrix(group2, combinations(3,2)))
-            idxMatrix1 <- rbind(idxMatrix1, group2, newMatrix)
+        if(testIsSymmetric) {
+            idxMatrix1 <- rbind(group1,
+                                combineMat(subsetByMatrix(group1, combinations(3,2)),
+                                           as.matrix(group2, ncol = 1)))
+
+        } else {
+            idxMatrix1 <- rbind(group1, group2,
+                                combineMat(subsetByMatrix(group1, combinations(3,2)),
+                                           as.matrix(group2, ncol = 1)),
+                                combineMat(as.matrix(group1, ncol = 1),
+                                           subsetByMatrix(group2, combinations(3,2))))
         }
     }
     if(length(group1) == 4 && length(group1) == 4) {
-        newMatrix <- combineMat(subsetByMatrix(group1, combinations(4,2)),
-                                subsetByMatrix(group2, combinations(4,2)))
-        idxMatrix1 <- rbind(group1, newMatrix)
-        if(!testIsSymmetric) {
-            idxMatrix1 <- rbind(group2, idxMatrix1)
+        if(testIsSymmetric) {
+            idxMatrix1 <- rbind(group1,
+                                combineMat(subsetByMatrix(group1, combinations(3,2)),
+                                           subsetByMatrix(group2, combinations(4,2))))
+        } else {
+            idxMatrix1 <- rbind(group1, group2,
+                                combineMat(subsetByMatrix(group1, combinations(4,2)),
+                                           subsetByMatrix(group2, combinations(4,2))))
         }
         if(includeUnbalanced) {
             newMatrix <- combineMat(subsetByMatrix(group1, combinations(4,3)),
@@ -119,15 +130,29 @@ makeIdxMatrix <- function(group1, group2, testIsSymmetric = TRUE, includeUnbalan
                                     subsetByMatrix(group2, combinations(4,3)))
             idxMatrix1 <- rbind(idxMatrix1, newMatrix)
         }
-
     }
-    if(length(group1) == 5 && length(group1) == 5 && testIsSymmetric) {
-        idxMatrix1 <- rbind(group1,
-                            combineMat(subsetByMatrix(group1, combinations(5, 3)),
-                                       subsetByMatrix(group2, combinations(5, 2))))
-        if(includeUnbalanced)
+    if(length(group1) == 5 && length(group1) == 5) {
+        if(testIsSymmetric) {
+            idxMatrix1 <- rbind(group1,
+                                combineMat(subsetByMatrix(group1, combinations(5, 3)),
+                                           subsetByMatrix(group2, combinations(5, 2))))
+        } else {
+            idxMatrix1 <- rbind(group1, group2,
+                                combineMat(subsetByMatrix(group1, combinations(5, 3)),
+                                           subsetByMatrix(group2, combinations(5, 2))),
+                                combineMat(subsetByMatrix(group1, combinations(5, 2)),
+                                           subsetByMatrix(group2, combinations(5, 3))))
+        }
+        if(includeUnbalanced) {
             idxMatrix1 <- rbind(idxMatrix1,
-                                combineMat(subsetByMatrix(group1, combinations(5,4)), group2))
+                                combineMat(subsetByMatrix(group1, combinations(5,4)),
+                                           as.matrix(group2, ncol = 1)))
+        }
+        if(includeUnbalanced && !testIsSymmetric) {
+            idxMatrix1 <- rbind(idxMatrix1,
+                                combineMat(as.matrix(group1, ncol = 1),
+                                           subsetByMatrix(group2, combinations(5,4))))
+        }
     }
     if(is.null(idxMatrix1))
         stop("unable to handle this combination of 'group1', 'group2' and 'testIsSymmetric'")
