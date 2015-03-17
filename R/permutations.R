@@ -46,6 +46,7 @@ subsetBlocks <- function(xx) {
 getFWER <- function(null, type = "blocks") {
     reference <- null[[1]]
     null <- null[-1]
+    null <- null[sapply(null, nrow) > 0]
     better <- sapply(1:nrow(reference), function(ii) {
         meanDiff <- abs(reference$meanDiff[ii])
         width <- reference$width[ii]

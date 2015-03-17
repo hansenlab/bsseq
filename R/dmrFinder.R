@@ -27,6 +27,15 @@ dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
         regions$direction <- ifelse(regions$meanDiff > 0, "hyper", "hypo")
     }
     regions <- regions[order(abs(regions$areaStat), decreasing = TRUE),]
+    if(!is.data.frame(regions) || nrow(regions) > 0) {
+        regions <- data.frame("chr" = character(0), "start" = integer(0), "end" = integer(0),
+                              "idxStart" = integer(0), "idxEnd" = integer(0), "cluster" = numeric(0),
+                              "n" = integer(0), "width" = numeric(0), "invdensity" = numeric(0),
+                              "areaStat" = numeric(0), "maxStat" = numeric(0), "meanDiff" = numeric(0),
+                              "group1.mean" = numeric(0), "group2.mean" = numeric(0),
+                              "tstat.sd" = numeric(0), "direction" = character(0))
+    }
+    regions$chr <- as.character(regions$chr)
     regions
 }
 
