@@ -2,12 +2,19 @@ getNullPermutation <- function(BSseq, idxMatrix1, idxMatrix2,
                                estimate.var, local.correct,
                                cutoff, stat, maxGap, mc.cores = 1) {
     stopifnot(nrow(idxMatrix1) == nrow(idxMatrix2))
+    cat("[getNullPermutation] performing", nrow(idxMatrix1), "permutations\n")
     nullDist <- mclapply(1:nrow(idxMatrix1), function(ii) {
+        ptime1 <- proc.time()
         BS.tstat <- BSmooth.tstat(BSseq, estimate.var = estimate.var,
                                   group1 = idxMatrix1[ii,],
                                   group2 = idxMatrix2[ii,],
-                                  local.correct = local.correct, maxGap = 10^8)
+                                  local.correct = local.correct, maxGap = 10^8,
+                                  verbose = FALSE)
         dmrs0 <- dmrFinder(BS.tstat, stat = stat, cutoff = cutoff, maxGap = maxGap)
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
+        cat(sprintf("[getNullPermutation] completing permutation %d in %.1f sec\n",
+                    ii, stime))
         dmrs0
     }, mc.cores = min(nrow(idxMatrix1), mc.cores), mc.preschedule = FALSE)
     nullDist
