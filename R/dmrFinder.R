@@ -1,5 +1,5 @@
 dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
-                             maxGap = 300, stat = "tstat.corrected", verbose = TRUE) {
+                      maxGap = 300, stat = "tstat.corrected", verbose = TRUE) {
     subverbose <- max(as.integer(verbose) - 1L, 0L)
     if(! stat %in% colnames(BSseqTstat@stats))
         stop("'stat' needs to be a column of 'BSseqTstat@stats'")
@@ -21,23 +21,16 @@ dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
     rownames(regions) <- NULL
     regions$width <- regions$end - regions$start + 1
     regions$invdensity <- regions$width / regions$n
+    regions$chr <- as.character(regions$chr)
     stats <- getStats(BSseqTstat, regions, stat = stat)
     regions <- cbind(regions, stats)
     if(stat %in% c("tstat.corrected", "tstat")) {
         regions$direction <- ifelse(regions$meanDiff > 0, "hyper", "hypo")
     }
     regions <- regions[order(abs(regions$areaStat), decreasing = TRUE),]
-    if(!is.data.frame(regions) || nrow(regions) > 0) {
-        regions <- data.frame("chr" = character(0), "start" = integer(0), "end" = integer(0),
-                              "idxStart" = integer(0), "idxEnd" = integer(0), "cluster" = numeric(0),
-                              "n" = integer(0), "width" = numeric(0), "invdensity" = numeric(0),
-                              "areaStat" = numeric(0), "maxStat" = numeric(0), "meanDiff" = numeric(0),
-                              "group1.mean" = numeric(0), "group2.mean" = numeric(0),
-                              "tstat.sd" = numeric(0), "direction" = character(0))
-    }
-    regions$chr <- as.character(regions$chr)
     regions
 }
+
 
 clusterMaker <- function(chr, pos, order.it=TRUE, maxGap=300){
     nonaIndex <- which(!is.na(chr) & !is.na(pos))
@@ -81,9 +74,7 @@ regionFinder3 <- function(x, chr, positions, keep, maxGap = 300, verbose = TRUE)
     names(out) <- c("up", "down")
     for(ii in 1:2) {
         idx <- segments[[ii]]
-        if(length(idx) == 0) {
-            out[[ii]] <- NULL
-        } else {
+        if(length(idx) > 0) {
             out[[ii]] <- data.frame(chr = sapply(idx, function(jj) chr[jj[1]]),
                                     start = sapply(idx, function(jj) min(positions[jj])),
                                     end = sapply(idx, function(jj) max(positions[jj])),
