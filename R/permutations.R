@@ -34,19 +34,25 @@ getNullDmrs <- function(BSseq, idxMatrix1, idxMatrix2, estimate.var = "same",
 subsetDmrs <- function(xx) {
     if(is.null(xx) || is(xx, "try-error"))
         return(NULL)
-    subset(xx, n >= 3 & abs(meanDiff) > 0.1 & invdensity <= 300)
+    out <- subset(xx, n >= 3 & abs(meanDiff) > 0.1 & invdensity <= 300)
+    if(nrow(out) == 0)
+        return(NULL)
+    out
 }
 
 subsetBlocks <- function(xx) {
     if(is.null(xx) || is(xx, "try-error"))
         return(NULL)
-    subset(xx, width >= 10000)
+    out <- subset(xx, width >= 10000)
+    if(nrow(out) == 0)
+        return(NULL)
+    out
 }
 
 getFWER <- function(null, type = "blocks") {
     reference <- null[[1]]
     null <- null[-1]
-    null <- null[sapply(null, nrow) > 0]
+    null <- null[!sapply(null, is.null)]
     better <- sapply(1:nrow(reference), function(ii) {
         meanDiff <- abs(reference$meanDiff[ii])
         width <- reference$width[ii]
@@ -69,7 +75,6 @@ getFWER <- function(null, type = "blocks") {
 }
        
 makeIdxMatrix <- function(group1, group2, testIsSymmetric = TRUE, includeUnbalanced = TRUE) {
-    ## gtools::combinations
     groupBoth <- c(group1, group2)
     idxMatrix1 <- NULL
     subsetByMatrix <- function(vec, mat) {
