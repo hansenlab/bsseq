@@ -202,9 +202,9 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     assays <- SimpleList(M = M, Cov = Cov, coef = coef, se.coef = se.coef)
     assays <- assays[!sapply(assays, is.null)]
     if(is.null(pData) || all(dim(pData) == c(0,0)))
-        BSseq <- SummarizedExperiment(assays = assays, rowData = gr)
+        BSseq <- SummarizedExperiment(assays = assays, rowRanges = gr)
     else
-        BSseq <- SummarizedExperiment(assays = assays, rowData = gr, colData = pData)
+        BSseq <- SummarizedExperiment(assays = assays, rowRanges = gr, colData = pData)
     BSseq <- as(BSseq, "BSseq")
     if(is.function(trans))
         BSseq@trans <- trans
