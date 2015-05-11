@@ -18,6 +18,7 @@ importFrom(locfit, "locfit", "lp")
 importFrom(matrixStats, "rowSds", "rowVars")
 import(IRanges)
 import(GenomicRanges)
+import(SummarizedExperiment)
 importFrom(scales, "alpha")
 importClassesFrom(Biobase, "AnnotatedDataFrame")
 importMethodsFrom(Biobase, "annotatedDataFrameFrom",
