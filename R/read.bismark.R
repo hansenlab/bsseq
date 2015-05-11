@@ -15,9 +15,9 @@ read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, verbose = TRUE){
         }
         ptime1 <- proc.time()
         raw <- read.bismarkFileRaw(thisfile = files[ii])
-        M <- matrix(elementMetadata(raw)[, "mCount"], ncol = 1)
-        Cov <- M + elementMetadata(raw)[, "uCount"]
-        elementMetadata(raw) <- NULL
+        M <- matrix(mcols(raw)[, "mCount"], ncol = 1)
+        Cov <- M + mcols(raw)[, "uCount"]
+        mcols(raw) <- NULL
         out <- BSseq(gr = raw, M = M, Cov = Cov,
                      sampleNames = sampleNames[ii], rmZeroCov = rmZeroCov)
         ptime2 <- proc.time()
@@ -61,6 +61,6 @@ read.bismarkFileRaw <- function(thisfile, verbose = TRUE){
     out[["chr"]] <- out[["start"]] <- out[["end"]] <- NULL
     out <- out[!sapply(out, is.null)]
     df <- DataFrame(out)
-    elementMetadata(gr) <- df
+    mcols(gr) <- df
     gr
 }

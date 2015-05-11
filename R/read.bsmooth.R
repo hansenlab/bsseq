@@ -395,7 +395,7 @@ read.bsmoothDirRaw <- function(dir, seqnames = NULL, keepCycle = FALSE, keepFilt
     names(out)[names(out) == "strand"] <- "bstrand"
     out <- out[!sapply(out, is.null)]
     df <- DataFrame(out)
-    elementMetadata(gr) <- df
+    mcols(gr) <- df
     gr
 }
 
@@ -414,9 +414,9 @@ sampleRawToBSseq <- function(gr, qualityCutoff = 20, sampleName = NULL, rmZeroCo
             Cov[wh] <- numberQualsGreaterThan(vec[wh])
         Cov
     }
-    M <- matrix(strToCov(elementMetadata(gr)[, "Mstr"]), ncol = 1)
-    Cov <- M + strToCov(elementMetadata(gr)[, "Ustr"])
-    elementMetadata(gr) <- NULL
+    M <- matrix(strToCov(mcols(gr)[, "Mstr"]), ncol = 1)
+    Cov <- M + strToCov(mcols(gr)[, "Ustr"])
+    mcols(gr) <- NULL
     BSseq(gr = gr, M = M, Cov = Cov, sampleNames = sampleName, rmZeroCov = rmZeroCov)
 }
 

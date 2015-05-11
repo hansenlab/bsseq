@@ -20,7 +20,7 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
     if(keepColumns) {
         dt <- as(df[, setdiff(names(df), c("chr", "start", "end", "strand"))],
                      "DataFrame")
-        elementMetadata(gr) <- dt
+        mcols(gr) <- dt
     }
     names(gr) <- rownames(df)
     gr
