@@ -1,11 +1,11 @@
-setClass("BSseq", contains = "SummarizedExperiment", 
+setClass("BSseq", contains = "RangedSummarizedExperiment", 
          representation(trans = "function",
                         parameters = "list"))
 
 setValidity("BSseq", function(object) {
     msg <- validMsg(NULL, .checkAssayNames(object, c("Cov", "M")))
     if(class(rowRanges(object)) != "GRanges")
-        msg <- validMsg(msg, sprintf("object of class '%s' needs to have a 'GRanges' in slot 'rowData'", class(object)))
+        msg <- validMsg(msg, sprintf("object of class '%s' needs to have a 'GRanges' in slot 'rowRanges'", class(object)))
     ## benchmarking shows that min(assay()) < 0 is faster than any(assay() < 0) if it is false
     if(is.null(colnames(object)))
         msg <- validMsg(msg, "colnames (aka sampleNames) need to be set")
@@ -92,7 +92,7 @@ getBSseq <- function(BSseq, type = c("Cov", "M", "gr", "coef", "se.coef", "trans
     if(type == "parameters")
         return(BSseq@parameters)
     if(type == "gr")
-        return(BSseq@rowData)
+        return(BSseq@rowRanges)
     
 }
 
@@ -216,12 +216,15 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
 
 setMethod("updateObject", "BSseq",
           function(object, ...) {
-               if(!is(try(object@assays, silent = TRUE), "try-error"))
-                   return(object)
-               BSseq(gr = object@gr, M = object@M, Cov = object@Cov,
-                     coef = object@coef, se.coef = object@se.coef,
-                     trans = object@trans, parameters = object@parameters,
-                     pData = object@phenoData@data)
+               if(.hasSlot(object, "assays")) {
+                   # call method for RangedSummarizedExperiment objects
+                   callNextMethod()
+               } else {
+                   BSseq(gr = object@gr, M = object@M, Cov = object@Cov,
+                         coef = object@coef, se.coef = object@se.coef,
+                         trans = object@trans, parameters = object@parameters,
+                         pData = object@phenoData@data)
+               }
            })
 
 
