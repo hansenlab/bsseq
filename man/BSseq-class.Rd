@@ -32,7 +32,7 @@ An object from the class links together several pieces of information.
 samples matrix of M values, a location by samples matrix of Cov
 (coverage) values and phenodata information.  In addition, there are
 slots for representing smoothed data. This class is an extension of
-\code{SummarizedExperiment}.
+\code{RangedSummarizedExperiment}.
 }
 \section{Slots}{
   \describe{
@@ -48,7 +48,7 @@ slots for representing smoothed data. This class is an extension of
     \item{[}{\code{signature(x = "BSseq")}: Subsetting by location
       (using integer indices) or sample (using integers or sample
       names).}
-    \item{length}{Unlike for \code{SummarizedExperiment},
+    \item{length}{Unlike for \code{RangedSummarizedExperiment},
       \code{length()} is the number of methylation loci (equal to
       \code{length(granges(x))}).} 
     \item{sampleNames,sampleNames<-}{Sample names and its replacement
@@ -131,7 +131,7 @@ slots for representing smoothed data. This class is an extension of
   }
 }
 \section{Coercion}{
-  Package version 0.9.4 introduced a new version of representing
+  Package version 1.5.2 introduced a new version of representing
   \sQuote{BSseq} objects.  You can update old serialized (saved)
   objects by invoking \code{x <- updateObject(x)}.
 }
@@ -150,7 +150,7 @@ slots for representing smoothed data. This class is an extension of
 \seealso{
   
   The package vignette.  \code{\link{BSseq}} for the constructor
-  function.  \code{\linkS4class{SummarizedExperiment}}
+  function.  \code{\linkS4class{RangedSummarizedExperiment}}
   for the underlying class.  \code{\link{getBSseq}},
   \code{\link{getCoverage}}, and \code{\link{getMeth}} for accessing the
   data stored in the object and finally \code{\link{BSmooth}} for
