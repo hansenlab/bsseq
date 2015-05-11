@@ -16,8 +16,8 @@ data.frame2GRanges(df, keepColumns = FALSE, ignoreStrand = FALSE)
     \code{seqnames}, \code{start}, \code{end} and optionally a
     \code{strand column}.}    
   \item{keepColumns}{In case \code{df} has additional columns, should
-    these columns be stored as metadata for the return GRanges or should
-    they be discarded.}
+    these columns be stored as metadata columns on the return GRanges
+    or should they be discarded.}
   \item{ignoreStrand}{In case \code{df} has a \code{strand} column,
     should this column be ignored.}
 }
