@@ -29,6 +29,7 @@ importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo", "seqinf
                   "seqnames", "seqnames<-", "seqlevels", "seqlevels<-")
 import(S4Vectors)
 importFrom(gtools, "combinations")
+importFrom(data.table, "fread")
 
 ##
 ## Exporting

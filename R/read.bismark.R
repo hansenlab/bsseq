@@ -64,3 +64,26 @@ read.bismarkFileRaw <- function(thisfile, verbose = TRUE){
     mcols(gr) <- df
     gr
 }
+
+read.bismarkCytosineRaw <- function(thisfile, keepContext = FALSE) {
+    out <- fread(thisfile)
+    if(length(out) != 6 && length(out) != 7)
+        stop("unknown file format")
+    if(length(out) == 6) {
+        setnames(out, c("chr", "start", "end", "methPerc", "mCount", "uCount"))
+        gr <- GRanges(seqnames = out[["chr"]],
+                      ranges = IRanges(start = out[["start"]], width = 1),
+                      mCount = out[["mCount"]], uCount = out[["uCount"]])
+    }
+    if(length(out) == 7) {
+        setnames(out, c("chr", "start", "strand", "mCount", "uCount", "type", "context"))
+        gr <- GRanges(seqnames = out[["chr"]], strand = out[["strand"]],
+                      ranges = IRanges(start = out[["start"]], width = 1),
+                      mCount = out[["mCount"]], uCount = out[["uCount"]])
+        if(keepContext) {
+            gr$type <- out[["type"]]
+            gr$context <- out[["context"]]
+        }                      
+    }
+    gr
+}
