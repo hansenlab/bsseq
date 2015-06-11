@@ -2,9 +2,18 @@
 \title{bsseq news}
 \encoding{UTF-8}
 
+\section{Version 1.5.x}{
+  \itemize{
+    \item new function strandCollapse for collapsing forward and reverse
+    strand data to be unstranded.
+    \item Updated read.bismark to support the cytosine report files;
+    both formats are support.
+  }
+}
+
 \section{Version 0.11.x}{
   \itemize{
-    \item Converted to using Authors@R in the DESCRIPTIOn file.
+    \item Converted to using Authors@R in the DESCRIPTION file.
     \item plotRegion did not respect the col/lty/lwd argument if given
     explicitely as opposed to through pData().  Reported by Karen
     Conneely <kconnee@emory.edu>.
