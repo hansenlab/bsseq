@@ -1,4 +1,5 @@
-read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, verbose = TRUE){
+read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, strandCollapse = TRUE,
+                         fileType = c("cytosineReport", "oldBedGraph"), verbose = TRUE){
     ## Argument checking
     if (anyDuplicated(files)){
         stop("duplicate entries in 'files'")
@@ -6,6 +7,7 @@ read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, verbose = TRUE){
     if (length(sampleNames) != length(files) | anyDuplicated(sampleNames)){
         stop("argument 'sampleNames' has to have the same length as argument 'files', without duplicate entries")
     }
+    fileType <- match.arg(fileType)
     ## Process each file
     idxes <- seq_along(files)
     names(idxes) <- sampleNames
@@ -14,12 +16,19 @@ read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, verbose = TRUE){
             cat(sprintf("[read.bismark] Reading file '%s' ... ", files[ii]))
         }
         ptime1 <- proc.time()
-        raw <- read.bismarkFileRaw(thisfile = files[ii])
+        if(fileType == "oldBedGraph") {
+            raw <- read.bismarkFileRaw(thisfile = files[ii])
+        }
+        if(fileType == "cytosineReport") {
+            raw <- read.bismarkCytosineRaw(thisfile = files[ii], keepContext = FALSE)
+        }
         M <- matrix(mcols(raw)[, "mCount"], ncol = 1)
         Cov <- M + mcols(raw)[, "uCount"]
         mcols(raw) <- NULL
         out <- BSseq(gr = raw, M = M, Cov = Cov,
                      sampleNames = sampleNames[ii], rmZeroCov = rmZeroCov)
+        if(strandCollapse && !all(runValue(strand(out)) == "*"))
+            out <- strandCollapse(out)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if (verbose) {

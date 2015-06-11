@@ -228,8 +228,24 @@ setMethod("updateObject", "BSseq",
            })
 
 
-
-                  
+strandCollapse <- function(BSseq, shift = TRUE) {
+    if(all(runValue(strand(BSseq)) == "*")) {
+        warning("All loci are unstranded; nothing to collapse")
+        return(BSseq)
+    }
+    if(!(all(runValue(strand(BSseq)) %in% c("+", "-"))))
+        stop("'BSseq' object has a mix of stranded and unstranded loci.")
+    BS.forward <- BSseq[strand(BSseq) == "+"]
+    strand(BS.forward) <- "*"
+    BS.reverse <- BSseq[strand(BSseq) == "-"]
+    strand(BS.reverse) <- "*"
+    if(shift)
+        rowRanges(BS.reverse) <- shift(granges(BS.reverse), -1L)
+    sampleNames(BS.reverse) <- paste0(sampleNames(BS.reverse), "_REVERSE")
+    BS.comb <- combine(BS.forward, BS.reverse)
+    newBSseq <- collapseBSseq(BS.comb, columns = rep(sampleNames(BSseq), 2))
+    newBSseq
+}
 
 ## getD <- function(data, sample1, sample2, type = c("raw", "fit"),
 ##                  addPositions = FALSE, alpha = 0.95) {

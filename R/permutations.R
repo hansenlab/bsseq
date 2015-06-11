@@ -41,7 +41,8 @@ getNullDmrs <- function(BSseq, idxMatrix1, idxMatrix2, estimate.var = "same",
 subsetDmrs <- function(xx) {
     if(is.null(xx) || is(xx, "try-error"))
         return(NULL)
-    out <- subset(xx, n >= 3 & abs(meanDiff) > 0.1 & invdensity <= 300)
+    out <- xx[ xx[,"n"] >= 3 & abs(xx[, "meanDiff"]) > 0.1 &
+                  xx[, "invdensity"] <= 300, ]
     if(nrow(out) == 0)
         return(NULL)
     out
