@@ -10,8 +10,6 @@ BiocStyle::latex()
 \author{Kasper Daniel Hansen \\ \texttt{kasperdanielhansen@gmail.com}}
 \date{Modified: June 10, 2015.  Compiled: \today}
 \begin{document}
-%\setlength{\parskip}{1\baselineskip}
-%\setlength{\parindent}{0pt}
 
 \maketitle
 

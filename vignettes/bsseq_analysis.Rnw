@@ -3,30 +3,13 @@
 %\VignetteDepends{bsseqData}
 %\VignettePackage{bsseq}
 \documentclass[12pt]{article}
-<<echo=FALSE,results=hide>>=
-options(width=70)
-@ 
-\SweaveOpts{eps=FALSE,echo=TRUE,eval=TRUE}
-\usepackage{times}
-\usepackage{color,hyperref}
-\usepackage{fullpage}
-\usepackage[numbers]{natbib}
-\usepackage{parskip}
-\definecolor{darkblue}{rgb}{0.0,0.0,0.75}
-\hypersetup{colorlinks,breaklinks,
-            linkcolor=darkblue,urlcolor=darkblue,
-            anchorcolor=darkblue,citecolor=darkblue}
-
-\newcommand{\Rcode}[1]{{\texttt{#1}}}
-\newcommand{\Rclass}[1]{{\texttt{"#1"}}}
-\newcommand{\Rpackage}[1]{{\texttt{#1}}}
-\newcommand{\software}[1]{\textsf{#1}}
-\newcommand{\R}{\software{R}}
+<<style-Sweave, eval=TRUE, echo=FALSE, results=tex>>=
+BiocStyle::latex()
+@
 \newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
-
 \title{Analyzing WGBS with the bsseq package}
-\author{Kasper Daniel Hansen\\ \texttt{khansen@jhsph.edu}}
-\date{Modified: October 13, 2012.  Compiled: \today}
+\author{Kasper Daniel Hansen\\ \texttt{kasperdanielhansen@gmail.com}}
+\date{Modified: June 10, 2015.  Compiled: \today}
 \begin{document}
 
 \maketitle
@@ -344,7 +327,6 @@ space and would add complications to the internal data structures.
 %% Backmatter
 %%
 
-\bibliographystyle{unsrturl}
 \bibliography{bsseq}
 
 \section*{SessionInfo}
