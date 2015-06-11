@@ -17,6 +17,7 @@
 \alias{show,BSseq-method}
 \alias{getBSseq}
 \alias{collapseBSseq}
+\alias{strandCollapse}
 \alias{orderBSseq}
 \alias{chrSelectBSseq}
 \alias{hasBeenSmoothed}
@@ -128,6 +129,18 @@ slots for representing smoothed data. This class is an extension of
       methylation loci.  The input is a list, with each component an object
       of class \code{BSseq}.  The (slower) alternative is to use
       \code{Reduce(combine, list)}. }
+  
+    \item{\code{strandCollapse(BSseq, shift = TRUE)}}{
+
+      This function operates on a \code{BSseq} objects which has
+      stranded loci (ie. loci where the strand is one of \sQuote{+} pr
+      \sQuote{-}).  It will collapse the methylation and coverage
+      information across the two strands, into one position.  The
+      argument \code{shift} indicates whether the positions for the loci
+      on the reverse strand should be shifted one (ie. the positions for
+      these loci are the positions of the \sQuote{G} in the
+      \sQuote{CpG}; this is the case for Bismark output for example.}
+
   }
 }
 \section{Coercion}{
