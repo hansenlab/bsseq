@@ -2,35 +2,20 @@
 %\VignetteDepends{bsseq}
 %\VignettePackage{bsseq}
 \documentclass[12pt]{article}
-<<options,echo=FALSE,results=hide>>=
-options(width=70)
-@ 
-\SweaveOpts{eps=FALSE,echo=TRUE}
-\usepackage{times}
-\usepackage{color,hyperref}
-\usepackage{fullpage}
-\usepackage[numbers]{natbib}
-\definecolor{darkblue}{rgb}{0.0,0.0,0.75}
-\hypersetup{colorlinks,breaklinks,
-            linkcolor=darkblue,urlcolor=darkblue,
-            anchorcolor=darkblue,citecolor=darkblue}
-
-\newcommand{\Rcode}[1]{{\texttt{#1}}}
-\newcommand{\Rpackage}[1]{{\texttt{#1}}}
-\newcommand{\software}[1]{\textsf{#1}}
-\newcommand{\R}{\software{R}}
+<<style-Sweave, eval=TRUE, echo=FALSE, results=tex>>=
+BiocStyle::latex()
+@
 \newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
-
 \title{The bsseq user's guide}
-\author{Kasper Daniel Hansen \\ \texttt{khansen@jhsph.edu}}
-\date{Modified: October 13, 2012.  Compiled: \today}
+\author{Kasper Daniel Hansen \\ \texttt{kasperdanielhansen@gmail.com}}
+\date{Modified: June 10, 2015.  Compiled: \today}
 \begin{document}
-\setlength{\parskip}{1\baselineskip}
-\setlength{\parindent}{0pt}
+%\setlength{\parskip}{1\baselineskip}
+%\setlength{\parindent}{0pt}
 
 \maketitle
 
-\section{Capabilities}
+\section*{Capabilities}
 
 The packages required for this vignette are
 
@@ -112,7 +97,7 @@ If you use this package, please cite our BSmooth paper:
 print(citation("bsseq"), style = "latex")
 @ 
 
-\section{Overview}
+\section*{Overview}
 
 The package assumes that the following data has been extracted from alignments:
 \begin{enumerate}
@@ -170,7 +155,7 @@ be of marginal interest to most users.  See the man page for \Rcode{binomialGood
 We also allow for easy computation of Fisher's exact test for each loci, using the function
 \Rcode{fisherTests}. 
 
-\section{Using objects of class BSseq}
+\section*{Using objects of class BSseq}
 
 \subsubsection*{Basic operations}
 
@@ -301,7 +286,7 @@ getMeth(BS.chr22, regions, type = "raw")
 getMeth(BS.chr22, regions[2], type = "raw", what = "perBase")
 @ 
 
-\section{Reading data}
+\section*{Reading data}
 
 \subsubsection*{Alignment output from the BSmooth alignment suite}
 
@@ -380,7 +365,6 @@ Fisher's exact tests may be efficiently computed using the function \Rcode{fishe
 Binomial and poisson goodness of fit tests statistics may be computed using
 \Rcode{binomialGoodnessOfFit} and \Rcode{poissonGoodnessOfFit}.
 
-\bibliographystyle{unsrturl}
 \bibliography{bsseq}
 
 
