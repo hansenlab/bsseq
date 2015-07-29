@@ -29,7 +29,7 @@ env:
   matrix:
 #    - RVERSION=3.0.3
 #    - RVERSION=3.1.2
-    - RVERSION=release
+    - RVERSION=3.2.1
 
 before_install:
   - echo RENV=$RENV
