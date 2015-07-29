@@ -1,23 +1,22 @@
 \name{read.bismark}
 \alias{read.bismark}
 \title{
-  Parsing output from the Bismark alignment suite
+  Parsing output from the Bismark alignment suite.
 }
 \description{
   Parsing output from the Bismark alignment suite.
 }
-\usage{
-  read.bismark(files,
-               sampleNames,
-               rmZeroCov = FALSE,
-               strandCollapse = TRUE,
-               fileType = c("coverage", "cytosineReport"),
-               verbose = TRUE)
+\usage{read.bismark(files,
+             sampleNames,
+             rmZeroCov = FALSE,
+             strandCollapse = TRUE,
+             fileType = c("cov", "oldBedGraph", "cytosineReport"),
+             verbose = TRUE)
 }
 \arguments{
   \item{files}{Input files. Each sample is in a different file. Input
-    files are created by running Bismark's
-    \code{bismark_methylation_extractor}; see Note for details.}
+    files are created by running Bismark's methylation extractor; see Note for
+    details.}
   \item{sampleNames}{sample names, based on the order of \code{files}.}
   \item{rmZeroCov}{Should methylation loci that have zero coverage in
     all samples be removed. This will result in a much smaller object if
@@ -28,39 +27,56 @@
   \item{verbose}{Make the function verbose.}
 }
 \note{
-  The format of the output of the Bismark alignment suite will depend on
-  various user-specified options. Most relevant to \code{bsseq::read.bismkar()}
-  is the options provided to \code{bismark_methylation_extractor}, part of the
-  Bismark alignment suite.
+  Input files can either be gzipped or not.
 
-  When calling \code{bsseq::read.bismark()}, the user specifies the relevant
-  file format by the \code{fileType} argument. The information provided herein
-  is accurate for Bismark \code{v0.14.3}; much of it is true for earlier
-  versions of the software but may require that the user consults the relevant
-  Bismark documentation.
+  The user must specify the relevant file format via the \code{fileType}
+  argument. The format of the output of the Bismark alignment suite will depend
+  on the version of Bismark and on various user-specified options. Please
+  consult the Bismark documentation and the Bismark RELEASE NOTES
+  (\url{http://www.bioinformatics.bbsrc.ac.uk/projects/bismark/RELEASE_NOTES.txt})
+  for the definitive list of changes between versions. When possible, it is
+  strongly recommended that you use the most recent version of Bismark.
 
-  The "\code{coverage}" format has 6 columns (\code{chromosome},
-  \code{position}, \code{strand}, \code{methylation percentage},
-  \code{count methylated}, \code{count unmethylated}) and uses 1-based
-  co-ordinates by default. The standard file extension for this file is
-  \code{.cov}.
-
-  % TODO: Give example of creating this output/input
-
-  Please note that the bedGraph output created in the above call (file
-  extension \code{.bedGraph}) is \strong{not} suitable for analysis with bsseq because
+  The "\code{cov}" and "\code{oldBedGraph}" formats both have six columns
+  ("\code{chromosome}", "\code{position}", "\code{strand}",
+  "\code{methylation percentage}", "\code{count methylated}",
+  "\code{count unmethylated}"). If you are using a recent version of Bismark
+  (\code{v>=0.10.0}) then the standard file extension for this file is
+  "\code{.cov}". If, however, you are using an older version of Bismark
+  (\code{v<0.10.0}) then the file extension will be "\code{.bedGraph}". Please
+  note that the "\code{.bedGraph}" file created in recent versions of Bismark
+  (\code{v>=0.10.0}) is \strong{not} suitable for analysis with bsseq because
   it only contains the "\code{methylation percentage}" and not
   "\code{count methylated}" nor "\code{count unmethylated}".
 
-  The "\code{cytosineReport}" format has 7 columns
-  (\code{chromosome}, \code{position}, \code{strand}, \code{count methylated},
-  \code{count unmethylated}, \code{C-context}, \code{trinucleotide context})
-  and uses 1-based co-ordinates by default. There is no standard file extension
-  for this file.
+  The "\code{cytosineReport}" format has seven columns
+  ("\code{chromosome}", "\code{position}", "\code{strand}",
+  "\code{count methylated}", "\code{count unmethylated}", "\code{C-context}",
+  "\code{trinucleotide context}").
+  There is no standard file extension for this file. The "\code{C-context}" and
+  "\code{trinucleotide context}" columns are not currently used by bsseq.
 
-  % TODO: Give example of creating this output/input
+  The following is an incomplete list of issues to be aware of when using
+  output from Bismark's methylation extractor:
 
-  Input files can either be gzipped or not.
+  \itemize{
+    \item The program to extract methylation counts was named
+    \code{methylation_extractor} in older versions of Bismark (\code{v<0.8.0})
+    and re-named \code{bismark_methylation_extractor} in recent versions of
+    Bismark (\code{v>=0.8.0}). Furthermore, very old versions of Bismark
+    (\code{v<0.7.7}) required that user run a separate script (called
+    something like \code{genome_methylation_bismark2bedGraph}) to create the
+    six-column "\code{cov}"/"\code{oldBedGraph}" file.
+    \item The \code{--counts} and \code{--bedGraph} arguments must be supplied
+    to \code{methylation_extractor}/\code{bismark_methylation_extractor} in
+    order to use the output with \code{bsseq::read.bismark()}.
+    \item The genomic co-ordinates of the Bismark output file may be zero-based
+    or one-based depending on whether the \code{--zero_based} argument is used.
+    Furthermore, the default co-ordinate system varies by version of Bismark.
+    bsseq makes no assumptions about the basis of the genomic co-ordinates and
+    it is left to the user to ensure that the appropriate basis is used in the
+    analysis of their data.
+  }
 }
 \value{
   An object of class \code{\link{BSseq}}.
@@ -81,7 +97,7 @@
                                sampleNames = "test_data",
                                rmZeroCov = FALSE,
                                strandCollapse = TRUE,
-                               fileType = "coverage",
+                               fileType = "cov",
                                verbose = TRUE)
   bismarkBSseq
 }

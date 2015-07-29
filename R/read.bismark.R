@@ -1,20 +1,14 @@
 # TODO: unit tests
-# TODO: update docs
-# TODO: Include example using cytosine report format? Probably not, files are too big
-# TODO: Add myself as contributor
-# TODO: Remove blogpost from rpubs and simply point to docs?
-# TODO: Suggest that s/oldBedGraph/coverage/g; oldBedGraph was inaccurate.
-# TODO: strandCollapse argument is only relevant if file is cytosineReport
-# TODO: Update NEWS.Rd
-# TODO: Note the warning ("The 'rowData' argument is deprecated. Please use
-# 'rowRanges' instead.) is coming from bsseq::BSseq()
+# TODO: Include example using cytosine report format? Probably not, files are
+# too big, but might include subset of a file for testing.
 # TODO: cat() and sprintf() calls should probably be replaced with message().
 # TODO: Add travis support
+# TODO: Switch from parallel to BiocParallel?
 read.bismark <- function(files,
                          sampleNames,
                          rmZeroCov = FALSE,
                          strandCollapse = TRUE,
-                         fileType = c("coverage", "cytosineReport"),
+                         fileType = c("cov", "oldBedGraph", "cytosineReport"),
                          verbose = TRUE) {
     ## Argument checking
     if (anyDuplicated(files)) {
@@ -35,10 +29,10 @@ read.bismark <- function(files,
             cat(sprintf("[read.bismark] Reading file '%s' ... ", files[ii]))
         }
         ptime1 <- proc.time()
-        if (fileType == "coverage") {
-            out <- read.bismarkCoverageRaw(thisfile = files[ii],
-                                           thisSampleName = sampleNames[ii],
-                                           rmZeroCov = rmZeroCov)
+        if (fileType == "cov" || fileType == "oldBedGraph") {
+            out <- read.bismarkCovRaw(thisfile = files[ii],
+                                      thisSampleName = sampleNames[ii],
+                                      rmZeroCov = rmZeroCov)
         } else if (fileType == "cytosineReport") {
             out <- read.bismarkCytosineReportRaw(thisfile = files[ii],
                                                  thisSampleName = sampleNames[ii],
@@ -69,9 +63,9 @@ read.bismark <- function(files,
     allOut
 }
 
-read.bismarkCoverageRaw <- function(thisfile,
-                                    thisSampleName,
-                                    rmZeroCov) {
+read.bismarkCovRaw <- function(thisfile,
+                               thisSampleName,
+                               rmZeroCov) {
 
     ## data.table::fread() can't read directly from a gzipped file so, if
     ## necessary, gunzip the file to a temporary location.
@@ -128,7 +122,6 @@ read.bismarkCytosineReportRaw <- function(thisfile,
     ## Create GRanges instance from 'out'
     gr <- GRanges(seqnames = out[[1]],
                   ranges = IRanges(start = out[[2]], width = 1))
-
 
     ## Create BSseq instance from 'out'
     BSseq(gr = gr,
