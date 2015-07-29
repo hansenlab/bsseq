@@ -1,9 +1,3 @@
-# TODO: unit tests
-# TODO: Include example using cytosine report format? Probably not, files are
-# too big, but might include subset of a file for testing.
-# TODO: cat() and sprintf() calls should probably be replaced with message().
-# TODO: Add travis support
-# TODO: Switch from parallel to BiocParallel?
 read.bismark <- function(files,
                          sampleNames,
                          rmZeroCov = FALSE,
@@ -121,7 +115,8 @@ read.bismarkCytosineReportRaw <- function(thisfile,
 
     ## Create GRanges instance from 'out'
     gr <- GRanges(seqnames = out[[1]],
-                  ranges = IRanges(start = out[[2]], width = 1))
+                  ranges = IRanges(start = out[[2]], width = 1),
+                  strand = out[[3]])
 
     ## Create BSseq instance from 'out'
     BSseq(gr = gr,

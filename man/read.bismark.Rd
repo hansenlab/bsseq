@@ -91,7 +91,7 @@
 }
 
 \examples{
-  infile <- system.file("extdata/test_data.fastq_bismark.bismark.cov",
+  infile <- system.file("extdata/test_data.fastq_bismark.bismark.cov.gz",
                         package = 'bsseq')
   bismarkBSseq <- read.bismark(files = infile,
                                sampleNames = "test_data",

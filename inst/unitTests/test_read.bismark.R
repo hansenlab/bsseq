@@ -1,6 +1,6 @@
 test_read.bismark_coverage <- function() {
     # Test that read.bismark() works on good input
-    infile <- system.file("extdata", "test_data.fastq_bismark.bismark.cov",
+    infile <- system.file("extdata", "test_data.fastq_bismark.bismark.cov.gz",
                           package = "bsseq")
     bsseq <- read.bismark(files = infile,
                           sampleNames = "test_data",
@@ -30,5 +30,28 @@ test_read.bismark_coverage <- function() {
 }
 
 test_read.bismark_cytosineReport <- function() {
+    # Test that read.bismark() works on good input
+    infile <- system.file("extdata", "test_data.cytosineReport.gz",
+                          package = "bsseq")
+    bsseq <- read.bismark(files = infile,
+                          sampleNames = "test_data",
+                          rmZeroCov = FALSE,
+                          strandCollapse = FALSE,
+                          fileType = "cytosineReport",
+                          verbose = FALSE)
+    checkTrue(is(bsseq, "BSseq"))
+    # Check that strandCollapse = FALSE works
+    checkEquals(length(bsseq), 100L)
+    checkTrue("+" %in% strand(bsseq))
+
+    # Check that strandCollapse = TRUE works
+    bsseq <- read.bismark(files = infile,
+                          sampleNames = "test_data",
+                          rmZeroCov = FALSE,
+                          strandCollapse = TRUE,
+                          fileType = "cytosineReport",
+                          verbose = FALSE)
+    checkEquals(length(bsseq), 50L)
+    checkTrue(all(strand(bsseq) == "*"))
 }
 
