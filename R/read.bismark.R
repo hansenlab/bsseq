@@ -1,98 +1,137 @@
-read.bismark <- function(files, sampleNames, rmZeroCov = FALSE, strandCollapse = TRUE,
-                         fileType = c("cytosineReport", "oldBedGraph"), verbose = TRUE){
+# TODO: unit tests
+# TODO: update docs
+# TODO: Include example using cytosine report format? Probably not, files are too big
+# TODO: Add myself as contributor
+# TODO: Remove blogpost from rpubs and simply point to docs?
+# TODO: Suggest that s/oldBedGraph/coverage/g; oldBedGraph was inaccurate.
+# TODO: strandCollapse argument is only relevant if file is cytosineReport
+# TODO: Update NEWS.Rd
+# TODO: Note the warning ("The 'rowData' argument is deprecated. Please use
+# 'rowRanges' instead.) is coming from bsseq::BSseq()
+# TODO: cat() and sprintf() calls should probably be replaced with message().
+# TODO: Add travis support
+read.bismark <- function(files,
+                         sampleNames,
+                         rmZeroCov = FALSE,
+                         strandCollapse = TRUE,
+                         fileType = c("coverage", "cytosineReport"),
+                         verbose = TRUE) {
     ## Argument checking
-    if (anyDuplicated(files)){
+    if (anyDuplicated(files)) {
         stop("duplicate entries in 'files'")
     }
-    if (length(sampleNames) != length(files) | anyDuplicated(sampleNames)){
+    if (length(sampleNames) != length(files) || anyDuplicated(sampleNames)) {
         stop("argument 'sampleNames' has to have the same length as argument 'files', without duplicate entries")
     }
     fileType <- match.arg(fileType)
+    if (verbose) {
+        message(paste0("Assuming file type is", fileType))
+    }
     ## Process each file
     idxes <- seq_along(files)
     names(idxes) <- sampleNames
-    allOut <- lapply(idxes, function(ii){
+    allOut <- lapply(idxes, function(ii) {
         if (verbose) {
             cat(sprintf("[read.bismark] Reading file '%s' ... ", files[ii]))
         }
         ptime1 <- proc.time()
-        if(fileType == "oldBedGraph") {
-            raw <- read.bismarkFileRaw(thisfile = files[ii])
+        if (fileType == "coverage") {
+            out <- read.bismarkCoverageRaw(thisfile = files[ii],
+                                           thisSampleName = sampleNames[ii],
+                                           rmZeroCov = rmZeroCov)
+        } else if (fileType == "cytosineReport") {
+            out <- read.bismarkCytosineReportRaw(thisfile = files[ii],
+                                                 thisSampleName = sampleNames[ii],
+                                                 rmZeroCov = rmZeroCov,
+                                                 keepContext = FALSE)
         }
-        if(fileType == "cytosineReport") {
-            raw <- read.bismarkCytosineRaw(thisfile = files[ii], keepContext = FALSE)
-        }
-        M <- matrix(mcols(raw)[, "mCount"], ncol = 1)
-        Cov <- M + mcols(raw)[, "uCount"]
-        mcols(raw) <- NULL
-        out <- BSseq(gr = raw, M = M, Cov = Cov,
-                     sampleNames = sampleNames[ii], rmZeroCov = rmZeroCov)
-        if(strandCollapse && !all(runValue(strand(out)) == "*"))
+        if (strandCollapse && !all(runValue(strand(out)) == "*")) {
             out <- strandCollapse(out)
+        }
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if (verbose) {
-            cat(sprintf("done in %.1f secs\n", stime))  
+            cat(sprintf("done in %.1f secs\n", stime))
         }
-        out  
+        out
     })
+
     if (verbose) {
         cat(sprintf("[read.bismark] Joining samples ... "))
     }
     ptime1 <- proc.time()
     allOut <- combineList(allOut)
     ptime2 <- proc.time()
-    stime <- (ptime2 - ptime1)[3]
+    stime <- (ptime2 - ptime1)[3L]
     if (verbose) {
         cat(sprintf("done in %.1f secs\n", stime))
     }
     allOut
 }
 
-read.bismarkFileRaw <- function(thisfile, verbose = TRUE){
-    ## Set up the 'what' argument for scan()
-    columnHeaders <- c("chr", "start", "end", "mPerc", "mCount", "uCount")
-    what0 <- replicate(length(columnHeaders), character(0))
-    names(what0) <- columnHeaders
-    int <- which(columnHeaders %in% c("start", "end", "mCount", "uCount"))
-    what0[int] <- replicate(length(int), integer(0))
-    null <- which(columnHeaders %in% "mPerc")
-    what0[null] <- replicate(length(null), NULL)
+read.bismarkCoverageRaw <- function(thisfile,
+                                    thisSampleName,
+                                    rmZeroCov) {
+
+    ## data.table::fread() can't read directly from a gzipped file so, if
+    ## necessary, gunzip the file to a temporary location.
+    if (isGzipped(thisfile)) {
+        thisfile <- gunzip(thisfile,
+                           temporary = TRUE,
+                           overwrite = TRUE,
+                           remove = FALSE)
+    }
+
     ## Read in the file
-    if (grepl("\\.gz$", thisfile)) 
-        con <- gzfile(thisfile)
-    else 
-        con <- file(thisfile, open = "r")
-    out <- scan(file = con, what = what0, sep = "\t", quote = "", na.strings = "NA", quiet = TRUE)
-    close(con)
+    out <- fread(thisfile)
+    if (ncol(out) != 6L) {
+        stop("unknown file format")
+    }
+
     ## Create GRanges instance from 'out'
-    gr <- GRanges(seqnames = out[["chr"]], ranges = IRanges(start = out[["start"]], width = 1))
-    out[["chr"]] <- out[["start"]] <- out[["end"]] <- NULL
-    out <- out[!sapply(out, is.null)]
-    df <- DataFrame(out)
-    mcols(gr) <- df
-    gr
+    gr <- GRanges(seqnames = out[[1L]],
+                  ranges = IRanges(start = out[[2L]], width = 1L))
+
+    ## Create BSseq instance from 'out'
+    BSseq(gr = gr,
+          M = as.matrix(out[[5L]]),
+          Cov = as.matrix(out[[5L]] + out[[6L]]),
+          sampleNames = thisSampleName,
+          rmZeroCov = rmZeroCov)
 }
 
-read.bismarkCytosineRaw <- function(thisfile, keepContext = FALSE) {
+read.bismarkCytosineReportRaw <- function(thisfile,
+                                          thisSampleName,
+                                          rmZeroCov,
+                                          keepContext = FALSE) {
+
+    ## NOTE: keepContext not yet implemented
+    if (keepContext) {
+        stop("'keepContext' argument not yet implemented")
+    }
+
+    ## data.table::fread() can't read directly from a gzipped file so, if
+    ## necessary, gunzip the file to a temporary location.
+    if (isGzipped(thisfile)) {
+        thisfile <- gunzip(thisfile,
+                           temporary = TRUE,
+                           overwrite = TRUE,
+                           remove = FALSE)
+    }
+
+    ## Read in the file
     out <- fread(thisfile)
-    if(length(out) != 6 && length(out) != 7)
+    if (ncol(out) != 7L) {
         stop("unknown file format")
-    if(length(out) == 6) {
-        setnames(out, c("chr", "start", "end", "methPerc", "mCount", "uCount"))
-        gr <- GRanges(seqnames = out[["chr"]],
-                      ranges = IRanges(start = out[["start"]], width = 1),
-                      mCount = out[["mCount"]], uCount = out[["uCount"]])
     }
-    if(length(out) == 7) {
-        setnames(out, c("chr", "start", "strand", "mCount", "uCount", "type", "context"))
-        gr <- GRanges(seqnames = out[["chr"]], strand = out[["strand"]],
-                      ranges = IRanges(start = out[["start"]], width = 1),
-                      mCount = out[["mCount"]], uCount = out[["uCount"]])
-        if(keepContext) {
-            gr$type <- out[["type"]]
-            gr$context <- out[["context"]]
-        }                      
-    }
-    gr
+
+    ## Create GRanges instance from 'out'
+    gr <- GRanges(seqnames = out[[1]],
+                  ranges = IRanges(start = out[[2]], width = 1))
+
+
+    ## Create BSseq instance from 'out'
+    BSseq(gr = gr,
+          M = as.matrix(out[[4L]]),
+          Cov = as.matrix(out[[4L]] + out[[5L]]))
 }
