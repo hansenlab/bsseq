@@ -6,8 +6,11 @@
   \itemize{
     \item new function strandCollapse for collapsing forward and reverse
     strand data to be unstranded.
-    \item Updated read.bismark to support the cytosine report files;
-    both formats are support.
+    \item Updated read.bismark() to support the cytosine report files;
+    both formats are supported. Other minor updates (mostly internal) to
+    read.bismark(). Greatly improved documentation of this function, paying
+    particular attention to differences in file formats between versions of
+    Bismark.
   }
 }
 
@@ -103,7 +106,7 @@
     combineList for testing.
     \item Bug fix to read.bsmooth; it now works correctly for the
     default settings (= returning a single object of class BSseq and not a
-    list). 
+    list).
     \item Getting ready for initial release on Bioconductor.
     \item Updated the citations in the vignette(s) and the CITATION file.
   }
