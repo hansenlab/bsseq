@@ -49,5 +49,6 @@ Collate:
     BSmooth.fstat.R
 License: Artistic-2.0
 URL: https://github.com/kasperdanielhansen/bsseq
+BugReports: https://github.com/kasperdanielhansen/bsseq/issues
 LazyData: yes
 biocViews: DNAMethylation
