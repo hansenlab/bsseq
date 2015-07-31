@@ -52,7 +52,8 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
 \references{
   KD Hansen, B Langmead, and RA Irizarry (2012). \emph{BSmooth: from
   whole genome bisulfite sequencing reads to differentially methylated
-  regions}. Submitted.
+  regions}. Genome Biology 13:R83.
+  \href{http://www.dx.doi.org/10.1186/gb-2012-13-10-r83}{doi:10.1186/gb-2012-13-10-r83}.
 }
 \seealso{
   \code{\link[locfit]{locfit}} in the locfit package, as well as \code{\linkS4class{BSseq}}.
