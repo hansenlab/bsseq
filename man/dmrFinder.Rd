@@ -58,7 +58,8 @@ dmrFinder(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
 \references{
   KD Hansen, B Langmead, and RA Irizarry (2012).  \emph{BSmooth: from
   whole genome bisulfite sequencing reads to differentially methylated
-  regions}. Submitted.
+  regions}. Genome Biology 13:R83.
+  \href{http://www.dx.doi.org/10.1186/gb-2012-13-10-r83}{doi:10.1186/gb-2012-13-10-r83}.
 }
 \seealso{
   \code{\link{BSmooth.tstat}} for the function constructing the input
