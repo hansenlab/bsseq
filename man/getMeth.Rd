@@ -47,9 +47,10 @@ getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
   containing the average methylation level in that region.
 }
 \references{
-A Agresti and B Coull (1998). \emph{Approximate Is Better than "Exact"
-for Interval Estimation of Binomial Proportions}. The American
-Statistician 52, 119-126.
+  A Agresti and B Coull.
+  \emph{Approximate Is Better than "Exact" for Interval Estimation of
+    Binomial Proportions}.
+  The American Statistician (1998) 52:119-126.
 }
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}.

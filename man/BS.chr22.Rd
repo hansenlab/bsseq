@@ -26,8 +26,10 @@
   \file{inst/scripts/get_BS.chr22.R}, see the example.
 }
 \references{
-  Lister et al. (2010). \emph{Human DNA methylomes at base resolution
-    show widespread epigenomic differences}.  Nature 462, 315-322.
+  R Lister et al.
+  \emph{Human DNA methylomes at base resolution show widespread
+    epigenomic differences}.
+  Nature (2009) 462, 315-322.
 }
 \examples{
 data(BS.chr22)
