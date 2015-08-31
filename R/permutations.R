@@ -176,17 +176,21 @@ makeIdxMatrix <- function(group1, group2, testIsSymmetric = TRUE, includeUnbalan
         } else {
             idxMatrix1 <- rbind(group1, group2,
                                 combineMat(subsetByMatrix(group1, combinations(6,3)),
-                                           subsetByMatrix(group2, combinations(6,2))))
+                                           subsetByMatrix(group2, combinations(6,3))))
         }
         if(includeUnbalanced) {
-            newMatrix <- combineMat(subsetByMatrix(group1, combinations(6,5)),
+            newMatrix1 <- combineMat(subsetByMatrix(group1, combinations(6,4)),
+                                    subsetByMatrix(group2, combinations(6,2)))
+            newMatrix2 <- combineMat(subsetByMatrix(group1, combinations(6,5)),
                                     as.matrix(group2, ncol = 1))
-            idxMatrix1 <- rbind(idxMatrix1, newMatrix)
+            idxMatrix1 <- rbind(idxMatrix1, newMatrix1, newMatrix2)
         }
         if(includeUnbalanced && !testIsSymmetric) {
-            newMatrix <- combineMat(as.matrix(group1, ncol = 1),
-                                    subsetByMatrix(group2, combinations(6,3)))
-            idxMatrix1 <- rbind(idxMatrix1, newMatrix)
+            newMatrix1 <- combineMat(subsetByMatrix(group1, combinations(6,2)),
+                                     subsetByMatrix(group2, combinations(6,4)))
+            newMatrix2 <- combineMat(as.matrix(group1, ncol = 1),
+                                     subsetByMatrix(group2, combinations(6,5)))
+            idxMatrix1 <- rbind(idxMatrix1, newMatrix1, newMatrix2)
         }
     }
     if(is.null(idxMatrix1))

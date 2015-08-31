@@ -82,3 +82,21 @@ test_makeIdxMatrix_perm5 <- function() {
     checkEquals(nrow(res), choose(10,5) / 2)
 }
 
+test_makeIdxMatrix_perm6 <- function() {
+    grp1 <- paste0("A", 1:6)
+    grp2 <- paste0("B", 1:6)
+
+    res <- bsseq:::makeIdxMatrix(grp1, grp2,
+                                 testIsSymmetric = FALSE, includeUnbalanced = TRUE)[[1]]
+    checkEquals(anyDuplicated(res), 0)
+    checkEquals(res[1,], grp1)
+    checkEquals(res[2,], grp2)
+    checkEquals(nrow(res), choose(12,6))
+
+    res <- bsseq:::makeIdxMatrix(grp1, grp2,
+                                 testIsSymmetric = TRUE, includeUnbalanced = TRUE)[[1]]
+    checkEquals(anyDuplicated(res), 0)
+    checkEquals(res[1,], grp1)
+    checkEquals(nrow(res), choose(12,6) / 2)
+}
+
