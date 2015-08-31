@@ -47,6 +47,7 @@ Collate:
     fisher.R
     permutations.R
     BSmooth.fstat.R
+    BSmooth.tstat2.R
 License: Artistic-2.0
 URL: https://github.com/kasperdanielhansen/bsseq
 BugReports: https://github.com/kasperdanielhansen/bsseq/issues
