@@ -3,7 +3,8 @@ This is the developer version of Bioconductor package [bsseq](http://bioconducto
 
 ```r
 source('http://bioconductor.org/biocLite.R')
-biocLite(bsseq')
+useDevel(TRUE)
+biocLite('bsseq')
 ```
 
 ## R CMD check results
