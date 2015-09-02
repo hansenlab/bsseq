@@ -24,7 +24,8 @@ after_success:
 r_build_args: "--no-build-vignettes --no-manual"
 # TODO: Travis is reporting an error when checking the vignette, hence the
 # inclusion of --no-vignettes in r_check_args
-r_check_args: "--no-vignettes"# Must 'manually' install packages in SUGGESTS in order to run full tests
+r_check_args: "--no-vignettes"
+# Must 'manually' install packages in SUGGESTS in order to run full tests
 r_binary_packages:
   - RUnit
 bioc_packages:
