@@ -14,7 +14,8 @@ Depends:
     GenomicRanges (>= 1.19.6),
     SummarizedExperiment (>= 0.1.1),
     parallel,
-    GenomeInfoDb
+    GenomeInfoDb,
+    limma
 Imports:
     scales,
     stats,

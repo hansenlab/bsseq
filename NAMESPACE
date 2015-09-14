@@ -31,6 +31,7 @@ import(S4Vectors)
 importFrom(gtools, "combinations")
 importFrom(data.table, "fread", "setnames")
 importFrom(R.utils, "isGzipped", "gunzip")
+import(limma)
 
 ##
 ## Exporting
