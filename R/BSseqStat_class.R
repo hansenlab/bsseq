@@ -2,19 +2,24 @@ setClass("BSseqStat", contains = "hasGRanges",
          representation(stats = "list",
                         parameters = "list")
          )
+
 setValidity("BSseqStat", function(object) {
     msg <- NULL
-    statsClasses <- sapply(object@stats, function(xx) is.vector(xx) || is.matrix(xx))
-    if(!all(statsClasses))
-        msg <- validMsg(msg, sprintf("All classes in the `stats` list has to be either vectors or matrices"))
-    lengths <- sapply(object@stats, function(xx) {
-        if(is.matrix(xx))
-            return(nrow(xx))
-        if(is.vector(xx))
-            return(length(xx))
-    })
-    if(!all(length(object@gr) == statsLengths))
-        msg <- validMsg(msg, sprintf("All components in the `stats` list needs to have the same length or number of rows as the `gr` slot"))
+    if(is.null(names(object@stats)) || any(names(object@stats) == "") ||
+       anyDuplicated(names(object@stats)))
+        msg <- validMsg(msg, "the 'stats' list needs to be named with unique names.")
+    for(name in c("rawSds", "smoothsSds", "stat")) {
+        if(name %in% names(object@stats) && !is.vector(object@stats[[name]]))
+            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' have to be a vector", name))
+        if(name %in% names(object@stats) && length(object@stats[[name]]) != length(object@gr))
+            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' have to have the same length as slot 'gr'", name))
+    }
+    for(name in c("rawTstats")) {
+        if(name %in% names(object@stats) && !is.matrix(object@stats[[name]]))
+            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' have to be a matrix", name))
+        if(name %in% names(object@stats) && nrow(object@stats[[name]]) != length(object@gr))
+            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' have to have the same number of rows as slot 'gr' is long", name))
+    }
     if(is.null(msg)) TRUE else msg
 })
 
@@ -28,15 +33,25 @@ setMethod("show", signature(object = "BSseqStat"),
               cat(" ", object@parameters$tstatText, "\n")
           })
 
-## setMethod("[", "BSseqStat", function(x, i, ...) {
-##     if(missing(i))
-##         stop("need [i] for subsetting")
-##     if(missing(i))
-##         return(x)
-##     x@gr <- x@gr[i]
-##     x@stats <- x@stats[i,, drop = FALSE]
-##     x
-## })
+setMethod("[", "BSseqStat", function(x, i, ...) {
+    if(missing(i))
+        stop("need [i] for subsetting")
+    if(missing(i))
+        return(x)
+    x@gr <- x@gr[i]
+    x@stats <- lapply(names(x@stats), function(nam) {
+        if(nam %in% c("rawTstats")) {
+            stopifnot(is.matrix(x@stats[[nam]]))
+            return(x@stats[[nam]][i,,drop=FALSE])
+        }
+        if(nam %in% c("rawSds", "smoothSds", "stat")) {
+            stopifnot(is.vector(x@stats[[nam]]))
+            return(x@stats[[nam]][i])
+        }
+        x@stats[[nam]]
+    })
+    x
+})
 
 BSseqStat <- function(gr = NULL, stats = NULL, parameters = NULL) {
     out <- new("BSseqStat")
@@ -45,6 +60,7 @@ BSseqStat <- function(gr = NULL, stats = NULL, parameters = NULL) {
     out@parameters <- parameters
     out
 }
+
 
 ## summary.BSseqStat <- function(object, ...) {
 ##     quant <- quantile(getStats(object)[, "tstat.corrected"],
@@ -74,42 +90,3 @@ BSseqStat <- function(gr = NULL, stats = NULL, parameters = NULL) {
 ##     }
 ## }
 
-## getStats <- function(BSseqStat, regions = NULL, stat = "tstat.corrected") {
-##     stopifnot(is(BSseqStat, "BSseqStat"))
-##     if(is.null(regions))
-##         return(BSseqStat@stats)
-##     if(class(regions) == "data.frame")
-##         regions <- data.frame2GRanges(regions)
-##     stopifnot(stat %in% colnames(BSseqStat@stats))
-##     stopifnot(length(stat) == 1)
-##     stopifnot(is(regions, "GenomicRanges"))
-##     ov <- findOverlaps(BSseqStat, regions)
-##     ov.sp <- split(queryHits(ov), subjectHits(ov))
-##     getRegionStats <- function(idx) {
-##         mat <- BSseqStat@stats[idx,, drop=FALSE]
-##         areaStat <- sum(mat[, stat])
-##         maxStat <- max(mat[, stat])
-##         c(areaStat, maxStat)
-##     }
-##     stats <- matrix(NA, ncol = 2, nrow = length(regions))
-##     colnames(stats) <- c("areaStat", "maxStat")
-##     tmp <- lapply(ov.sp, getRegionStats)
-##     stats[as.integer(names(tmp)),] <- do.call(rbind, tmp)
-##     out <- as.data.frame(stats)
-##     if(! stat %in% c("tstat.corrected", "tstat"))
-##         return(out)
-##     getRegionStats_ttest <- function(idx) {
-##         mat <- BSseqStat@stats[idx,, drop=FALSE]
-##         group1.mean <- mean(mat[, "group1.means"])
-##         group2.mean <- mean(mat[, "group2.means"])
-##         meanDiff <- mean(mat[, "group1.means"] - mat[, "group2.means"])
-##         tstat.sd <- mean(mat[, "tstat.sd"])
-##         c(meanDiff, group1.mean, group2.mean, tstat.sd)
-##     }
-##     stats_ttest<- matrix(NA, ncol = 4, nrow = length(regions))
-##     colnames(stats_ttest) <- c("meanDiff", "group1.mean", "group2.mean", "tstat.sd")
-##     tmp <- lapply(ov.sp, getRegionStats_ttest)
-##     stats_ttest[as.integer(names(tmp)),] <- do.call(rbind, tmp)
-##     out <- cbind(out, as.data.frame(stats_ttest))
-##     out
-## }
