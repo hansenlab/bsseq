@@ -60,7 +60,7 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
     smoothSds <- do.call("c",
                          mclapply(clusterIdx, function(idx) {
-                             smoothSd(getStats(BSseqStat, "rawSds")[idx], k = k, qSd = qSd)
+                             smoothSd(getStats(BSseqStat, what = "rawSds")[idx], k = k, qSd = qSd)
                          }, mc.cores = mc.cores))
     if("smoothSds" %in% names(getStats(BSseqStat)))
         BSseqStat@stats[["smoothSds"]] <- stat
@@ -75,11 +75,11 @@ computeStat <- function(BSseqStat, coef = NULL) {
     if(is.null(coef)) {
         coef <- 1:ncol(BSseqStat$rawTstats)
     }
-    tstats <- getStats(BSseqStat, "rawTstats")[, coef, drop = FALSE]
-    tstats <- tstats * getStats(BSseqStat, "rawSds") /
-        getStats(BSseqStat, "smoothSds")
+    tstats <- getStats(BSseqStat, what = "rawTstats")[, coef, drop = FALSE]
+    tstats <- tstats * getStats(BSseqStat, what = "rawSds") /
+        getStats(BSseqStat, what = "smoothSds")
     if(length(coef) > 1) {
-        cor.coefficients <- getStats(BSseqStat, "cor.coefficients")[coef,coef]
+        cor.coefficients <- getStats(BSseqStat, what = "cor.coefficients")[coef,coef]
         stat <- as.numeric(classifyTestsF(tstats, cor.coefficients,
                                           fstat.only = TRUE))
         stat.type <- "fstat"
@@ -128,13 +128,11 @@ localCorrectStat <- function(BSseqStat, threshold = c(-15,15), mc.cores = 1, ver
     stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
     stat <- BSseqStat$stat
-    stat.corrected <- do.call(c, mclapply(clusterIdx, compute.correction, mc.cores = mc.cores))
+    stat.corrected <- do.call(c, mclapply(clusterIdx, compute.correction,
+                                          mc.cores = mc.cores))
     BSseqTstat@stats <- cbind(getStats(BSseqTstat),
                               "tstat.corrected" = stat.corrected)
     BSseqTstat@parameters$local.local <- TRUE
     BSseqTstat
 }
-
-
-
 

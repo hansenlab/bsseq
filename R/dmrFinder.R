@@ -6,7 +6,7 @@ dmrFinder <- function(bstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
         dmrStat <- bstat@stats[, stat]
     }
     if(is(bstat, "BSseqStat")) {
-        dmrStat <- getStats(bstat, "stat")
+        dmrStat <- getStats(bstat, what = "stat")
     }
     subverbose <- max(as.integer(verbose) - 1L, 0L)
     if(is.null(cutoff))
