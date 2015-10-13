@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.6.0
+Version: 1.7.0
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
     sequencing data.
