@@ -8,18 +8,25 @@
   object.
 }
 \usage{
-getStats(BSseqTstat, regions = NULL, stat = "tstat.corrected")
+getStats(bstat, regions = NULL, ...)
 }
 \arguments{
-  \item{BSseqTstat}{An object of class \code{BSseqTstat}.}
+  \item{bstat}{An object of class \code{BSseqStat} or \code{BSseqTstat}.}
   \item{regions}{An optional \code{data.frame} or
     \code{GenomicRanges} object specifying a number of genomic
-    regions.} 
-  \item{stat}{Which statistics column should be obtained.}
+    regions.}
+  \item{...}{Additional arguments passed to the different backends based
+    on the class of \code{bstat}; see Details.}
 }
 \value{
   An object of class \code{data.frame} possible restricted to the
   regions specified.
+}
+\details{
+  Additional argument when the \code{bstat} object is of class \code{BSseqTstat}:
+  \describe{
+    \item{stat}{Which statistics column should be obtained.}
+  }
 }
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}

@@ -1,17 +1,23 @@
-dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
+dmrFinder <- function(bstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
                       maxGap = 300, stat = "tstat.corrected", verbose = TRUE) {
+    if(is(bstat, "BSseqTstat")) {
+        if(! stat %in% colnames(bstat@stats))
+            stop("'stat' needs to be a column of 'bstat@stats'")
+        dmrStat <- bstat@stats[, stat]
+    }
+    if(is(bstat, "BSseqStat")) {
+        dmrStat <- getStats(bstat, what = "stat")
+    }
     subverbose <- max(as.integer(verbose) - 1L, 0L)
-    if(! stat %in% colnames(BSseqTstat@stats))
-        stop("'stat' needs to be a column of 'BSseqTstat@stats'")
     if(is.null(cutoff))
-        cutoff <- quantile(BSseqTstat@stats[, stat], qcutoff)
+        cutoff <- quantile(dmrStat, qcutoff)
     if(length(cutoff) == 1)
         cutoff <- c(-cutoff, cutoff)
-    direction <- as.integer(BSseqTstat@stats[, stat] >= cutoff[2])
-    direction[BSseqTstat@stats[, stat] <= cutoff[1]] <- -1L
+    direction <- as.integer(dmrStat >= cutoff[2])
+    direction[dmrStat <= cutoff[1]] <- -1L
     direction[is.na(direction)] <- 0L
-    chrs <- as.character(seqnames(BSseqTstat@gr))
-    positions <- start(BSseqTstat)
+    chrs <- as.character(seqnames(bstat))
+    positions <- start(bstat)
     regions <- regionFinder3(direction, chr = chrs, positions = positions,
                              maxGap = maxGap, verbose = subverbose)
     if(is.null(regions$down) && is.null(regions$up))
@@ -22,12 +28,19 @@ dmrFinder <- function(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
     regions$width <- regions$end - regions$start + 1
     regions$invdensity <- regions$width / regions$n
     regions$chr <- as.character(regions$chr)
-    stats <- getStats(BSseqTstat, regions, stat = stat)
-    regions <- cbind(regions, stats)
-    if(stat %in% c("tstat.corrected", "tstat")) {
-        regions$direction <- ifelse(regions$meanDiff > 0, "hyper", "hypo")
+    if(is(bstat, "BSseqTstat")) {
+        stats <- getStats(bstat, regions, stat = stat)
+        regions <- cbind(regions, stats)
+        if(stat %in% c("tstat.corrected", "tstat")) {
+            regions$direction <- ifelse(regions$meanDiff > 0, "hyper", "hypo")
+        }
+        regions <- regions[order(abs(regions$areaStat), decreasing = TRUE),]
     }
-    regions <- regions[order(abs(regions$areaStat), decreasing = TRUE),]
+    if(is(bstat, "BSseqStat")) {
+        stats <- getStats(bstat, regions)
+        regions <- cbind(regions, stats)
+        regions <- regions[order(abs(regions$areaStat), decreasing = TRUE),]
+    }
     regions
 }
 

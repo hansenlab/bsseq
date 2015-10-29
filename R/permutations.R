@@ -1,8 +1,8 @@
-getNullPermutation <- function(BSseq, idxMatrix1, idxMatrix2,
-                               estimate.var, local.correct,
-                               cutoff, stat, maxGap, mc.cores = 1) {
+getNullDistribution_BSmooth.tstat <- function(BSseq, idxMatrix1, idxMatrix2,
+                                              estimate.var, local.correct,
+                                              cutoff, stat, maxGap, mc.cores = 1) {
     stopifnot(nrow(idxMatrix1) == nrow(idxMatrix2))
-    cat("[getNullPermutation] performing", nrow(idxMatrix1), "permutations\n")
+    message(sprintf("[getNullDistribution_BSmooth.tstat] performing %d permutations\n", nrow(idxMatrix1)))
     nullDist <- mclapply(1:nrow(idxMatrix1), function(ii) {
         ptime1 <- proc.time()
         BS.tstat <- BSmooth.tstat(BSseq, estimate.var = estimate.var,
@@ -13,30 +13,49 @@ getNullPermutation <- function(BSseq, idxMatrix1, idxMatrix2,
         dmrs0 <- dmrFinder(BS.tstat, stat = stat, cutoff = cutoff, maxGap = maxGap)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        cat(sprintf("[getNullPermutation] completing permutation %d in %.1f sec\n",
-                    ii, stime))
+        message(sprintf("[getNullDistribution_BSmooth.tstat] completing permutation %d in %.1f sec\n", ii, stime))
         dmrs0
     }, mc.cores = min(nrow(idxMatrix1), mc.cores), mc.preschedule = FALSE)
     nullDist
 }
 
-getNullBlocks <- function(BSseq, idxMatrix1, idxMatrix2, estimate.var = "same",
+getNullDistribution_BSmooth.fstat <- function(BSseq, idxMatrix, design, contrasts,
+                                              coef = NULL, cutoff, maxGap.sd, maxGap.dmr, mc.cores = 1) {
+    message(sprintf("[getNullDistribution_BSmooth.fstat] performing %d permutations\n", nrow(idxMatrix)))
+    nullDist <- mclapply(1:nrow(idxMatrix), function(ii) {
+        ptime1 <- proc.time()
+        bstat <- BSmooth.fstat(BSseq[, idxMatrix[ii,]], design = design, contrasts = contrasts)
+        bstat <- smoothSds(bstat, maxGap = maxGap.sd)
+        bstat <- computeStat(bstat, coef = coef)
+        dmrs0 <- dmrFinder(bstat, cutoff = cutoff, maxGap = maxGap.dmr)
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
+        message(sprintf("[getNullDistribution_BSmooth.fstat] completing permutation %d in %.1f sec\n", ii, stime))
+        dmrs0
+    }, mc.cores = min(nrow(idxMatrix), mc.cores), mc.preschedule = FALSE)
+    nullDist
+}
+
+getNullBlocks_BSmooth.tstat <- function(BSseq, idxMatrix1, idxMatrix2, estimate.var = "same",
                           mc.cores = 1) {
-    getNullPermutation(BSseq = BSseq, idxMatrix1 = idxMatrix1,
+    getNullDistribution_BSmooth.tstat(BSseq = BSseq, idxMatrix1 = idxMatrix1,
                        idxMatrix2 = idxMatrix2, local.correct = FALSE,
                        estimate.var = estimate.var,
                        cutoff = c(-2,2), stat = "tstat", maxGap = 10000,
                        mc.cores = mc.cores)
 }
 
-getNullDmrs <- function(BSseq, idxMatrix1, idxMatrix2, estimate.var = "same",
+getNullDmrs_BSmooth.tstat <- function(BSseq, idxMatrix1, idxMatrix2, estimate.var = "same",
                         mc.cores = 1) {
-    getNullPermutation(BSseq = BSseq, idxMatrix1 = idxMatrix1,
+    getNullDistribution_BSmooth.tstat(BSseq = BSseq, idxMatrix1 = idxMatrix1,
                        idxMatrix2 = idxMatrix2, local.correct = TRUE,
                        estimate.var = estimate.var,
                        cutoff = c(-4.6,4.6), stat = "tstat.corrected", maxGap = 300,
                        mc.cores = mc.cores)
 }
+
+
+
 
 subsetDmrs <- function(xx) {
     if(is.null(xx) || is(xx, "try-error"))
@@ -176,17 +195,21 @@ makeIdxMatrix <- function(group1, group2, testIsSymmetric = TRUE, includeUnbalan
         } else {
             idxMatrix1 <- rbind(group1, group2,
                                 combineMat(subsetByMatrix(group1, combinations(6,3)),
-                                           subsetByMatrix(group2, combinations(6,2))))
+                                           subsetByMatrix(group2, combinations(6,3))))
         }
         if(includeUnbalanced) {
-            newMatrix <- combineMat(subsetByMatrix(group1, combinations(6,5)),
+            newMatrix1 <- combineMat(subsetByMatrix(group1, combinations(6,4)),
+                                    subsetByMatrix(group2, combinations(6,2)))
+            newMatrix2 <- combineMat(subsetByMatrix(group1, combinations(6,5)),
                                     as.matrix(group2, ncol = 1))
-            idxMatrix1 <- rbind(idxMatrix1, newMatrix)
+            idxMatrix1 <- rbind(idxMatrix1, newMatrix1, newMatrix2)
         }
         if(includeUnbalanced && !testIsSymmetric) {
-            newMatrix <- combineMat(as.matrix(group1, ncol = 1),
-                                    subsetByMatrix(group2, combinations(6,3)))
-            idxMatrix1 <- rbind(idxMatrix1, newMatrix)
+            newMatrix1 <- combineMat(subsetByMatrix(group1, combinations(6,2)),
+                                     subsetByMatrix(group2, combinations(6,4)))
+            newMatrix2 <- combineMat(as.matrix(group1, ncol = 1),
+                                     subsetByMatrix(group2, combinations(6,5)))
+            idxMatrix1 <- rbind(idxMatrix1, newMatrix1, newMatrix2)
         }
     }
     if(is.null(idxMatrix1))
