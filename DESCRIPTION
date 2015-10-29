@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.7.0
+Version: 1.7.1
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
     sequencing data.
@@ -10,12 +10,13 @@ Depends:
     R (>= 2.15),
     methods,
     BiocGenerics,
-    IRanges (>= 2.1.10),
     GenomicRanges (>= 1.19.6),
     SummarizedExperiment (>= 0.1.1),
     parallel,
-    GenomeInfoDb
+    limma
 Imports:
+    IRanges (>= 2.1.10),
+    GenomeInfoDb,
     scales,
     stats,
     graphics,
@@ -29,7 +30,8 @@ Imports:
 Suggests:
     RUnit,
     bsseqData,
-    BiocStyle
+    BiocStyle,
+    knitr
 Collate:
     hasGRanges.R
     BSseq_class.R
@@ -47,8 +49,12 @@ Collate:
     fisher.R
     permutations.R
     BSmooth.fstat.R
+    BSseqStat_class.R
+    getStats.R
 License: Artistic-2.0
+VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq
-BugReports: https://github.com/kasperdanielhansen/bsseq/issues
 LazyData: yes
+LazyDataCompression: xz
+BugReports: https://github.com/kasperdanielhansen/bsseq/issues
 biocViews: DNAMethylation

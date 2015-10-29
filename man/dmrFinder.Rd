@@ -11,11 +11,11 @@
   (low, high) cutoff.
 }
 \usage{
-dmrFinder(BSseqTstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
+dmrFinder(bstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
   maxGap=300, stat = "tstat.corrected", verbose = TRUE)
 }
 \arguments{
-  \item{BSseqTstat}{An object of class \code{BSseqTstat}.}
+  \item{bstat}{An object of class \code{BSseqStat} or \code{BSseqTstat}.}
   \item{cutoff}{The cutoff of the t-statistics.  This should be a vector
     of length two giving the (low, high) cutoff.  If \code{NULL}, see
     \code{qcutoff}.} 

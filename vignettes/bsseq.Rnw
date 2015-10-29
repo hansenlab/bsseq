@@ -1,8 +1,9 @@
 %\VignetteIndexEntry{The bsseq user's guide}
 %\VignetteDepends{bsseq}
 %\VignettePackage{bsseq}
+%\VignetteEngine{knitr::knitr}
 \documentclass[12pt]{article}
-<<style-Sweave, eval=TRUE, echo=FALSE, results=tex>>=
+<<style-knitr, eval=TRUE, echo=FALSE, results="asis">>=
 BiocStyle::latex()
 @
 \newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
@@ -17,7 +18,7 @@ BiocStyle::latex()
 
 The packages required for this vignette are
 
-<<load,results=hide>>=
+<<load, warning=FALSE, message=FALSE>>=
 library(bsseq)
 @ 
 
@@ -91,7 +92,7 @@ methylated position (DMP) referring to a single loci.
 
 If you use this package, please cite our BSmooth paper:
 
-<<citation,echo=FALSE,results=tex>>=
+<<citation,echo=FALSE,results="asis">>=
 print(citation("bsseq"), style = "latex")
 @ 
 
@@ -329,7 +330,7 @@ combine the evidence from both strands, CpGs on the ``-'' strand needs to have 1
 their position.  A full script showing how these files are used to create \Rcode{BS.chr22} can be
 found in \texttt{inst/scripts/get\_BS.chr22.R} in the \Rpackage{bsseq} package.  The path of this
 file may be found by
-<<locateScript>>=
+<<locateScript,results="hide">>=
 system.file("scripts", "get_BS.chr22.R", package = "bsseq")
 @ 
 
@@ -360,15 +361,14 @@ with the bsseq package'', which also finding DMRs and plotting them.
 
 Fisher's exact tests may be efficiently computed using the function \Rcode{fisherTests}.
 
-Binomial and poisson goodness of fit tests statistics may be computed using
-\Rcode{binomialGoodnessOfFit} and \Rcode{poissonGoodnessOfFit}.
+Binomial and poisson goodness of fit tests statistics may be computed using \Rcode{binomialGoodnessOfFit} and \Rcode{poissonGoodnessOfFit}.
 
 \bibliography{bsseq}
 
 
 \section*{SessionInfo}
 
-<<sessionInfo,results=tex,eval=TRUE,echo=FALSE>>=
+<<sessionInfo,results="asis",eval=TRUE,echo=FALSE>>=
 toLatex(sessionInfo())
 @ 
 
