@@ -119,7 +119,7 @@ read.bismarkCytosineReportRaw <- function(thisfile,
                   strand = out[[3]])
 
     ## Create BSseq instance from 'out'
-    BSseq(gr = gr,
+    BSseq(gr = gr, sampleNames = thisSampleName,
           M = as.matrix(out[[4L]]),
           Cov = as.matrix(out[[4L]] + out[[5L]]))
 }
