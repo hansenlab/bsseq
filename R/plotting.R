@@ -15,7 +15,7 @@ plotAnnoTrack <- function(gr, annoTrack) {
 
 plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addRegions = NULL,
                             annoTrack = NULL, col = NULL, lty = NULL, lwd = NULL, 
-                            BSseqTstat = NULL, stat = "tstat.corrected", stat.col = "black",
+                            BSseqStat = NULL, stat = "tstat.corrected", stat.col = "black",
                             stat.lwd = 1, stat.lty = 1, stat.ylim = c(-8,8),
                             mainWithWidth = TRUE, regionCol = alpha("red", 0.1), addTicks = TRUE,
                             addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE, verbose = TRUE) {
@@ -32,8 +32,8 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     }
     gr <- resize(gr, width = 2*extend + width(gr), fix = "center")
     BSseq <- subsetByOverlaps(BSseq, gr)
-    if(!is.null(BSseqTstat))
-        BSseqTstat <- subsetByOverlaps(BSseqTstat, gr)
+    if(!is.null(BSseqStat))
+        BSseqStat <- subsetByOverlaps(BSseqStat, gr)
     
     if(length(start(BSseq)) == 0)
         stop("No overlap between BSseq data and regions")
@@ -43,7 +43,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     for(ii in seq(along = gr)) {
         if(verbose) cat(sprintf("[plotManyRegions]   plotting region %d (out of %d)\n", ii, nrow(regions)))
         plotRegion(BSseq = BSseq, region = regions[ii,], extend = extend,
-                   col = col, lty = lty, lwd = lwd, main = main[ii], BSseqTstat = BSseqTstat,
+                   col = col, lty = lty, lwd = lwd, main = main[ii], BSseqStat = BSseqStat,
                    stat = stat, stat.col = stat.col, stat.lwd = stat.lwd,
                    stat.lty = stat.lty, stat.ylim = stat.ylim,
                    addRegions = addRegions, regionCol = regionCol, mainWithWidth = mainWithWidth,
@@ -211,7 +211,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
 
 plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions = NULL, annoTrack = NULL,
                        col = NULL, lty = NULL, lwd = NULL,
-                       BSseqTstat = NULL, stat = "tstat.corrected", stat.col = "black",
+                       BSseqStat = NULL, stat = "tstat.corrected", stat.col = "black",
                        stat.lwd = 1, stat.lty = 1, stat.ylim = c(-8,8),
                        mainWithWidth = TRUE,
                        regionCol = alpha("red", 0.1), addTicks = TRUE, addPoints = FALSE,
@@ -219,7 +219,7 @@ plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions =
     
     opar <- par(mar = c(0,4.1,0,0), oma = c(5,0,4,2), mfrow = c(1,1))
     on.exit(par(opar))
-    if(is.null(BSseqTstat))
+    if(is.null(BSseqStat))
         layout(matrix(1:2, ncol = 1), heights = c(2,1))
     else
         layout(matrix(1:3, ncol = 1), heights = c(2,2,1))
@@ -230,16 +230,25 @@ plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions =
                     pointsMinCov = pointsMinCov, highlightMain = highlightMain)
     gr <- .bsGetGr(BSseq, region, extend)
     
-    if(!is.null(BSseqTstat)) {
-        BSseqTstat <- subsetByOverlaps(BSseqTstat, gr)
+    if(!is.null(BSseqStat)) {
+        BSseqStat <- subsetByOverlaps(BSseqStat, gr)
+        if(is(BSseqStat, "BSseqTstat")) {
+            stat.values <- getStats(BSseqStat, what = stat)
+            stat.type <- "tstat"
+        }
+        if(is(BSseqStat, "BSseqStat")) {
+            stat.type <- getStats(BSseqStat, what = "stat.type")
+            if(stat.type == "tstat")
+                stat.values <- getStats(BSseqStat, what = "stat")
+            if(stat.type == "fstat")
+                stat.values <- sqrt(getStats(BSseqStat, what = "stat"))
+        }
         plot(start(gr), 0.5, type = "n", xaxt = "n", yaxt = "n",
-             ylim = stat.ylim, xlim = c(start(gr), end(gr)), xlab = "", ylab = "t-stat")
+             ylim = stat.ylim, xlim = c(start(gr), end(gr)), xlab = "", ylab = stat.type)
         axis(side = 2, at = c(-5,0,5))
         abline(h = 0, col = "grey60")
-        mapply(function(stat, col, lty, lwd) {
-            .bsPlotLines(start(BSseqTstat), BSseqTstat@stats[, stat],
-                         lty = lty, plotRange = c(start(gr), end(gr)), col = col, lwd = lwd)
-        }, stat = stat, col = stat.col, lty = stat.lty, lwd = stat.lwd)
+        .bsPlotLines(start(BSseqStat), stat.values, lty = stat.lty, col = stat.col, lwd = stat.lwd,
+                     plotRange = c(start(gr), end(gr)))
     }
     
     if(!is.null(annoTrack))

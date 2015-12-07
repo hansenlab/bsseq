@@ -136,3 +136,16 @@ localCorrectStat <- function(BSseqStat, threshold = c(-15,15), mc.cores = 1, ver
     BSseqTstat
 }
 
+
+
+fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac) {
+    bstat <- BSmooth.fstat(BSseq = BSseq, design = design, contrasts = contrasts)
+    bstat <- smoothSds(bstat)
+    bstat <- computeStat(bstat)
+    dmrs <- dmrFinder(bstat, cutoff = cutoff)
+    meth <- getMeth(BSseq, dmrs, what = "perRegion")
+    meth <- t(apply(meth, 1, function(xx) tapply(xx, fac, mean)))
+    dmrs <- cbind(dmrs, meth)
+    dmrs <- subset(dmrs, rowMaxes(meth) - rowMins(meth) > 0.1)
+    dmrs
+}
