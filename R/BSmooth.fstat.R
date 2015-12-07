@@ -73,7 +73,7 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
 computeStat <- function(BSseqStat, coef = NULL) {
     stopifnot(is(BSseqStat, "BSseqStat"))
     if(is.null(coef)) {
-        coef <- 1:ncol(BSseqStat$rawTstats)
+        coef <- 1:ncol(getStats(BSseqStat, what = "rawTstats"))
     }
     tstats <- getStats(BSseqStat, what = "rawTstats")[, coef, drop = FALSE]
     tstats <- tstats * getStats(BSseqStat, what = "rawSds") /
