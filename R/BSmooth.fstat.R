@@ -63,7 +63,7 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
                              smoothSd(getStats(BSseqStat, what = "rawSds")[idx], k = k, qSd = qSd)
                          }, mc.cores = mc.cores))
     if("smoothSds" %in% names(getStats(BSseqStat)))
-        BSseqStat@stats[["smoothSds"]] <- stat
+        BSseqStat@stats[["smoothSds"]] <- smoothSds
     else
         BSseqStat@stats <- c(getStats(BSseqStat), list(smoothSds = smoothSds))
     BSseqStat
