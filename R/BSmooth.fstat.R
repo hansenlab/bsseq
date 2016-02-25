@@ -161,5 +161,5 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
     meth <- t(apply(meth, 1, function(xx) tapply(xx, fac, mean)))
     dmrs <- cbind(dmrs, meth)
     dmrs$maxDiff <- rowMaxs(meth) - rowMins(meth)
-    dmrs
+    list(bstat = bstat, dmrs = dmrs, idxMatrix = idxMatrix, nullDist = nullDist)
 }
