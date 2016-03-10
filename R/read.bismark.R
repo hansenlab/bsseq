@@ -13,7 +13,7 @@ read.bismark <- function(files,
     }
     fileType <- match.arg(fileType)
     if (verbose) {
-        message(paste0("Assuming file type is", fileType))
+        message(paste0("Assuming file type is ", fileType))
     }
     ## Process each file
     idxes <- seq_along(files)

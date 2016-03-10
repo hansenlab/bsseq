@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.7.3
+Version: 1.7.6
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
     sequencing data.
@@ -26,7 +26,8 @@ Imports:
     data.table,
     S4Vectors,
     R.utils (>= 2.0.0),
-    matrixStats
+    matrixStats,
+    permute
 Suggests:
     RUnit,
     bsseqData,
