@@ -39,8 +39,10 @@ setMethod("[", "BSseqStat", function(x, i, ...) {
     if(missing(i))
         return(x)
     x@gr <- x@gr[i]
-    x@stats <- lapply(names(x@stats), function(nam) {
-        if(nam %in% c("rawTstats")) {
+    statnames <- names(x@stats)
+    names(statnames) <- statnames
+    x@stats <- lapply(statnames, function(nam) {
+        if(nam %in% c("rawTstats", "modelCoefficients")) {
             stopifnot(is.matrix(x@stats[[nam]]))
             return(x@stats[[nam]][i,,drop=FALSE])
         }

@@ -2,6 +2,14 @@
 \title{bsseq news}
 \encoding{UTF-8}
 
+\section{Version 1.7.x}{
+  \itemize{
+    \item Fixing an error with reading multiple samples aligned with
+    bismark in the format "cytosineReport".
+  }
+}
+
+
 \section{Version 1.5.x}{
   \itemize{
     \item new function strandCollapse for collapsing forward and reverse
