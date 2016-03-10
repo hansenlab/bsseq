@@ -7,7 +7,6 @@
 <<style-knitr, eval=TRUE, echo=FALSE, results="asis">>=
 BiocStyle::latex()
 @
-\newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
 \title{Analyzing WGBS with the bsseq package}
 \author{Kasper Daniel Hansen\\ \texttt{kasperdanielhansen@gmail.com}}
 \date{Modified: June 10, 2015.  Compiled: \today}
@@ -38,10 +37,7 @@ BS.cancer.ex
 pData(BS.cancer.ex)
 @ 
 
-If you use this package, please cite our BSmooth paper
-<<citation,echo=FALSE,results="asis">>=
-print(citation("bsseq"), style = "latex")
-@
+If you use this package, please cite our BSmooth paper \cite{Hansen:2012}.
 
 \section*{Smoothing}
 

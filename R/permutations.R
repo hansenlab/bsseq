@@ -72,6 +72,9 @@ getNullDmrs_BSmooth.tstat <- function(BSseq, idxMatrix1, idxMatrix2, estimate.va
                        mc.cores = mc.cores)
 }
 
+
+
+
 subsetDmrs <- function(xx) {
     if(is.null(xx) || is(xx, "try-error"))
         return(NULL)
@@ -104,6 +107,41 @@ getFWER <- function(null, type = "blocks") {
             out <- sapply(null, function(nulldist) {
                 # any(abs(nulldist$meanDiff) >= meanDiff &
                         # nulldist$width >= width)
+                any(abs(nulldist$areaStat) >= areaStat &
+                        nulldist$width >= width)
+            })
+        }
+        if (type == "dmrs") {
+            out <- sapply(null, function(nulldist) {
+                # any(abs(nulldist$meanDiff) >= meanDiff &
+                #     nulldist$n >= n)
+                any(abs(nulldist$areaStat) >= areaStat &
+                        nulldist$n >= n)
+            })
+        }
+        sum(out)
+    })
+    better
+}
+
+# NOTE: Identical to getFWER() except uses areaStat rather than meanDiff
+#       to compare regions.
+getFWER.fstat <- function(null, type = "blocks") {
+    reference <- null[[1]]
+    null <- null[-1]
+    null <- null[!sapply(null, is.null)]
+    # TODO: Will break if null == list(), which can occur in practice (although
+    #       rarely).
+    better <- sapply(1:nrow(reference), function(ii) {
+        # meanDiff <- abs(reference$meanDiff[ii])
+        areaStat <- abs(reference$areaStat[ii])
+        width <- reference$width[ii]
+        n <- reference$n[ii]
+        if (type == "blocks") {
+            out <- sapply(null, function(nulldist) {
+                ## any(abs(nulldist$meanDiff) >= meanDiff &
+                ## nulldist$width >= width)
+                ## nulldist$width >= width)
                 any(abs(nulldist$areaStat) >= areaStat &
                         nulldist$width >= width)
             })

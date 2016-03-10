@@ -6,7 +6,9 @@
 <<style-knitr, eval=TRUE, echo=FALSE, results="asis">>=
 BiocStyle::latex()
 @
-\newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
+%% \newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
+%% \newcommand{\Rhref}[2]{\href{#1}{#2}}
+
 \title{The bsseq user's guide}
 \author{Kasper Daniel Hansen \\ \texttt{kasperdanielhansen@gmail.com}}
 \date{Modified: June 10, 2015.  Compiled: \today}
@@ -90,11 +92,7 @@ methylated position (DMP) referring to a single loci.
 
 \subsubsection*{Citation}
 
-If you use this package, please cite our BSmooth paper:
-
-<<citation,echo=FALSE,results="asis">>=
-print(citation("bsseq"), style = "latex")
-@ 
+If you use this package, please cite our BSmooth paper \cite{Hansen:2012}.
 
 \section*{Overview}
 
