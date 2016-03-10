@@ -79,7 +79,7 @@ combineList <- function(x, ...) {
         Cov <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "Cov")))
     } else {
         gr <- sort(reduce(do.call(c, unname(lapply(x, granges))), min.gapwidth = 0L))
-        sampleNames <- do.call(c, lapply(x, sampleNames))
+        sampleNames <- do.call(c, unname(lapply(x, sampleNames)))
         M <- matrix(0, ncol = length(sampleNames), nrow = length(gr))
         colnames(M) <- sampleNames
         Cov <- M
