@@ -10,7 +10,7 @@ importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
            "strand", "strand<-", "union", "unique", "updateObject")
 importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
-           "qnorm", "qqplot", "qunif")
+           "qnorm", "qqplot", "qunif", "cov2cor")
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "rect", "rug")
 import(parallel)
