@@ -13,7 +13,7 @@ read.bismark <- function(files,
     }
     fileType <- match.arg(fileType)
     if (verbose) {
-        message(paste0("Assuming file type is", fileType))
+        message(paste0("Assuming file type is ", fileType))
     }
     ## Process each file
     idxes <- seq_along(files)
@@ -119,7 +119,7 @@ read.bismarkCytosineReportRaw <- function(thisfile,
                   strand = out[[3]])
 
     ## Create BSseq instance from 'out'
-    BSseq(gr = gr,
+    BSseq(gr = gr, sampleNames = thisSampleName,
           M = as.matrix(out[[4L]]),
           Cov = as.matrix(out[[4L]] + out[[5L]]))
 }

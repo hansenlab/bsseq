@@ -63,7 +63,7 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
                              smoothSd(getStats(BSseqStat, what = "rawSds")[idx], k = k, qSd = qSd)
                          }, mc.cores = mc.cores))
     if("smoothSds" %in% names(getStats(BSseqStat)))
-        BSseqStat@stats[["smoothSds"]] <- stat
+        BSseqStat@stats[["smoothSds"]] <- smoothSds
     else
         BSseqStat@stats <- c(getStats(BSseqStat), list(smoothSds = smoothSds))
     BSseqStat
@@ -73,7 +73,7 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
 computeStat <- function(BSseqStat, coef = NULL) {
     stopifnot(is(BSseqStat, "BSseqStat"))
     if(is.null(coef)) {
-        coef <- 1:ncol(BSseqStat$rawTstats)
+        coef <- 1:ncol(getStats(BSseqStat, what = "rawTstats"))
     }
     tstats <- getStats(BSseqStat, what = "rawTstats")[, coef, drop = FALSE]
     tstats <- tstats * getStats(BSseqStat, what = "rawSds") /
@@ -134,5 +134,33 @@ localCorrectStat <- function(BSseqStat, threshold = c(-15,15), mc.cores = 1, ver
                               "tstat.corrected" = stat.corrected)
     BSseqTstat@parameters$local.local <- TRUE
     BSseqTstat
+}
+
+fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
+                           coef = NULL, maxGap.sd = 10 ^ 8, maxGap.dmr = 300,
+                           mc.cores = 1) {
+    bstat <- BSmooth.fstat(BSseq = BSseq, design = design,
+                           contrasts = contrasts,
+                           returnModelCoefficients = TRUE)
+    bstat <- smoothSds(bstat)
+    bstat <- computeStat(bstat, coef = coef)
+    dmrs <- dmrFinder(bstat, cutoff = cutoff)
+    idxMatrix <- permuteAll(nperm, design)
+    nullDist <- getNullDistribution_BSmooth.fstat(BSseq = BSseq,
+                                                  idxMatrix = idxMatrix,
+                                                  design = design,
+                                                  contrasts = contrasts,
+                                                  coef = coef,
+                                                  cutoff = cutoff,
+                                                  maxGap.sd = maxGap.sd,
+                                                  maxGap.dmr = maxGap.dmr,
+                                                  mc.cores = mc.cores)
+    fwer <- getFWER.fstat(null = c(list(dmrs), nullDist), type = "dmrs")
+    dmrs$fwer <- fwer
+    meth <- getMeth(BSseq, dmrs, what = "perRegion")
+    meth <- t(apply(meth, 1, function(xx) tapply(xx, fac, mean)))
+    dmrs <- cbind(dmrs, meth)
+    dmrs$maxDiff <- rowMaxs(meth) - rowMins(meth)
+    list(bstat = bstat, dmrs = dmrs, idxMatrix = idxMatrix, nullDist = nullDist)
 }
 

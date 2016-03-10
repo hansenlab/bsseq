@@ -19,12 +19,22 @@ getNullDistribution_BSmooth.tstat <- function(BSseq, idxMatrix1, idxMatrix2,
     nullDist
 }
 
-getNullDistribution_BSmooth.fstat <- function(BSseq, idxMatrix, design, contrasts,
-                                              coef = NULL, cutoff, maxGap.sd, maxGap.dmr, mc.cores = 1) {
-    message(sprintf("[getNullDistribution_BSmooth.fstat] performing %d permutations\n", nrow(idxMatrix)))
-    nullDist <- mclapply(1:nrow(idxMatrix), function(ii) {
+getNullDistribution_BSmooth.fstat <- function(BSseq,
+                                              idxMatrix,
+                                              design, contrasts,
+                                              coef = NULL, cutoff,
+                                              maxGap.sd, maxGap.dmr,
+                                              mc.cores = 1) {
+
+    message(sprintf("[getNullDistribution_BSmooth.fstat] performing %d permutations\n",
+                    nrow(idxMatrix)))
+    # NOTE: Using mc.preschedule = TRUE
+    nullDist <- mclapply(seq_len(nrow(idxMatrix)), function(ii) {
         ptime1 <- proc.time()
-        bstat <- BSmooth.fstat(BSseq[, idxMatrix[ii,]], design = design, contrasts = contrasts)
+        # NOTE: More efficient to permute design matrix using idxMatrix[ii, ] than
+        #       permute the raw data with BSseq[, idxMatrix[ii, ]]
+        bstat <- BSmooth.fstat(BSseq, design = design[idxMatrix[ii, ], ],
+                               contrasts = contrasts)
         bstat <- smoothSds(bstat, maxGap = maxGap.sd)
         bstat <- computeStat(bstat, coef = coef)
         dmrs0 <- dmrFinder(bstat, cutoff = cutoff, maxGap = maxGap.dmr)
@@ -32,8 +42,16 @@ getNullDistribution_BSmooth.fstat <- function(BSseq, idxMatrix, design, contrast
         stime <- (ptime2 - ptime1)[3]
         message(sprintf("[getNullDistribution_BSmooth.fstat] completing permutation %d in %.1f sec\n", ii, stime))
         dmrs0
-    }, mc.cores = min(nrow(idxMatrix), mc.cores), mc.preschedule = FALSE)
+    }, mc.cores = min(nrow(idxMatrix), mc.cores), mc.preschedule = TRUE)
     nullDist
+}
+
+permuteAll <- function(nperm, design) {
+    message(sprintf("[permuteAll] performing %d unrestricted permutations of the design matrix\n", nperm))
+
+    CTRL <- how(nperm = nperm)
+    # NOTE: shuffleSet() returns a nperm * nrow(design) matrix of permutations
+    idxMatrix <- shuffleSet(n = nrow(design), control = CTRL)
 }
 
 getNullBlocks_BSmooth.tstat <- function(BSseq, idxMatrix1, idxMatrix2, estimate.var = "same",
@@ -53,9 +71,6 @@ getNullDmrs_BSmooth.tstat <- function(BSseq, idxMatrix1, idxMatrix2, estimate.va
                        cutoff = c(-4.6,4.6), stat = "tstat.corrected", maxGap = 300,
                        mc.cores = mc.cores)
 }
-
-
-
 
 subsetDmrs <- function(xx) {
     if(is.null(xx) || is(xx, "try-error"))
@@ -81,26 +96,66 @@ getFWER <- function(null, type = "blocks") {
     null <- null[-1]
     null <- null[!sapply(null, is.null)]
     better <- sapply(1:nrow(reference), function(ii) {
-        meanDiff <- abs(reference$meanDiff[ii])
+        # meanDiff <- abs(reference$meanDiff[ii])
+        areaStat <- abs(reference$areaStat[ii])
         width <- reference$width[ii]
         n <- reference$n[ii]
-        if(type == "blocks") {
+        if (type == "blocks") {
             out <- sapply(null, function(nulldist) {
-                any(abs(nulldist$meanDiff) >= meanDiff &
+                # any(abs(nulldist$meanDiff) >= meanDiff &
+                        # nulldist$width >= width)
+                any(abs(nulldist$areaStat) >= areaStat &
                         nulldist$width >= width)
             })
         }
-        if(type == "dmrs") {
+        if (type == "dmrs") {
             out <- sapply(null, function(nulldist) {
-                any(abs(nulldist$meanDiff) >= meanDiff &
-                    nulldist$n >= n)
+                # any(abs(nulldist$meanDiff) >= meanDiff &
+                #     nulldist$n >= n)
+                any(abs(nulldist$areaStat) >= areaStat &
+                        nulldist$n >= n)
             })
         }
         sum(out)
     })
     better
 }
-       
+
+# NOTE: Identical to getFWER() except uses areaStat rather than meanDiff
+#       to compare regions.
+getFWER.fstat <- function(null, type = "blocks") {
+    reference <- null[[1]]
+    null <- null[-1]
+    null <- null[!sapply(null, is.null)]
+    # TODO: Will break if null == list(), which can occur in practice (although
+    #       rarely).
+    better <- sapply(1:nrow(reference), function(ii) {
+        # meanDiff <- abs(reference$meanDiff[ii])
+        areaStat <- abs(reference$areaStat[ii])
+        width <- reference$width[ii]
+        n <- reference$n[ii]
+        if (type == "blocks") {
+            out <- sapply(null, function(nulldist) {
+                # any(abs(nulldist$meanDiff) >= meanDiff &
+                # nulldist$width >= width)
+                any(abs(nulldist$areaStat) >= areaStat &
+                        nulldist$width >= width)
+            })
+        }
+        if (type == "dmrs") {
+            out <- sapply(null, function(nulldist) {
+                # any(abs(nulldist$meanDiff) >= meanDiff &
+                #     nulldist$n >= n)
+                any(abs(nulldist$areaStat) >= areaStat &
+                        nulldist$n >= n)
+            })
+        }
+        sum(out)
+    })
+    better
+}
+
+# TODO: Simplify makeIdxMatrix() by using permute package
 makeIdxMatrix <- function(group1, group2, testIsSymmetric = TRUE, includeUnbalanced = TRUE) {
     groupBoth <- c(group1, group2)
     idxMatrix1 <- NULL

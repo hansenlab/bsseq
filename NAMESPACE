@@ -15,7 +15,7 @@ importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "rect", "rug")
 import(parallel)
 importFrom(locfit, "locfit", "lp")
-importFrom(matrixStats, "rowSds", "rowVars")
+importFrom(matrixStats, "rowSds", "rowVars", "rowMaxs", "rowMins")
 import(IRanges)
 import(GenomicRanges)
 import(SummarizedExperiment)
@@ -32,6 +32,7 @@ importFrom(gtools, "combinations")
 importFrom(data.table, "fread", "setnames")
 importFrom(R.utils, "isGzipped", "gunzip")
 import(limma)
+importFrom(permute, "shuffleSet", "how")
 
 ##
 ## Exporting
