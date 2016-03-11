@@ -49,7 +49,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
     if(estimate.var == "paired")
         stopifnot(length(group1) == length(group2))
     
-    if(any(rowSums(getCoverage(BSseq)[, c(group1, group2)]) == 0))
+    if(any(rowSums(getCoverage(BSseq), cols = c(group1, group2)) == 0))
         warning("Computing t-statistics at locations where there is no data; consider subsetting the 'BSseq' object first")
     
     if(is.null(maxGap))
@@ -68,8 +68,8 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
     ptime1 <- proc.time()
     allPs <- getMeth(BSseq, type = "smooth", what = "perBase",
                      confint = FALSE)
-    group1.means <- rowMeans(allPs[, group1, drop = FALSE], na.rm = TRUE)
-    group2.means <- rowMeans(allPs[, group2, drop = FALSE], na.rm = TRUE)
+    group1.means <- rowMeans(allPs, cols = group1, na.rm = TRUE)
+    group2.means <- rowMeans(allPs, cols = group2, na.rm = TRUE)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
@@ -78,7 +78,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
     ptime1 <- proc.time()
     switch(estimate.var,
            "group2" = {
-               rawSds <- rowSds(allPs[, group2, drop = FALSE], na.rm = TRUE)
+               rawSds <- rowSds(allPs, cols = group2, na.rm = TRUE)
                smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
                    smoothSd(rawSds[idx], k = k)
                }, mc.cores = mc.cores))
@@ -86,9 +86,9 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
                tstat.sd <- smoothSds * scale
            },
            "same" = {
-               rawSds <- sqrt( ((length(group1) - 1) * rowVars(allPs[, group1, drop = FALSE]) +
-                                (length(group2) - 1) * rowVars(allPs[, group2, drop = FALSE])) /
-                              (length(group1) + length(group2) - 2))
+               rawSds <- sqrt( ((length(group1) - 1) * rowVars(allPs, cols = group1) +
+                                (length(group2) - 1) * rowVars(allPs, cols = group2)) /
+                               (length(group1) + length(group2) - 2))
                smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
                    smoothSd(rawSds[idx], k = k)
                }, mc.cores = mc.cores))
@@ -96,7 +96,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
                tstat.sd <- smoothSds * scale
            },
            "paired" = {
-               rawSds <- rowSds(allPs[, group1, drop = FALSE] - allPs[, group2, drop = FALSE])
+               rawSds <- rowSds(allPs, group1, drop = FALSE] - allPs[, group2, drop = FALSE])
                smoothSds <- do.call(c, mclapply(clusterIdx, function(idx) {
                    smoothSd(rawSds[idx], k = k)
                }, mc.cores = mc.cores))
