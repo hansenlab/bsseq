@@ -11,10 +11,10 @@ collapseBSseq <- function(BSseq, columns) {
         columns.idx <- match(names(columns), sampleNames(BSseq))
     sp <- split(columns.idx, columns)
     M <- do.call(cbind, lapply(sp, function(ss) {
-        rowSums(getBSseq(BSseq, "M"), cols = ss)
+        rowSums(getBSseq(BSseq, "M")[, ss, drop = FALSE])
     }))
     Cov <- do.call(cbind, lapply(sp, function(ss) {
-        rowSums(getBSseq(BSseq, "Cov"), cols = ss)
+        rowSums(getBSseq(BSseq, "Cov")[, ss, drop = FALSE])
     }))
     BSseq(gr = getBSseq(BSseq, "gr"), M = M, Cov = Cov, sampleNames = names(sp))
 }

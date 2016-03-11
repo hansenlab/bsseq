@@ -26,7 +26,7 @@ Imports:
     data.table,
     S4Vectors,
     R.utils (>= 2.0.0),
-    matrixStats (>= 0.50.0),
+    matrixStats,
     permute
 Suggests:
     RUnit,
