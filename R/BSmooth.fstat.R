@@ -163,3 +163,4 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
     dmrs$maxDiff <- rowMaxs(meth) - rowMins(meth)
     list(bstat = bstat, dmrs = dmrs, idxMatrix = idxMatrix, nullDist = nullDist)
 }
+

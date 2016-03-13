@@ -6,7 +6,9 @@
 <<style-knitr, eval=TRUE, echo=FALSE, results="asis">>=
 BiocStyle::latex()
 @
-\newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
+%% \newcommand{\bold}[1]{\textbf{#1}} % Fix for R bibentry
+%% \newcommand{\Rhref}[2]{\href{#1}{#2}}
+
 \title{The bsseq user's guide}
 \author{Kasper Daniel Hansen \\ \texttt{kasperdanielhansen@gmail.com}}
 \date{Modified: June 10, 2015.  Compiled: \today}
@@ -90,11 +92,7 @@ methylated position (DMP) referring to a single loci.
 
 \subsubsection*{Citation}
 
-If you use this package, please cite our BSmooth paper:
-
-<<citation,echo=FALSE,results="asis">>=
-print(citation("bsseq"), style = "latex")
-@ 
+If you use this package, please cite our BSmooth paper \cite{Hansen:2012}.
 
 \section*{Overview}
 
@@ -160,7 +158,7 @@ We also allow for easy computation of Fisher's exact test for each loci, using t
 
 Objects of class \Rcode{BSseq} contains a \Rcode{GRanges} object with the genomic locations.  This
 \Rcode{GRanges} object can be obtained by \Rcode{granges}.  A number of standard \Rcode{GRanges}
-methods works directly on the \R.code{BSseq} object, such as \Rcode{start}, \Rcode{end},
+methods works directly on the \Rcode{BSseq} object, such as \Rcode{start}, \Rcode{end},
 \Rcode{seqnames} (chromosome names) etc.
 
 These objects also contains a \Rcode{phenoData} object for sample pheno data.  Useful methods are
