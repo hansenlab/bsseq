@@ -158,7 +158,7 @@ We also allow for easy computation of Fisher's exact test for each loci, using t
 
 Objects of class \Rcode{BSseq} contains a \Rcode{GRanges} object with the genomic locations.  This
 \Rcode{GRanges} object can be obtained by \Rcode{granges}.  A number of standard \Rcode{GRanges}
-methods works directly on the \R.code{BSseq} object, such as \Rcode{start}, \Rcode{end},
+methods works directly on the \Rcode{BSseq} object, such as \Rcode{start}, \Rcode{end},
 \Rcode{seqnames} (chromosome names) etc.
 
 These objects also contains a \Rcode{phenoData} object for sample pheno data.  Useful methods are
