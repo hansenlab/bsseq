@@ -164,3 +164,37 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
     list(bstat = bstat, dmrs = dmrs, idxMatrix = idxMatrix, nullDist = nullDist)
 }
 
+fstat.comparisons.pipeline <- function(BSseq, design, contrasts, cutoff, fac,
+                                       verbose = TRUE) {
+    bstat <- BSmooth.fstat(BSseq = BSseq,
+                           design = design,
+                           contrasts = contrasts,
+                           returnModelCoefficients = TRUE,
+                           verbose = verbose)
+    bstat <- smoothSds(bstat, verbose = verbose)
+    # NOTE: Want to keep the bstat object corresponding to the original fstat
+    #       and not that from the last t-tsts in the following lapply()
+    bstat_f <- bstat
+    if (verbose) {
+        cat(paste0("[fstat.comparisons.pipeline] making ", ncol(contrasts),
+                   " comparisons ... \n"))
+    }
+    l <- lapply(seq_len(ncol(contrasts)), function(coef) {
+        if (verbose) {
+            cat(paste0("[fstat.comparisons.pipeline] ",
+                       colnames(contrasts)[coef], "\n"))
+        }
+        bstat <- computeStat(bstat, coef = coef)
+        dmrs <- dmrFinder(bstat, cutoff = cutoff, verbose = FALSE)
+        if (!is.null(dmrs)) {
+            meth <- getMeth(BSseq, dmrs, what = "perRegion")
+            meth <- t(apply(meth, 1, function(xx) tapply(xx, fac, mean)))
+            dmrs <- cbind(dmrs, meth)
+            dmrs$maxDiff <- rowMaxs(meth) - rowMins(meth)
+        }
+        dmrs
+    })
+    names(l) <- colnames(contrasts)
+    list(bstat = bstat, dmrs = l)
+}
+
