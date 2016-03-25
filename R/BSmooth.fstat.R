@@ -165,7 +165,6 @@ fstat.comparisons.pipeline <- function(BSseq, design, contrasts, cutoff, fac,
     bstat <- BSmooth.fstat(BSseq = BSseq,
                            design = design,
                            contrasts = contrasts,
-                           returnModelCoefficients = TRUE,
                            verbose = verbose)
     bstat <- smoothSds(bstat, verbose = verbose)
     # NOTE: Want to keep the bstat object corresponding to the original fstat
