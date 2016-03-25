@@ -1,10 +1,10 @@
-BSmooth.fstat <- function(BSseq, design, contrasts, returnModelCoefficients = FALSE, verbose = TRUE){
+BSmooth.fstat <- function(BSseq, design, contrasts, verbose = TRUE){
     stopifnot(is(BSseq, "BSseq"))
     stopifnot(hasBeenSmoothed(BSseq))
-        
+
     ## if(any(rowSums(getCoverage(BSseq)[, unlist(groups)]) == 0))
     ##     warning("Computing t-statistics at locations where there is no data; consider subsetting the 'BSseq' object first")
-    
+
     if(verbose) cat("[BSmooth.fstat] fitting linear models ... ")
     ptime1 <- proc.time()
     allPs <- getMeth(BSseq, type = "smooth", what = "perBase",
@@ -30,9 +30,6 @@ BSmooth.fstat <- function(BSseq, design, contrasts, returnModelCoefficients = FA
     stats <- list(rawSds = rawSds,
                   cor.coefficients = cor.coefficients,
                   rawTstats = rawTstats)
-    if(returnModelCoefficients) {
-        stats$modelCoefficients <- fit$coefficients
-    }
     out <- BSseqStat(gr = granges(BSseq),
                      stats = stats, parameters = parameters)
     out
@@ -140,8 +137,7 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
                            coef = NULL, maxGap.sd = 10 ^ 8, maxGap.dmr = 300,
                            mc.cores = 1) {
     bstat <- BSmooth.fstat(BSseq = BSseq, design = design,
-                           contrasts = contrasts,
-                           returnModelCoefficients = TRUE)
+                           contrasts = contrasts)
     bstat <- smoothSds(bstat)
     bstat <- computeStat(bstat, coef = coef)
     dmrs <- dmrFinder(bstat, cutoff = cutoff)
@@ -169,7 +165,6 @@ fstat.comparisons.pipeline <- function(BSseq, design, contrasts, cutoff, fac,
     bstat <- BSmooth.fstat(BSseq = BSseq,
                            design = design,
                            contrasts = contrasts,
-                           returnModelCoefficients = TRUE,
                            verbose = verbose)
     bstat <- smoothSds(bstat, verbose = verbose)
     # NOTE: Want to keep the bstat object corresponding to the original fstat
