@@ -11,6 +11,7 @@
              rmZeroCov = FALSE,
              strandCollapse = TRUE,
              fileType = c("cov", "oldBedGraph", "cytosineReport"),
+             mc.cores = 1,
              verbose = TRUE)
 }
 \arguments{
@@ -22,8 +23,13 @@
     all samples be removed. This will result in a much smaller object if
     the data originates from (targeted) capture bisulfite sequencing.}
   \item{strandCollapse}{Should strand-symmetric methylation loci, e.g., CpGs,
-    be collapsed across strands.}
+    be collapsed across strands. This option is only available if
+    \code{fileType = "cytosineReport"} since the other file types do not
+    contain the necessary strand information.}
   \item{fileType}{The format of the input file; see Note for details.}
+  \item{mc.cores}{The number of cores used.  Note that setting
+    \code{mc.cores} to a value greater than 1 is not  supported on MS
+    Windows, see the help page for \code{mclapply}.}
   \item{verbose}{Make the function verbose.}
 }
 \note{
@@ -96,7 +102,7 @@
   bismarkBSseq <- read.bismark(files = infile,
                                sampleNames = "test_data",
                                rmZeroCov = FALSE,
-                               strandCollapse = TRUE,
+                               strandCollapse = FALSE,
                                fileType = "cov",
                                verbose = TRUE)
   bismarkBSseq
