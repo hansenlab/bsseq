@@ -9,6 +9,15 @@ test_read.bismark_coverage <- function() {
                           fileType = "cov",
                           verbose = FALSE)
     checkTrue(is(bsseq, "BSseq"))
+    # Regression check
+    # Should not fail if sampleNames have names()
+    bsseq <- read.bismark(files = infile,
+                          sampleNames = c(test = "test_data"),
+                          rmZeroCov = FALSE,
+                          strandCollapse = FALSE,
+                          fileType = "cov",
+                          verbose = FALSE)
+    checkTrue(is(bsseq, "BSseq"))
 
     # Should also work because the "cov" fileType is the same as the
     # "oldBedGraph" fileType

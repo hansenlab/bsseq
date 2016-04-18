@@ -3,6 +3,7 @@ read.bismark <- function(files,
                          rmZeroCov = FALSE,
                          strandCollapse = TRUE,
                          fileType = c("cov", "oldBedGraph", "cytosineReport"),
+                         mc.cores = 1,
                          verbose = TRUE) {
     ## Argument checking
     if (anyDuplicated(files)) {
@@ -15,10 +16,18 @@ read.bismark <- function(files,
     if (verbose) {
         message(paste0("Assuming file type is ", fileType))
     }
+    if (strandCollapse && (fileType == "cov" || fileType == "oldBedGraph")) {
+        stop("'strandCollapse' must be 'FALSE' if 'fileType' is '", fileType, "'")
+    }
+    ## SummarizedExperiment validator makes calls to identical() that will fail
+    ## due to how sampleNames are propagated sometimes with and without names().
+    ## To make life simpler, we simply strip the names()
+    sampleNames <- unname(sampleNames)
+
     ## Process each file
     idxes <- seq_along(files)
     names(idxes) <- sampleNames
-    allOut <- lapply(idxes, function(ii) {
+    allOut <- mclapply(idxes, function(ii) {
         if (verbose) {
             cat(sprintf("[read.bismark] Reading file '%s' ... ", files[ii]))
         }
@@ -33,7 +42,7 @@ read.bismark <- function(files,
                                                  rmZeroCov = rmZeroCov,
                                                  keepContext = FALSE)
         }
-        if (strandCollapse && !all(runValue(strand(out)) == "*")) {
+        if (strandCollapse) {
             out <- strandCollapse(out)
         }
         ptime2 <- proc.time()
@@ -42,7 +51,7 @@ read.bismark <- function(files,
             cat(sprintf("done in %.1f secs\n", stime))
         }
         out
-    })
+    }, mc.cores = mc.cores)
 
     if (verbose) {
         cat(sprintf("[read.bismark] Joining samples ... "))
@@ -121,5 +130,6 @@ read.bismarkCytosineReportRaw <- function(thisfile,
     ## Create BSseq instance from 'out'
     BSseq(gr = gr, sampleNames = thisSampleName,
           M = as.matrix(out[[4L]]),
-          Cov = as.matrix(out[[4L]] + out[[5L]]))
+          Cov = as.matrix(out[[4L]] + out[[5L]]),
+          rmZeroCov = rmZeroCov)
 }
