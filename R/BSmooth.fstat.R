@@ -140,7 +140,7 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
                            contrasts = contrasts)
     bstat <- smoothSds(bstat)
     bstat <- computeStat(bstat, coef = coef)
-    dmrs <- dmrFinder(bstat, cutoff = cutoff)
+    dmrs <- dmrFinder(bstat, cutoff = cutoff, maxGap = maxGap.dmr)
     idxMatrix <- permuteAll(nperm, design)
     nullDist <- getNullDistribution_BSmooth.fstat(BSseq = BSseq,
                                                   idxMatrix = idxMatrix,
@@ -161,12 +161,13 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
 }
 
 fstat.comparisons.pipeline <- function(BSseq, design, contrasts, cutoff, fac,
+                                       maxGap.sd = 10 ^ 8, maxGap.dmr = 300,
                                        verbose = TRUE) {
     bstat <- BSmooth.fstat(BSseq = BSseq,
                            design = design,
                            contrasts = contrasts,
                            verbose = verbose)
-    bstat <- smoothSds(bstat, verbose = verbose)
+    bstat <- smoothSds(bstat, maxGap = maxGap.sd, verbose = verbose)
     # NOTE: Want to keep the bstat object corresponding to the original fstat
     #       and not that from the last t-tsts in the following lapply()
     bstat_f <- bstat
@@ -180,7 +181,8 @@ fstat.comparisons.pipeline <- function(BSseq, design, contrasts, cutoff, fac,
                        colnames(contrasts)[coef], "\n"))
         }
         bstat <- computeStat(bstat, coef = coef)
-        dmrs <- dmrFinder(bstat, cutoff = cutoff, verbose = FALSE)
+        dmrs <- dmrFinder(bstat, cutoff = cutoff, maxGap = maxGap.dmr,
+                          verbose = verbose)
         if (!is.null(dmrs)) {
             meth <- getMeth(BSseq, dmrs, what = "perRegion")
             meth <- t(apply(meth, 1, function(xx) tapply(xx, fac, mean)))
