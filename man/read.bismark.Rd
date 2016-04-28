@@ -62,7 +62,7 @@
   There is no standard file extension for this file. The "\code{C-context}" and
   "\code{trinucleotide context}" columns are not currently used by bsseq.
 
-  The following is an incomplete list of issues to be aware of when using
+  The following is a list of some issues to be aware of when using
   output from Bismark's methylation extractor:
 
   \itemize{
@@ -81,7 +81,9 @@
     Furthermore, the default co-ordinate system varies by version of Bismark.
     bsseq makes no assumptions about the basis of the genomic co-ordinates and
     it is left to the user to ensure that the appropriate basis is used in the
-    analysis of their data.
+    analysis of their data. Since Bioconductor packages and
+    \code{\linkS4class{GRanges}} use one-based co-ordinates, it
+    is recommended that your Bismark files are also one-based.
   }
 }
 \value{
