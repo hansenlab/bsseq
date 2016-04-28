@@ -66,7 +66,8 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
     BSseqStat
 }
 
-
+# Quieten R CMD check
+globalVariables("tstat")
 computeStat <- function(BSseqStat, coef = NULL) {
     stopifnot(is(BSseqStat, "BSseqStat"))
     if(is.null(coef)) {
