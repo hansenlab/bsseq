@@ -54,10 +54,11 @@
     Kasper Daniel Hansen \email{khansen@jhsph.edu}
 }
 \seealso{
-    The package vignette(s).  \code{\linkS4class{hasGRanges}} for accessing
-    the genomic locations.  \code{\link{BSmooth.fstat}} for a function
-    that objects of class \code{BSseqStat}, and \code{\link{dmrFinder}}
-    for a function that computes DMRs based on the statistics.  Also see
-    the mpre specialised \code{\linkS4class{BSseqTstat}}.
+    \code{\linkS4class{hasGRanges}} for accessing the genomic locations.
+    \code{\link{BSmooth.fstat}} for a function
+    that returns objects of class \code{BSseqStat}, and \code{\link{smoothSds}},
+    \code{\link{computeStat}} and \code{\link{dmrFinder}}
+    for functions that operate based on these statistics.  Also see
+    the more specialised \code{\linkS4class{BSseqTstat}}.
 }
 \keyword{classes}
