@@ -1,10 +1,10 @@
-BSmooth.fstat <- function(BSseq, design, contrasts, returnModelCoefficients = FALSE, verbose = TRUE){
+BSmooth.fstat <- function(BSseq, design, contrasts, verbose = TRUE){
     stopifnot(is(BSseq, "BSseq"))
     stopifnot(hasBeenSmoothed(BSseq))
-        
+
     ## if(any(rowSums(getCoverage(BSseq)[, unlist(groups)]) == 0))
     ##     warning("Computing t-statistics at locations where there is no data; consider subsetting the 'BSseq' object first")
-    
+
     if(verbose) cat("[BSmooth.fstat] fitting linear models ... ")
     ptime1 <- proc.time()
     allPs <- getMeth(BSseq, type = "smooth", what = "perBase",
@@ -30,9 +30,6 @@ BSmooth.fstat <- function(BSseq, design, contrasts, returnModelCoefficients = FA
     stats <- list(rawSds = rawSds,
                   cor.coefficients = cor.coefficients,
                   rawTstats = rawTstats)
-    if(returnModelCoefficients) {
-        stats$modelCoefficients <- fit$coefficients
-    }
     out <- BSseqStat(gr = granges(BSseq),
                      stats = stats, parameters = parameters)
     out
@@ -69,7 +66,8 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
     BSseqStat
 }
 
-
+# Quieten R CMD check
+globalVariables("tstat")
 computeStat <- function(BSseqStat, coef = NULL) {
     stopifnot(is(BSseqStat, "BSseqStat"))
     if(is.null(coef)) {
@@ -140,11 +138,10 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
                            coef = NULL, maxGap.sd = 10 ^ 8, maxGap.dmr = 300,
                            mc.cores = 1) {
     bstat <- BSmooth.fstat(BSseq = BSseq, design = design,
-                           contrasts = contrasts,
-                           returnModelCoefficients = TRUE)
+                           contrasts = contrasts)
     bstat <- smoothSds(bstat)
     bstat <- computeStat(bstat, coef = coef)
-    dmrs <- dmrFinder(bstat, cutoff = cutoff)
+    dmrs <- dmrFinder(bstat, cutoff = cutoff, maxGap = maxGap.dmr)
     idxMatrix <- permuteAll(nperm, design)
     nullDist <- getNullDistribution_BSmooth.fstat(BSseq = BSseq,
                                                   idxMatrix = idxMatrix,
@@ -162,5 +159,40 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
     dmrs <- cbind(dmrs, meth)
     dmrs$maxDiff <- rowMaxs(meth) - rowMins(meth)
     list(bstat = bstat, dmrs = dmrs, idxMatrix = idxMatrix, nullDist = nullDist)
+}
+
+fstat.comparisons.pipeline <- function(BSseq, design, contrasts, cutoff, fac,
+                                       maxGap.sd = 10 ^ 8, maxGap.dmr = 300,
+                                       verbose = TRUE) {
+    bstat <- BSmooth.fstat(BSseq = BSseq,
+                           design = design,
+                           contrasts = contrasts,
+                           verbose = verbose)
+    bstat <- smoothSds(bstat, maxGap = maxGap.sd, verbose = verbose)
+    # NOTE: Want to keep the bstat object corresponding to the original fstat
+    #       and not that from the last t-tsts in the following lapply()
+    bstat_f <- bstat
+    if (verbose) {
+        cat(paste0("[fstat.comparisons.pipeline] making ", ncol(contrasts),
+                   " comparisons ... \n"))
+    }
+    l <- lapply(seq_len(ncol(contrasts)), function(coef) {
+        if (verbose) {
+            cat(paste0("[fstat.comparisons.pipeline] ",
+                       colnames(contrasts)[coef], "\n"))
+        }
+        bstat <- computeStat(bstat, coef = coef)
+        dmrs <- dmrFinder(bstat, cutoff = cutoff, maxGap = maxGap.dmr,
+                          verbose = verbose)
+        if (!is.null(dmrs)) {
+            meth <- getMeth(BSseq, dmrs, what = "perRegion")
+            meth <- t(apply(meth, 1, function(xx) tapply(xx, fac, mean)))
+            dmrs <- cbind(dmrs, meth)
+            dmrs$maxDiff <- rowMaxs(meth) - rowMins(meth)
+        }
+        dmrs
+    })
+    names(l) <- colnames(contrasts)
+    list(bstat = bstat, dmrs = l)
 }
 
