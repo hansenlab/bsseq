@@ -1,33 +1,12 @@
 language: r
-sudo: required
-
-# Choose your operating system(s) (default: linux)
-os:
-  - linux
-  - osx
-
-# Bioconductor-specific stuff. If targetting bioc-devel then need to use
-# "bioc_use_devel: true", otherwise remove or comment-out this line.
-# TODO: Should --timings be added to r_check_args to mimic BioC build machines?
+r:
+  - devel
+sudo: false
+cache: packages
 bioc_required: true
-bioc_use_devel: true
-# On CRAN all warnings are treated as errors; this is not true on Bioconductor.
 warnings_are_errors: false
-
-# Need this if also using covr to get code coverage
+# Used for code coverage testing with covr and codecov
 r_github_packages:
   - jimhester/covr
 after_success:
   - Rscript -e 'covr::codecov()'
-
-# bsseq-specific stuff
-r_build_args: "--no-build-vignettes --no-manual"
-# TODO: Travis is reporting an error when checking the vignette, hence the
-# inclusion of --no-vignettes in r_check_args
-r_check_args: "--no-vignettes"
-# Must 'manually' install packages in SUGGESTS in order to run full tests
-r_binary_packages:
-  - RUnit
-bioc_packages:
-  - bsseqData
-  - BiocStyle

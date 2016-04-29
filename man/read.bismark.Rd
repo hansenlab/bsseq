@@ -11,6 +11,7 @@
              rmZeroCov = FALSE,
              strandCollapse = TRUE,
              fileType = c("cov", "oldBedGraph", "cytosineReport"),
+             mc.cores = 1,
              verbose = TRUE)
 }
 \arguments{
@@ -22,8 +23,13 @@
     all samples be removed. This will result in a much smaller object if
     the data originates from (targeted) capture bisulfite sequencing.}
   \item{strandCollapse}{Should strand-symmetric methylation loci, e.g., CpGs,
-    be collapsed across strands.}
+    be collapsed across strands. This option is only available if
+    \code{fileType = "cytosineReport"} since the other file types do not
+    contain the necessary strand information.}
   \item{fileType}{The format of the input file; see Note for details.}
+  \item{mc.cores}{The number of cores used.  Note that setting
+    \code{mc.cores} to a value greater than 1 is not  supported on MS
+    Windows, see the help page for \code{mclapply}.}
   \item{verbose}{Make the function verbose.}
 }
 \note{
@@ -56,7 +62,7 @@
   There is no standard file extension for this file. The "\code{C-context}" and
   "\code{trinucleotide context}" columns are not currently used by bsseq.
 
-  The following is an incomplete list of issues to be aware of when using
+  The following is a list of some issues to be aware of when using
   output from Bismark's methylation extractor:
 
   \itemize{
@@ -75,7 +81,9 @@
     Furthermore, the default co-ordinate system varies by version of Bismark.
     bsseq makes no assumptions about the basis of the genomic co-ordinates and
     it is left to the user to ensure that the appropriate basis is used in the
-    analysis of their data.
+    analysis of their data. Since Bioconductor packages and
+    \code{\linkS4class{GRanges}} use one-based co-ordinates, it
+    is recommended that your Bismark files are also one-based.
   }
 }
 \value{
@@ -96,7 +104,7 @@
   bismarkBSseq <- read.bismark(files = infile,
                                sampleNames = "test_data",
                                rmZeroCov = FALSE,
-                               strandCollapse = TRUE,
+                               strandCollapse = FALSE,
                                fileType = "cov",
                                verbose = TRUE)
   bismarkBSseq

@@ -31,7 +31,7 @@ not constructed by the user..
     \item{\code{parameters}:}{Object of class \code{list}.  A list of
       parameters representing how the t-statistics were computed.}
     \item{\code{gr}:}{Object of class \code{GRanges} giving genomic
-      locations.} 
+      locations.}
   }
 }
 \section{Extends}{
@@ -48,7 +48,7 @@ Class \code{\linkS4class{hasGRanges}}, directly.
   This class extends \code{hasGRanges} and therefore inherits a number
   of useful \code{GRanges} methods that operate on the \code{gr} slot,
   used for accessing and setting the genomic locations and also do
-  \code{subsetByOverlaps}. 
+  \code{subsetByOverlaps}.
   }
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}
@@ -56,7 +56,7 @@ Class \code{\linkS4class{hasGRanges}}, directly.
 \seealso{
   The package vignette(s).  \code{\linkS4class{hasGRanges}} for accessing
   the genomic locations.  \code{\link{BSmooth.tstat}} for a function
-  that objects of class \code{BSseqTstat}, and \code{\link{dmrFinder}}
+  that returns objects of class \code{BSseqTstat}, and \code{\link{dmrFinder}}
   for a function that computes DMRs based on the t-statistics.  Also see
   \code{\link[bsseqData]{BS.cancer.ex.tstat}} for an example of the
   class in the \pkg{bsseqData} package.

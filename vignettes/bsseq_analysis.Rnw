@@ -201,7 +201,7 @@ Even in comparisons where we do not observe these large-scale methylation differ
 
 Once t-statistics have been computed, we can compute differentially methylated regions (DMRs) by
 thresholding the t-statistics.  Here we use a cutoff of $4.6$, which was chosen by looking at the
-quantiles of the t-statistics (for the entire genome).
+quantiles of the t-statistics (for the entire genome)\footnote{See \url{https://support.bioconductor.org/p/78227/} for further discussion on the choice of cutoff. }.
 <<dmrs>>=
 dmrs0 <- dmrFinder(BS.cancer.ex.tstat, cutoff = c(-4.6, 4.6))
 dmrs <- subset(dmrs0, n >= 3 & abs(meanDiff) >= 0.1)
