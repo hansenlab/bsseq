@@ -40,6 +40,7 @@
   \code{\linkS4class{BSseqStat}} also describes the return class.  This
   function is likely to be followed by the use of \code{\link{dmrFinder}}.}
 \examples{
+  \dontrun{
     if(require(bsseqData)) {
         data(keepLoci.ex)
         data(BS.cancer.ex.fit)
@@ -60,4 +61,6 @@
         BS.stat <- computeStat(BS.stat)
         BS.stat
     }
+  }
 }
+\keyword{internal}

@@ -38,6 +38,7 @@ BSmooth.fstat(BSseq, design, contrasts, verbose = TRUE)
     \code{\link{dmrFinder}}.
 }
 \examples{
+  \dontrun{
     if(require(bsseqData)) {
         data(keepLoci.ex)
         data(BS.cancer.ex.fit)
@@ -56,4 +57,6 @@ BSmooth.fstat(BSseq, design, contrasts, verbose = TRUE)
                                   contrasts)
         BS.stat
     }
+  }
 }
+\keyword{internal}
