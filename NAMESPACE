@@ -12,7 +12,7 @@ importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
            "qnorm", "qqplot", "qunif", "cov2cor")
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
-           "mtext", "par", "plot", "points", "rect", "rug")
+           "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
 import(parallel)
 importFrom(locfit, "locfit", "lp")
 importFrom(matrixStats, "rowSds", "rowVars", "rowMaxs", "rowMins")
