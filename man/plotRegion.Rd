@@ -10,14 +10,16 @@
 }
 \usage{
 plotRegion(BSseq, region = NULL, extend = 0, main = "",
-  addRegions = NULL, annoTrack = NULL, col = NULL, lty = NULL,
-  lwd = NULL, BSseqStat = NULL,  stat = "tstat.corrected",
+  addRegions = NULL, annoTrack = NULL, cex.anno = 1,
+  geneTrack = NULL, cex.gene = 1.5, col = NULL, lty = NULL,
+  lwd = NULL, BSseqStat = NULL, stat = "tstat.corrected",
   stat.col = "black", stat.lwd = 1, stat.lty = 1, stat.ylim = c(-8, 8),
   mainWithWidth = TRUE, regionCol = alpha("red", 0.1), addTicks = TRUE,
   addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE)
 
 plotManyRegions(BSseq, regions = NULL, extend = 0, main = "",
-  addRegions = NULL, annoTrack = NULL, col = NULL, lty = NULL,
+  addRegions = NULL, annoTrack = NULL, cex.anno = 1,
+  geneTrack = NULL, cex.gene = 1.5, col = NULL, lty = NULL,
   lwd = NULL, BSseqStat = NULL, stat = "tstat.corrected",
   stat.col = "black", stat.lwd = 1, stat.lty = 1, stat.ylim = c(-8, 8),
   mainWithWidth = TRUE, regionCol = alpha("red", 0.1), addTicks = TRUE,
@@ -42,6 +44,12 @@ plotManyRegions(BSseq, regions = NULL, extend = 0, main = "",
   component is a track and the names of the list are the track names.
   Each track will be plotted as solid bars, and we routinely display
   information such as CpG islands, exons, etc.}
+  \item{cex.anno}{\code{cex} argument when plotting \code{annoTrack}.}
+  \item{geneTrack}{\strong{EXPERIMENTAL}: A \code{data.frame} with columns:
+  \code{chr}, \code{start}, \code{end}, \code{gene_ID}, \code{exon_number},
+  \code{strand}, \code{gene_name}, \code{isoforms}. This interface is under
+  active development and subject to change.}
+  \item{cex.gene}{\code{cex} argument when plotting \code{geneTrack}.}
   \item{col}{The color of the methylation estimates, see details.}
   \item{lty}{The line type of the methylation estimates, see details.}
   \item{lwd}{The line width of the methylation estimates, see details.}
@@ -64,7 +72,7 @@ plotManyRegions(BSseq, regions = NULL, extend = 0, main = "",
   \item{pointsMinCov}{The minimum coverage a methylation loci need in
   order for the raw methylation estimates to be plotted.  Useful for
   filtering out low coverage loci.  Only used if \code{addPoints =
-  TRUE}.} 
+  TRUE}.}
   \item{highlightMain}{Should the plot region be highlighted?}
   \item{verbose}{Should the function be verbose?}
 }
