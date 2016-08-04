@@ -29,6 +29,9 @@ getNullDistribution_BSmooth.fstat <- function(BSseq,
     message(sprintf("[getNullDistribution_BSmooth.fstat] performing %d permutations\n",
                     nrow(idxMatrix)))
     # NOTE: Using mc.preschedule = TRUE
+    # TODO: Need some protection for when a core(s) error, otherwise nullDist
+    #       contains a mixture of data frame, NULL, and try-error objects
+    #       (which will subesequently break when passed to getFWER.fstat())
     nullDist <- mclapply(seq_len(nrow(idxMatrix)), function(ii) {
         ptime1 <- proc.time()
         # NOTE: More efficient to permute design matrix using idxMatrix[ii, ] than
@@ -132,26 +135,26 @@ getFWER.fstat <- function(null, type = "blocks") {
     null <- null[!sapply(null, is.null)]
     # TODO: Will break if null == list(), which can occur in practice (although
     #       rarely).
-    better <- sapply(1:nrow(reference), function(ii) {
+    better <- sapply(seq_len(nrow(reference)), function(ii) {
         # meanDiff <- abs(reference$meanDiff[ii])
         areaStat <- abs(reference$areaStat[ii])
         width <- reference$width[ii]
         n <- reference$n[ii]
         if (type == "blocks") {
-            out <- sapply(null, function(nulldist) {
+            out <- vapply(null, function(nulldist) {
                 # any(abs(nulldist$meanDiff) >= meanDiff &
                 # nulldist$width >= width)
                 any(abs(nulldist$areaStat) >= areaStat &
                         nulldist$width >= width)
-            })
+            }, logical(1L))
         }
         if (type == "dmrs") {
-            out <- sapply(null, function(nulldist) {
+            out <- vapply(null, function(nulldist) {
                 # any(abs(nulldist$meanDiff) >= meanDiff &
                 #     nulldist$n >= n)
                 any(abs(nulldist$areaStat) >= areaStat &
                         nulldist$n >= n)
-            })
+            }, logical(1L))
         }
         sum(out)
     })
