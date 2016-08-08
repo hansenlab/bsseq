@@ -137,6 +137,7 @@ localCorrectStat <- function(BSseqStat, threshold = c(-15,15), mc.cores = 1, ver
 fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
                            coef = NULL, maxGap.sd = 10 ^ 8, maxGap.dmr = 300,
                            type = "dmrs", mc.cores = 1) {
+    type <- match.arg(type, c("dmrs", "blocks"))
     bstat <- BSmooth.fstat(BSseq = BSseq, design = design,
                            contrasts = contrasts)
     bstat <- smoothSds(bstat)
