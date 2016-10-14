@@ -101,7 +101,7 @@ The package assumes that the following data has been extracted from alignments:
 \item genomic positions, including chromosome and location, for methylation loci.
 \item a (matrix) of M (Methylation) values, describing the number of read supporting methylation covering a
   single loci.  Each row in this matrix is a methylation loci and each column is a sample.
-\item a (matrix) of Cov (Coverage) values, describing the number of read supporting methylation covering a
+\item a (matrix) of Cov (Coverage) values, describing the total number of reads covering a
   single loci.  Each row in this matrix is a methylation loci and each column is a sample.
 \end{enumerate}
 
