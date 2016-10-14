@@ -160,8 +160,8 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
         else
             lwd <- rep(1, nrow(pData(object)))
     }
-    if(length(lty) != ncol(object))
-        lty <- rep(lty, length.out = ncol(object))
+    if(length(lwd) != ncol(object))
+        lwd <- rep(lwd, length.out = ncol(object))
     if(is.null(names(lwd)))
         names(lwd) <- sampleNames(object)
 
