@@ -8,7 +8,8 @@
 }
 \usage{
 getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
-  what = c("perBase", "perRegion"), confint = FALSE, alpha = 0.95)
+  what = c("perBase", "perRegion"), confint = FALSE, alpha = 0.95,
+  na.rm = TRUE)
 }
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
@@ -20,6 +21,7 @@ getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
     methylation estimates (see below).  This is only supported if
     \code{what} is equal to \code{perBase}.}
   \item{alpha}{alpha value for the confidence interval.}
+  \item{na.rm}{whether to ignore NA methylation values for region averages}
 }
 \note{
   A \code{BSseq} object needs to be smoothed by the function
@@ -44,7 +46,10 @@ getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
   corresponding to a genomic region (and each row of the matrix being a
   loci inside the region).  If \code{what = "perRegion"} the function
   returns a matrix, with each row corresponding to a region and
-  containing the average methylation level in that region.
+  containing the average methylation level in that region.  If
+  \code{na.rm = FALSE}, the average methylation level of regions is given
+  as NA if any CpG in the region has a coverage of 0 and therefore
+  methylation level of NA.
 }
 \references{
   A Agresti and B Coull.

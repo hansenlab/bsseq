@@ -35,7 +35,8 @@ orderBSseq <- function(BSseq, seqOrder = NULL) {
 
 
 getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
-                    what = c("perBase", "perRegion"), confint = FALSE, alpha = 0.95) {
+                    what = c("perBase", "perRegion"), confint = FALSE, alpha = 0.95,
+                    na.rm = TRUE) {
     p.conf <- function(p, n, alpha) {
         z <- abs(qnorm((1 - alpha)/2, mean = 0, sd = 1))
         upper <- (p + z^2/(2*n) + z*sqrt(  (p*(1-p) + z^2/(4*n)) / n)) /
@@ -96,12 +97,12 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
     if(what == "perRegion") {
         if(type == "smooth") {
             out <- lapply(mmsplit, function(xx) {
-                colMeans(getBSseq(BSseq, "trans")(getBSseq(BSseq, "coef")[xx,,drop = FALSE]), na.rm = TRUE)
+                colMeans(getBSseq(BSseq, "trans")(getBSseq(BSseq, "coef")[xx,,drop = FALSE]), na.rm = na.rm)
             })
         }
         if(type == "raw") {
             out <- lapply(mmsplit, function(xx) {
-                colMeans(getBSseq(BSseq, "M")[xx,,drop = FALSE] / getBSseq(BSseq, "Cov")[xx,,drop = FALSE], na.rm = TRUE)
+                colMeans(getBSseq(BSseq, "M")[xx,,drop = FALSE] / getBSseq(BSseq, "Cov")[xx,,drop = FALSE], na.rm = na.rm)
             })
         }
         out <- do.call(rbind, out)
