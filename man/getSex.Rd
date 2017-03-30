@@ -14,7 +14,7 @@ addSex(BSseq, sex = NULL)
 plotSex(df, id = NULL)
 }
 \arguments{
-  \item{object}{An object of class \code{BSseq}.}
+  \item{BSseq}{An object of class \code{BSseq}.}
   \item{cutoff}{Value used to distinguish males and females when evaluating
   difference between coverage of X and Y chromosomes.}
   \item{sex}{An optional character vector of sex (with values \code{M}
@@ -39,7 +39,7 @@ plotSex(df, id = NULL)
   \code{yCov} which are the average coverage values of the X and Y chromosomes,
   respectively.
 
-  For \code{addSex}, an object of the same type as \code{object} but
+  For \code{addSex}, an object of the same type as \code{BSseq} but
   with a column named \code{predictedSex} added to the pheno data.
 }
 \author{
