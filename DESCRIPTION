@@ -5,7 +5,8 @@ Description: A collection of tools for analyzing and visualizing bisulfite
     sequencing data.
 Authors@R: c(person(c("Kasper", "Daniel"), "Hansen", role = c("aut", "cre"),
     email = "kasperdanielhansen@gmail.com"),
-    person("Peter", "Hickey", role = "ctb", email = "peter.hickey@gmail.com"))
+    person("Peter", "Hickey", role = "ctb", email = "peter.hickey@gmail.com"),
+	person(c("Shan", "V."), "Andrews", role = "ctb", email = "sandre17@jhu.edu"))
 Depends:
     R (>= 3.3),
     methods,
@@ -52,6 +53,7 @@ Collate:
     BSmooth.fstat.R
     BSseqStat_class.R
     getStats.R
+	getSex.R
 License: Artistic-2.0
 VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq
