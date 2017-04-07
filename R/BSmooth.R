@@ -44,10 +44,11 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
                         se.coef = se.coef,
                         trans = NULL, h = h, nn = nn))
         }
+        # NOTE: as.vector() rather than as.array() to also remove colnames
         sdata <- data.frame(pos = pos[wh],
-                            M = as.array(pmin2(pmax2(M[wh, ], 0.01),
-                                               Cov[wh, ] - 0.01)),
-                            Cov = Cov[wh, ])
+                            M = as.vector(pmin2(pmax2(M[wh, ], 0.01),
+                                                Cov[wh, ] - 0.01)),
+                            Cov = as.vector(Cov[wh, ]))
         fit <- locfit(M ~ lp(pos, nn = nn, h = h), data = sdata,
                       weights = Cov, family = "binomial", maxk = 10000)
         pp <- preplot(fit, where = "data", band = "local",
