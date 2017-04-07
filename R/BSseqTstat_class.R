@@ -1,5 +1,5 @@
-setClass("BSseqTstat", contains = "hasGRanges", 
-         representation(stats = "matrix",
+setClass("BSseqTstat", contains = "hasGRanges",
+         representation(stats = "DelayedMatrix",
                         parameters = "list")
          )
 setValidity("BSseqTstat", function(object) {
@@ -17,6 +17,11 @@ setMethod("show", signature(object = "BSseqTstat"),
               cat(" ", object@parameters$smoothText, "\n")
               cat("with parameters\n")
               cat(" ", object@parameters$tstatText, "\n")
+              if (.isHDF5ArrayBacked(object@stats)) {
+                  cat("'stats' slot is HDF5Array-backed\n")
+              } else {
+                  cat("'stats' slot is in-memory\n")
+              }
           })
 
 setMethod("[", "BSseqTstat", function(x, i, ...) {
@@ -32,14 +37,14 @@ setMethod("[", "BSseqTstat", function(x, i, ...) {
 BSseqTstat <- function(gr = NULL, stats = NULL, parameters = NULL) {
     out <- new("BSseqTstat")
     out@gr <- gr
-    out@stats <- stats
+    out@stats <- .DelayedMatrix(stats)
     out@parameters <- parameters
     out
 }
 
 summary.BSseqTstat <- function(object, ...) {
-    quant <- quantile(getStats(object)[, "tstat.corrected"],
-                      prob = c(0.0001, 0.001, 0.01, 0.5, 0.99, 0.999, 0.9999))
+    quant <- .quantile(getStats(object)[, "tstat.corrected"],
+                       prob = c(0.0001, 0.001, 0.01, 0.5, 0.99, 0.999, 0.9999))
     quant <- t(t(quant))
     colnames(quant) <- "quantiles"
     out <- list(quantiles = quant)
@@ -53,9 +58,11 @@ print.summary.BSseqTstat <- function(x, ...) {
 
 plot.BSseqTstat <- function(x, y, ...) {
     tstat <- getStats(x)[, "tstat"]
+    tstat <- as.array(tstat)
     plot(density(tstat), xlim = c(-10,10), col = "blue", main = "")
     if("tstat.corrected" %in% colnames(getStats(x))) {
         tstat.cor <- getStats(x)[, "tstat.corrected"]
+        tstat.cor <- as.array(tstat.cor)
         lines(density(tstat.cor), col = "black")
         legend("topleft", legend = c("uncorrected", "corrected"), lty = c(1,1),
                col = c("blue", "black"))
@@ -65,3 +72,11 @@ plot.BSseqTstat <- function(x, y, ...) {
     }
 }
 
+setMethod("updateObject", "BSseqTstat",
+          function(object, ...) {
+              stats <- object@stats
+              stats <- .DelayedMatrix(stats)
+              object@stats <- stats
+              object
+          }
+)

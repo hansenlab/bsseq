@@ -64,5 +64,15 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
 data(BS.chr22)
 BS.fit <- BSmooth(BS.chr22, verbose = TRUE)
 BS.fit
+
+#-------------------------------------------------------------------------------
+# An example using a HDF5Array-backed BSseq object
+#
+library(HDF5Array)
+# See ?SummarizedExperiment::saveHDF5SummarizedExperiment for details
+hdf5_BS.chr22 <- saveHDF5SummarizedExperiment(x = BS.chr22,
+                                              dir = tempfile())
+hdf5_BS.fit <- BSmooth(hdf5_BS.chr22, verbose = TRUE)
+hdf5_BS.fit
 }
 }
