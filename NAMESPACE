@@ -10,7 +10,8 @@ importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
            "strand", "strand<-", "union", "unique", "updateObject")
 importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
-           "qnorm", "qqplot", "qunif", "cov2cor")
+           "qnorm", "qqplot", "qunif", "cov2cor",
+           "plogis")
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
 import(parallel)
@@ -33,6 +34,9 @@ importFrom(data.table, "fread", "setnames")
 importFrom(R.utils, "isGzipped", "gunzip")
 import(limma)
 importFrom(permute, "shuffleSet", "how")
+importClassesFrom(DelayedArray, "DelayedArray", "DelayedMatrix")
+importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2",
+           "setRealizeBackend", "type")
 
 ##
 ## Exporting

@@ -22,7 +22,7 @@ binomialGoodnessOfFit(BSseq, method = c("MLE"), nQuantiles = 10^5)
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
   \item{x}{A chisqGoodnessOfFit object (as produced by
-    \code{poissonGoodnessOfFit} or \code{binomialGoodnessOfFit}).} 
+    \code{poissonGoodnessOfFit} or \code{binomialGoodnessOfFit}).}
   \item{nQuantiles}{The number of (evenly-spaced) quantiles stored in
     the return object.}
   \item{method}{How is the parameter estimated.}
@@ -34,7 +34,7 @@ binomialGoodnessOfFit(BSseq, method = c("MLE"), nQuantiles = 10^5)
     \code{plot}) or ignored (for \code{print}).}
 }
 \details{
-  
+
   These functions compute and plot goodness of fit statistics for
   \code{BSseq} objects.  For each methylation loci, the Poisson
   goodness of fit statistic tests whether the coverage (at that loci) is
@@ -66,5 +66,18 @@ if(require(bsseqData)) {
   BS.cancer.ex <- updateObject(BS.cancer.ex)
   gof <- poissonGoodnessOfFit(BS.cancer.ex)
   plot(gof)
+
+#-------------------------------------------------------------------------------
+# An example using a HDF5Array-backed BSseq object
+#
+\donttest{
+    library(HDF5Array)
+
+    # See ?SummarizedExperiment::saveHDF5SummarizedExperiment for details
+    hdf5_BS.cancer.ex <- saveHDF5SummarizedExperiment(x = BS.cancer.ex,
+                                                      dir = tempfile())
+    hdf5_gof <- poissonGoodnessOfFit(hdf5_BS.cancer.ex)
+    plot(hdf5_gof)
+}
 }
 }

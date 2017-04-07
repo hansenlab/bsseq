@@ -2,6 +2,27 @@
 \title{bsseq news}
 \encoding{UTF-8}
 
+\section{Version 1.11.x}{
+This version brings some new features for working with large
+bisulfite-sequencing datasets. Adding these features has involved substantial
+reworkings to the internals of bsseq. However, we have endeavoured to keep the
+user-facing functionality unchanged. You will need to update old
+serialized (saved) objects by invoking \code{x <- updateObject(x)}.
+
+To support larger datasets, bsseq now provides the option of using disk-backed
+BSseq, BSseqTstat, and BSseqStat objects. This can greatly reduce the memory
+footprint when analysing large datasets. For example, the 'M', 'Cov', and
+'coef' matrices in a BSseq object can be stored as HDF5 files on disk.
+
+  \itemize{
+    \item bsseq now uses DelayedMatrix objects from the DelayedArray package
+    for all matrix-like data. This enables large data to be stored on disk
+    rather than in memory.
+    \item Serialized (saved) BSseq, BSseqTstat, and BSseqStat objects will need
+    to be updated by invoking \code{x <- updateObject(x)}.
+  }
+}
+
 \section{Version 1.7.x}{
   \itemize{
     \item Fixing an error with reading multiple samples aligned with

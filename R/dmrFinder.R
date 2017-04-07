@@ -1,20 +1,21 @@
+# NOTE: Realises in memory a matrix with nrow = length(bstat) and ncol = 1
 dmrFinder <- function(bstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
                       maxGap = 300, stat = "tstat.corrected", verbose = TRUE) {
     if(is(bstat, "BSseqTstat")) {
         if(! stat %in% colnames(bstat@stats))
             stop("'stat' needs to be a column of 'bstat@stats'")
-        dmrStat <- bstat@stats[, stat]
+        dmrStat <- as.array(bstat@stats[, stat, drop = FALSE])
     }
     if(is(bstat, "BSseqStat")) {
-        dmrStat <- getStats(bstat, what = "stat")
+        dmrStat <- as.array(getStats(bstat, what = "stat"))
     }
     subverbose <- max(as.integer(verbose) - 1L, 0L)
     if(is.null(cutoff))
-        cutoff <- quantile(dmrStat, qcutoff)
+        cutoff <- .quantile(dmrStat, qcutoff)
     if(length(cutoff) == 1)
         cutoff <- c(-cutoff, cutoff)
     direction <- as.integer(dmrStat >= cutoff[2])
-    direction[dmrStat <= cutoff[1]] <- -1L
+    direction[as.array(dmrStat <= cutoff[1])] <- -1L
     direction[is.na(direction)] <- 0L
     chrs <- as.character(seqnames(bstat))
     positions <- start(bstat)

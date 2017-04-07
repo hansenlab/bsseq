@@ -18,7 +18,7 @@ dmrFinder(bstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
   \item{bstat}{An object of class \code{BSseqStat} or \code{BSseqTstat}.}
   \item{cutoff}{The cutoff of the t-statistics.  This should be a vector
     of length two giving the (low, high) cutoff.  If \code{NULL}, see
-    \code{qcutoff}.} 
+    \code{qcutoff}.}
   \item{qcutoff}{In case \code{cutoff} is \code{NULL}, compute the
     cutoff using these quantiles of the t-statistic.}
   \item{maxGap}{If two methylation loci are separated by this distance,
@@ -67,7 +67,7 @@ dmrFinder(bstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
     object, and \code{\linkS4class{BSseqTstat}} for its class.  In the
     example below, we use \code{\link[bsseqData]{BS.cancer.ex.tstat}} as
     the actual input object.  Also see the package vignette(s) for a
-    detailed example.  
+    detailed example.
 }
 \examples{
 if(require(bsseqData)) {

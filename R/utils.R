@@ -19,7 +19,7 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
     }
     if(keepColumns) {
         dt <- as(df[, setdiff(names(df), c("chr", "start", "end", "strand"))],
-                     "DataFrame")
+                 "DataFrame")
         mcols(gr) <- dt
     }
     names(gr) <- rownames(df)
@@ -35,12 +35,29 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
         NULL
 }
 
-setMethod("assays", "BSseq",
-          function(x, ..., withDimnames = TRUE) {
-              x@assays$field("data")
-          })
+.checkAssayClasses <- function(object, names) {
+    nms <- intersect(assayNames(object), names)
+    is_DelayedMatrix <- vapply(assays(object, withDimnames = FALSE)[nms],
+                               function(assay) {
+                                   if (is.null(assay)) {
+                                       return(TRUE)
+                                   }
+                                   is(assay, "DelayedMatrix")
+                               }, logical(1L))
+    if (!all(is_DelayedMatrix)) {
+        return(paste0("assay slots '", paste0(nms, collapse = "', '"),
+                      "' of object of class '", class(object),
+                      "' need be DelayedMatrix objects"))
+    } else {
+        NULL
+    }
+}
 
-setMethod("assayNames", "BSseq",
-          function(x, ...) {
-              names(x@assays$field("data"))
-          })
+.oldTrans <- function(x) {
+    y <- x
+    ix <- which(x < 0)
+    ix2 <- which(x > 0)
+    y[ix] <- exp(x[ix])/(1 + exp(x[ix]))
+    y[ix2] <- 1/(1 + exp(-x[ix2]))
+    y
+}

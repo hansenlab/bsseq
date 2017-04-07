@@ -16,12 +16,12 @@ BSmooth.tstat(BSseq, group1, group2,
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
   \item{group1}{A vector of sample names or indexes for the \sQuote{treatment}
-    group.} 
+    group.}
   \item{group2}{A vector of sample names or indexes for the \sQuote{control}
-    group.} 
+    group.}
   \item{estimate.var}{How is the variance estimated, see details.}
   \item{local.correct}{A logical; should local correction be used, see
-    details.} 
+    details.}
   \item{maxGap}{A scalar greater than 0, see details.}
   \item{qSd}{A scalar between 0 and 1, see details.}
   \item{k}{A positive scalar, see details.}
@@ -81,5 +81,20 @@ if(require(bsseqData)) {
   BS.tstat
   ## This object is also stored as BS.cancer.ex.tstat in the
   ## bsseqData package
+
+  #---------------------------------------------------------------------------
+  # An example using a HDF5Array-backed BSseq object
+  #
+  \donttest{
+    library(HDF5Array)
+    # See ?SummarizedExperiment::saveHDF5SummarizedExperiment for details
+    hdf5_BS.cancer.ex.fit <- saveHDF5SummarizedExperiment(
+        x = BS.cancer.ex.fit[keepLoci.ex, ],
+        dir = tempfile())
+    hdf5_BS.tstat <- BSmooth.tstat(hdf5_BS.cancer.ex.fit,
+                                   group1 = c("C1", "C2", "C3"),
+                                   group2 = c("N1", "N2", "N3"),
+                                   estimate.var = "group2")
+  }
 }
 }
