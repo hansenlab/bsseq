@@ -151,12 +151,17 @@ localCorrectStat <- function(BSseqStat, threshold = c(-15,15), mc.cores = 1, ver
 
 fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
                            coef = NULL, maxGap.sd = 10 ^ 8, maxGap.dmr = 300,
-                           mc.cores = 1) {
+                           type = "dmrs", mc.cores = 1) {
+    type <- match.arg(type, c("dmrs", "blocks"))
     bstat <- BSmooth.fstat(BSseq = BSseq, design = design,
                            contrasts = contrasts)
     bstat <- smoothSds(bstat)
     bstat <- computeStat(bstat, coef = coef)
     dmrs <- dmrFinder(bstat, cutoff = cutoff, maxGap = maxGap.dmr)
+    if (is.null(dmrs)) {
+        stop("No DMRs identified. Consider reducing the 'cutoff' from (",
+             paste0(cutoff, collapse = ", "), ")")
+    }
     idxMatrix <- permuteAll(nperm, design)
     nullDist <- getNullDistribution_BSmooth.fstat(BSseq = BSseq,
                                                   idxMatrix = idxMatrix,
@@ -167,7 +172,7 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
                                                   maxGap.sd = maxGap.sd,
                                                   maxGap.dmr = maxGap.dmr,
                                                   mc.cores = mc.cores)
-    fwer <- getFWER.fstat(null = c(list(dmrs), nullDist), type = "dmrs")
+    fwer <- getFWER.fstat(null = c(list(dmrs), nullDist), type = type)
     dmrs$fwer <- fwer
     meth <- getMeth(BSseq, dmrs, what = "perRegion")
     meth <- t(apply(meth, 1, function(xx) tapply(xx, fac, mean)))
