@@ -1,4 +1,4 @@
-setClass("BSseqStat", contains = "hasGRanges", 
+setClass("BSseqStat", contains = "hasGRanges",
          representation(stats = "list",
                         parameters = "list")
          )
@@ -8,17 +8,12 @@ setValidity("BSseqStat", function(object) {
     if(is.null(names(object@stats)) || any(names(object@stats) == "") ||
        anyDuplicated(names(object@stats)))
         msg <- validMsg(msg, "the 'stats' list needs to be named with unique names.")
-    for(name in c("rawSds", "smoothsSds", "stat")) {
-        if(name %in% names(object@stats) && !is.vector(object@stats[[name]]))
-            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' have to be a vector", name))
-        if(name %in% names(object@stats) && length(object@stats[[name]]) != length(object@gr))
-            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' have to have the same length as slot 'gr'", name))
-    }
-    for(name in c("rawTstats")) {
-        if(name %in% names(object@stats) && !is.matrix(object@stats[[name]]))
-            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' have to be a matrix", name))
-        if(name %in% names(object@stats) && nrow(object@stats[[name]]) != length(object@gr))
-            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' have to have the same number of rows as slot 'gr' is long", name))
+    for(name in c("rawSds", "smoothsSds", "stat", "rawTstats")) {
+        if(name %in% names(object@stats) &&
+           !is(object@stats[[name]], "DelayedMatrix"))
+            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' has to be a DelayedMatrix object", name))
+        if(name %in% names(object@stats) && isTRUE(nrow(object@stats[[name]]) != length(object@gr)))
+            msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' has to have the same number of rows as slot 'gr' is long", name))
     }
     if(is.null(msg)) TRUE else msg
 })
@@ -29,8 +24,17 @@ setMethod("show", signature(object = "BSseqStat"),
               cat(" ", length(object), "methylation loci\n")
               cat("based on smoothed data:\n")
               cat(" ", object@parameters$smoothText, "\n")
-              cat("with parameters\n")
-              cat(" ", object@parameters$tstatText, "\n")
+              not_delayed_matrices <- c("cor.coefficients", "stat.type")
+              delayed_matrices <- setdiff(names(object@stats),
+                                          not_delayed_matrices)
+              is_HDF5Array_backed <- vapply(object@stats[delayed_matrices],
+                                            .isHDF5ArrayBacked,
+                                            logical(1L))
+              if (any(is_HDF5Array_backed)) {
+                  cat("'stats' slot is HDF5Array-backed\n")
+              } else {
+                  cat("'stats' slot is in-memory\n")
+              }
           })
 
 setMethod("[", "BSseqStat", function(x, i, ...) {
@@ -42,13 +46,10 @@ setMethod("[", "BSseqStat", function(x, i, ...) {
     statnames <- names(x@stats)
     names(statnames) <- statnames
     x@stats <- lapply(statnames, function(nam) {
-        if(nam %in% c("rawTstats", "modelCoefficients")) {
-            stopifnot(is.matrix(x@stats[[nam]]))
+        if(nam %in% c("rawTstats", "modelCoefficients", "rawSds", "smoothSds",
+                      "stat")) {
+            stopifnot(is(x@stats[[nam]], "DelayedMatrix"))
             return(x@stats[[nam]][i,,drop=FALSE])
-        }
-        if(nam %in% c("rawSds", "smoothSds", "stat")) {
-            stopifnot(is.vector(x@stats[[nam]]))
-            return(x@stats[[nam]][i])
         }
         x@stats[[nam]]
     })
@@ -58,11 +59,26 @@ setMethod("[", "BSseqStat", function(x, i, ...) {
 BSseqStat <- function(gr = NULL, stats = NULL, parameters = NULL) {
     out <- new("BSseqStat")
     out@gr <- gr
+    not_delayed_matrices <- c("cor.coefficients", "stat.type")
+    delayed_matrices <- setdiff(names(stats), not_delayed_matrices)
+    stats[delayed_matrices] <- endoapply(stats[delayed_matrices],
+                                         .DelayedMatrix)
     out@stats <- stats
     out@parameters <- parameters
     out
 }
 
+setMethod("updateObject", "BSseqStat",
+          function(object, ...) {
+              not_delayed_matrices <- c("cor.coefficients", "stat.type")
+              delayed_matrices <- setdiff(names(stats), not_delayed_matrices)
+              stats <- object@stats
+              stats[delayed_matrices] <- endoapply(stats[delayed_matrices],
+                                                   .DelayedMatrix)
+              object@stats <- stats
+              object
+          }
+)
 
 ## summary.BSseqStat <- function(object, ...) {
 ##     quant <- quantile(getStats(object)[, "tstat.corrected"],

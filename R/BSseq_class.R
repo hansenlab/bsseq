@@ -1,22 +1,30 @@
-setClass("BSseq", contains = "RangedSummarizedExperiment", 
+setClass("BSseq", contains = "RangedSummarizedExperiment",
          representation(trans = "function",
                         parameters = "list"))
 
 setValidity("BSseq", function(object) {
     msg <- validMsg(NULL, .checkAssayNames(object, c("Cov", "M")))
+    msg <- validMsg(msg, .checkAssayClasses(object,
+                                            c("Cov", "M", "coef", "se.coef")))
     if(class(rowRanges(object)) != "GRanges")
         msg <- validMsg(msg, sprintf("object of class '%s' needs to have a 'GRanges' in slot 'rowRanges'", class(object)))
     ## benchmarking shows that min(assay()) < 0 is faster than any(assay() < 0) if it is false
     if(is.null(colnames(object)))
         msg <- validMsg(msg, "colnames (aka sampleNames) need to be set")
-    if(min(assay(object, "M")) < 0)
-        msg <- validMsg(msg, "the 'M' assay has negative entries")
-    if(min(assay(object, "Cov")) < 0)
-        msg <- validMsg(msg, "the 'Cov' assay has negative entries")
-    if(max(assay(object, "M") - assay(object, "Cov")) > 0.5)
-        msg <- validMsg(msg, "the 'M' assay has at least one entry bigger than the 'Cov' assay")
-    if(!is.null(rownames(assay(object, "M"))) ||
-       !is.null(rownames(assay(object, "Cov"))) ||
+    M <- assay(object, "M", withDimnames = FALSE)
+    Cov <- assay(object, "Cov", withDimnames = FALSE)
+    if (!.isHDF5ArrayBacked(M) && !.isHDF5ArrayBacked(Cov)) {
+        ## TODO: This check is super expensive if M or Cov is a HDF5Matrix, so
+        ##       we skip it for the time being
+        if(min(assay(object, "M", withDimnames = FALSE)) < 0)
+            msg <- validMsg(msg, "the 'M' assay has negative entries")
+        if(min(assay(object, "Cov", withDimnames = FALSE)) < 0)
+            msg <- validMsg(msg, "the 'Cov' assay has negative entries")
+        if(max(assay(object, "M", withDimnames = FALSE) -
+               assay(object, "Cov", withDimnames = FALSE)) > 0.5)
+            msg <- validMsg(msg, "the 'M' assay has at least one entry bigger than the 'Cov' assay")
+    }
+    if(!is.null(rownames(M)) || !is.null(rownames(Cov)) ||
        ("coef" %in% assayNames(object) && !is.null(rownames(assay(object, "coef")))) ||
        ("se.coef" %in% assayNames(object) && !is.null(rownames(assay(object, "se.coef")))))
         warning("unnecessary rownames in object")
@@ -33,6 +41,11 @@ setMethod("show", signature(object = "BSseq"),
                   cat(" ", object@parameters$smoothText, "\n")
               } else {
                   cat("has not been smoothed\n")
+              }
+              if (.isHDF5ArrayBacked(object)) {
+                  cat("Some assays are HDF5Array-backed\n")
+              } else {
+                  cat("All assays are in-memory\n")
               }
           })
 
@@ -93,7 +106,7 @@ getBSseq <- function(BSseq, type = c("Cov", "M", "gr", "coef", "se.coef", "trans
         return(BSseq@parameters)
     if(type == "gr")
         return(BSseq@rowRanges)
-    
+
 }
 
 BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
@@ -111,10 +124,14 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
         stop("'gr' needs to have widths of 1")
     if(is.null(M) || is.null(Cov))
         stop("Need M and Cov")
-    if(!is.matrix(M))
-        stop("'M' needs to be a matrix")
-    if(!is.matrix(Cov))
-        stop("'Cov' needs to be a matrix")
+    M <- .DelayedMatrix(M)
+    Cov <- .DelayedMatrix(Cov)
+    if (!is.null(coef)) {
+        coef <- .DelayedMatrix(coef)
+    }
+    if (!is.null(se.coef)) {
+        se.coef <- .DelayedMatrix(se.coef)
+    }
     if(length(gr) != nrow(M) ||
        length(gr) != nrow(Cov) ||
        ncol(Cov) != ncol(M))
@@ -139,9 +156,15 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     if(length(unique(sampleNames)) != ncol(M))
         stop("sampleNames need to be unique and of the right length.")
     ## check that 0 <= M <= Cov and remove positions with Cov = 0
-    if(any(M < 0) || any(M > Cov) || any(is.na(M)) || any(is.na(Cov)) ||
-       any(is.infinite(Cov)))
-        stop("'M' and 'Cov' may not contain NA or infinite values and 0 <= M <= Cov")
+    if (!.isHDF5ArrayBacked(M) && !.isHDF5ArrayBacked(Cov)) {
+        ## TODO: This check is super expensive if M or Cov is a HDF5Matrix, so
+        ##       we skip it for the time being
+        if (any(M < 0) || any(M > Cov) || any(is.na(M)) || any(is.na(Cov)) ||
+            any(is.infinite(Cov))) {
+            stop("'M' and 'Cov' may not contain NA or infinite values and ",
+                 "0 <= M <= Cov")
+        }
+    }
     if(rmZeroCov) {
         wh <- which(rowSums(Cov) == 0)
         if(length(wh) > 0) {
@@ -156,7 +179,7 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
         mm <- as.matrix(findOverlaps(grR, gr))
         mm <- mm[order(mm[,1]),]
         if(length(grR) == length(gr)) {
-            ## only re-ordering is necessary 
+            ## only re-ordering is necessary
             gr <- grR
             M <- M[mm[,2],,drop = FALSE]
             Cov <- Cov[mm[,2],,drop = FALSE]
@@ -171,8 +194,31 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
             gr <- grR
             sp <- split(mm[,2], mm[,1])[as.character(1:length(grR))]
             names(sp) <- NULL
-            M <- do.call(rbind, lapply(sp, function(ii) colSums(M[ii,, drop = FALSE])))
-            Cov <- do.call(rbind, lapply(sp, function(ii) colSums(Cov[ii,, drop = FALSE])))
+            # TODO: .collapseDelayedMatrix() always return numeric; it may be
+            #       worth coercing M and Cov to integer DelayedMatrix objects,
+            #       which would halve storage requirements and impose some more
+            #       structure on the BSseq class (via new validity method
+            #       checks)
+            # NOTE: Tries to be smart about how collapsed DelayedMatrix should
+            #       be realized
+            if (.isHDF5ArrayBacked(M)) {
+                M_BACKEND <- "HDF5Array"
+            } else {
+                M_BACKEND <- NULL
+            }
+            M <- .collapseDelayedMatrix(x = M,
+                                        sp = sp,
+                                        MARGIN = 2,
+                                        BACKEND = M_BACKEND)
+            if (.isHDF5ArrayBacked(Cov)) {
+                Cov_BACKEND <- "HDF5Array"
+            } else {
+                Cov_BACKEND <- NULL
+            }
+            Cov <- .collapseDelayedMatrix(x = Cov,
+                                          sp = sp,
+                                          MARGIN = 2,
+                                          BACKEND = Cov_BACKEND)
         }
     }
     if(is.null(colnames(M)) || any(sampleNames != colnames(M)))
@@ -180,8 +226,8 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     if(is.null(colnames(Cov)) || any(sampleNames != colnames(Cov)))
         colnames(Cov) <- sampleNames
     if(!is.null(coef)) {
-        if(!is.matrix(coef) ||
-           nrow(coef) != nrow(M) ||
+
+        if(nrow(coef) != nrow(M) ||
            ncol(coef) != ncol(M))
             stop("'coef' does not have the right dimensions")
         if(is.null(colnames(coef)) || any(sampleNames != colnames(coef)))
@@ -190,8 +236,7 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
             rownames(coef) <- NULL
     }
     if(!is.null(se.coef)) {
-        if(!is.matrix(se.coef) ||
-           nrow(se.coef) != nrow(M) ||
+        if(nrow(se.coef) != nrow(M) ||
            ncol(se.coef) != ncol(M))
             stop("'se.coef' does not have the right dimensions")
         if(is.null(colnames(se.coef)) || any(sampleNames != colnames(se.coef)))
@@ -213,19 +258,30 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     BSseq
 }
 
-
 setMethod("updateObject", "BSseq",
           function(object, ...) {
-               if(.hasSlot(object, "assays")) {
-                   # call method for RangedSummarizedExperiment objects
-                   callNextMethod()
-               } else {
-                   BSseq(gr = object@gr, M = object@M, Cov = object@Cov,
-                         coef = object@coef, se.coef = object@se.coef,
-                         trans = object@trans, parameters = object@parameters,
-                         pData = object@phenoData@data)
-               }
-           })
+              # NOTE: identical() is too strong
+              if (isTRUE(all.equal(getBSseq(object, "trans"), .oldTrans))) {
+                  object@trans <- plogis
+              }
+              if (.hasSlot(object, "assays")) {
+                  assays(object) <- endoapply(
+                      assays(object, withDimnames = FALSE), function(assay) {
+                          if (is.null(assay)) {
+                              return(assay)
+                          } else {
+                              .DelayedMatrix(assay)
+                          }
+                      })
+                  # call method for RangedSummarizedExperiment objects
+                  callNextMethod()
+              } else {
+                  BSseq(gr = object@gr, M = object@M, Cov = object@Cov,
+                        coef = object@coef, se.coef = object@se.coef,
+                        trans = object@trans, parameters = object@parameters,
+                        pData = object@phenoData@data)
+              }
+          })
 
 
 strandCollapse <- function(BSseq, shift = TRUE) {
@@ -285,7 +341,7 @@ strandCollapse <- function(BSseq, shift = TRUE) {
 ##                ## Based on the delta method
 ##                se.d <- sqrt((data$se.coef[, sample1] * p1 * (1-p1))^2 +
 ##                             (data$se.coef[, sample2] * p2 * (1-p2))^2)
-               
+
 ##                lower <- d - z * se.d
 ##                upper <- d + z * se.d
 ##                out <- data.frame(d = d, lower = lower, upper = upper)

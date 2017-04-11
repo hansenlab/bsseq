@@ -6,6 +6,7 @@
 \alias{[,BSseqTstat-method}
 \alias{[,BSseqTstat,ANY,ANY,ANY-method}
 \alias{show,BSseqTstat-method}
+\alias{updateObject,BSseqTstat-method}
 \title{Class BSseqTstat}
 \description{
   A class for representing t-statistics for smoothed whole-genome
@@ -16,8 +17,17 @@
 }
 \arguments{
   \item{gr}{The genomic locations as an object of class \code{GRanges}.}
-  \item{stats}{The statistics, as a matrix.}
+  \item{stats}{The statistics, as a matrix-like object (see 'Details' below).}
   \item{parameters}{A list of parameters.}
+}
+
+\details{
+  The 'stats' matrix-like object will be coerced to a
+  \linkS4class{DelayedMatrix} object; see
+  \code{?DelayedArray::\link[DelayedArray]{DelayedMatrix}} for the full list of
+  supported matrix-like objects. We recommend using \link[base]{matrix} objects
+  for in-memory storage of data and \linkS4class{HDF5Matrix} for on-disk
+  storage of data.
 }
 \section{Objects from the Class}{
 Objects can be created by calls of the form \code{BSseqTstat(...)}.
@@ -26,8 +36,9 @@ not constructed by the user..
 }
 \section{Slots}{
   \describe{
-    \item{\code{stats}:}{This is a matrix with columns representing
-      various statistics for methylation loci along the genome.}
+    \item{\code{stats}:}{This is a \linkS4class{DelayedMatrix} object with
+      columns representing various statistics for methylation loci along the
+      genome.}
     \item{\code{parameters}:}{Object of class \code{list}.  A list of
       parameters representing how the t-statistics were computed.}
     \item{\code{gr}:}{Object of class \code{GRanges} giving genomic
@@ -50,6 +61,11 @@ Class \code{\linkS4class{hasGRanges}}, directly.
   used for accessing and setting the genomic locations and also do
   \code{subsetByOverlaps}.
   }
+\section{Coercion}{
+  Package version 1.11.1 introduced a new version of representing
+  \sQuote{BSseqTstat} objects. You can update old serialized (saved)
+  objects by invoking \code{x <- updateObject(x)}.
+}
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}
 }

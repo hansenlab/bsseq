@@ -4,8 +4,12 @@ read.bismark <- function(files,
                          strandCollapse = TRUE,
                          fileType = c("cov", "oldBedGraph", "cytosineReport"),
                          mc.cores = 1,
-                         verbose = TRUE) {
+                         verbose = TRUE,
+                         BACKEND = NULL) {
     ## Argument checking
+    if (!is.null(BACKEND) && mc.cores > 1) {
+        stop("Currently, 'mc.cores' must be 1 if 'BACKEND' is not NULL")
+    }
     if (anyDuplicated(files)) {
         stop("duplicate entries in 'files'")
     }
@@ -35,12 +39,14 @@ read.bismark <- function(files,
         if (fileType == "cov" || fileType == "oldBedGraph") {
             out <- read.bismarkCovRaw(thisfile = files[ii],
                                       thisSampleName = sampleNames[ii],
-                                      rmZeroCov = rmZeroCov)
+                                      rmZeroCov = rmZeroCov,
+                                      BACKEND = BACKEND)
         } else if (fileType == "cytosineReport") {
             out <- read.bismarkCytosineReportRaw(thisfile = files[ii],
                                                  thisSampleName = sampleNames[ii],
                                                  rmZeroCov = rmZeroCov,
-                                                 keepContext = FALSE)
+                                                 keepContext = FALSE,
+                                                 BACKEND = BACKEND)
         }
         if (strandCollapse) {
             out <- strandCollapse(out)
@@ -68,7 +74,8 @@ read.bismark <- function(files,
 
 read.bismarkCovRaw <- function(thisfile,
                                thisSampleName,
-                               rmZeroCov) {
+                               rmZeroCov,
+                               BACKEND = NULL) {
 
     ## data.table::fread() can't read directly from a gzipped file so, if
     ## necessary, gunzip the file to a temporary location.
@@ -90,9 +97,14 @@ read.bismarkCovRaw <- function(thisfile,
                   ranges = IRanges(start = out[[2L]], width = 1L))
 
     ## Create BSseq instance from 'out'
+    ## TODO: Might be able to avoid the as.matrix()
+    M <- as.matrix(out[[5L]])
+    Cov <- as.matrix(out[[5L]] + out[[6L]])
+    M <- realize(M, BACKEND = BACKEND)
+    Cov <- realize(Cov, BACKEND = BACKEND)
     BSseq(gr = gr,
-          M = as.matrix(out[[5L]]),
-          Cov = as.matrix(out[[5L]] + out[[6L]]),
+          M = M,
+          Cov = Cov,
           sampleNames = thisSampleName,
           rmZeroCov = rmZeroCov)
 }
@@ -100,7 +112,8 @@ read.bismarkCovRaw <- function(thisfile,
 read.bismarkCytosineReportRaw <- function(thisfile,
                                           thisSampleName,
                                           rmZeroCov,
-                                          keepContext = FALSE) {
+                                          keepContext = FALSE,
+                                          BACKEND = NULL) {
 
     ## NOTE: keepContext not yet implemented
     if (keepContext) {
@@ -128,8 +141,13 @@ read.bismarkCytosineReportRaw <- function(thisfile,
                   strand = out[[3]])
 
     ## Create BSseq instance from 'out'
+    ## TODO: Might be able to avoid the as.matrix()
+    M <- as.matrix(out[[4L]])
+    Cov <- as.matrix(out[[4L]] + out[[5L]])
+    M <- realize(M, BACKEND = BACKEND)
+    Cov <- realize(Cov, BACKEND = BACKEND)
     BSseq(gr = gr, sampleNames = thisSampleName,
-          M = as.matrix(out[[4L]]),
-          Cov = as.matrix(out[[4L]] + out[[5L]]),
+          M = M,
+          Cov = Cov,
           rmZeroCov = rmZeroCov)
 }

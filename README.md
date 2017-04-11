@@ -7,8 +7,6 @@ useDevel(TRUE)
 biocLite('bsseq')
 ```
 
-## R CMD check results
-
 ## Software status
 
 | Resource:     | Bioconductor        | Travis CI     |

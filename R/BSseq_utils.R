@@ -10,12 +10,33 @@ collapseBSseq <- function(BSseq, columns) {
     else
         columns.idx <- match(names(columns), sampleNames(BSseq))
     sp <- split(columns.idx, columns)
-    M <- do.call(cbind, lapply(sp, function(ss) {
-        rowSums(getBSseq(BSseq, "M")[, ss, drop = FALSE])
-    }))
-    Cov <- do.call(cbind, lapply(sp, function(ss) {
-        rowSums(getBSseq(BSseq, "Cov")[, ss, drop = FALSE])
-    }))
+    # TODO: .collapseDelayedMatrix() always return numeric; it may be
+    #       worth coercing M and Cov to integer DelayedMatrix objects,
+    #       which would halve storage requirements and impose some more
+    #       structure on the BSseq class (via new validity method
+    #       checks)
+    # NOTE: Tries to be smart about how collapsed DelayedMatrix should
+    #       be realized
+    M <- getBSseq(BSseq, "M")
+    if (.isHDF5ArrayBacked(M)) {
+        M_BACKEND <- "HDF5Array"
+    } else {
+        M_BACKEND <- NULL
+    }
+    M <- .collapseDelayedMatrix(x = M,
+                                sp = sp,
+                                MARGIN = 1,
+                                BACKEND = M_BACKEND)
+    Cov <- getBSseq(BSseq, "Cov")
+    if (.isHDF5ArrayBacked(Cov)) {
+        Cov_BACKEND <- "HDF5Array"
+    } else {
+        Cov_BACKEND <- NULL
+    }
+    Cov <- .collapseDelayedMatrix(x = Cov,
+                                  sp = sp,
+                                  MARGIN = 1,
+                                  BACKEND = Cov_BACKEND)
     BSseq(gr = getBSseq(BSseq, "gr"), M = M, Cov = Cov, sampleNames = names(sp))
 }
 
@@ -108,10 +129,9 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
         outMatrix <- matrix(NA, ncol = ncol(BSseq), nrow = length(regions))
         colnames(outMatrix) <- sampleNames(BSseq)
         outMatrix[as.integer(rownames(out)),] <- out
-        return(outMatrix)
+        .DelayedMatrix(outMatrix)
     }
 }
-
 
 getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
                     what = c("perBase", "perRegionAverage", "perRegionTotal")) {
@@ -175,7 +195,7 @@ getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
     outMatrix <- matrix(NA, ncol = ncol(BSseq), nrow = length(regions))
     colnames(outMatrix) <- sampleNames(BSseq)
     outMatrix[as.integer(rownames(out)),] <- out
-    return(outMatrix)
+    .DelayedMatrix(outMatrix)
 }
 
 

@@ -17,7 +17,7 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
     names(clusterIdx) <- NULL
     clusterIdx
 }
-    
+
 
 BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sample", "chromosome"),
                     mc.preschedule = FALSE, mc.cores = 1, keep.se = FALSE, verbose = TRUE) {
@@ -29,8 +29,8 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
         if(verbose >= 2)
             cat(sprintf("[BSmooth]   smoothing start: sample:%s, chr:%s, nLoci:%s\n",
                         this_sample_chr[1], this_sample_chr[2], length(idxes)))
-        Cov <- getCoverage(BSseq, type = "Cov")[idxes, sampleIdx]
-        M <- getCoverage(BSseq, type = "M")[idxes, sampleIdx]
+        Cov <- getCoverage(BSseq, type = "Cov")[idxes, sampleIdx, drop = FALSE]
+        M <- getCoverage(BSseq, type = "M")[idxes, sampleIdx, drop = FALSE]
         pos <- start(BSseq)[idxes]
         stopifnot(all(diff(pos) > 0))
         wh <- which(Cov != 0)
@@ -44,9 +44,11 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
                         se.coef = se.coef,
                         trans = NULL, h = h, nn = nn))
         }
+        # NOTE: as.vector() rather than as.array() to also remove colnames
         sdata <- data.frame(pos = pos[wh],
-                            M = pmin(pmax(M[wh], 0.01), Cov[wh] - 0.01),
-                            Cov = Cov[wh])
+                            M = as.vector(pmin2(pmax2(M[wh, ], 0.01),
+                                                Cov[wh, ] - 0.01)),
+                            Cov = as.vector(Cov[wh, ]))
         fit <- locfit(M ~ lp(pos, nn = nn, h = h), data = sdata,
                       weights = Cov, family = "binomial", maxk = 10000)
         pp <- preplot(fit, where = "data", band = "local",
@@ -119,11 +121,15 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
         coef <- do.call(rbind, lapply(out, function(xx) xx$coef))
         se.coef <- do.call(rbind, lapply(out, function(xx) xx$se.coef))
     })
+    coef <- .DelayedMatrix(coef)
+    if (!is.null(se.coef)) {
+        se.coef <- .DelayedMatrix(se.coef)
+    }
     ptime.outer2 <- proc.time()
     stime.outer <- (ptime.outer2 - ptime.outer1)[3]
     if(verbose)
         cat(sprintf("[BSmooth] smoothing done in %.1f sec\n", stime.outer))
-    
+
     rownames(coef) <- NULL
     colnames(coef) <- sampleNames(BSseq)
     if(!is.null(se.coef)) {
@@ -135,16 +141,8 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
         assay(BSseq, "coef") <- coef
     if(!is.null(se.coef))
         assay(BSseq, "se.coef") <- se.coef
-    mytrans <- function(x) {
-        y <- x
-        ix <- which(x < 0)
-        ix2 <- which(x > 0)
-        y[ix] <- exp(x[ix])/(1 + exp(x[ix]))
-        y[ix2] <- 1/(1 + exp(-x[ix2]))
-        y
-    }
-    environment(mytrans) <- baseenv()
-    BSseq@trans <- mytrans
+    BSseq@trans <- plogis
+
     parameters <- list(smoothText = sprintf("BSmooth (ns = %d, h = %d, maxGap = %d)", ns, h, maxGap),
                        ns = ns, h = h, maxGap = maxGap)
     BSseq@parameters <- parameters
