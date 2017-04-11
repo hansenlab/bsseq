@@ -35,8 +35,7 @@ importFrom(R.utils, "isGzipped", "gunzip")
 import(limma)
 importFrom(permute, "shuffleSet", "how")
 importClassesFrom(DelayedArray, "DelayedArray", "DelayedMatrix")
-importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2",
-           "setRealizeBackend", "type")
+importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2")
 
 ##
 ## Exporting

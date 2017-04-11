@@ -134,7 +134,7 @@ slots for representing smoothed data. This class is an extension of
       matrices (the latter two can only be combined if all objects have the
       same rowRanges). The default, \code{BACKEND = NULL}, corresponds to using
       \link[base]{matrix} objects. See
-      \code{?DelayedArray::\link[DelayedArray]{setRealizeBackend}} for
+      \code{?DelayedArray::\link[DelayedArray]{setRealizationBackend}} for
       alternative backends.
       }
 
