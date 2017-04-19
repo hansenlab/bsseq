@@ -31,7 +31,7 @@ setMethod("combine", signature(x = "BSseq", y = "BSseq"), function(x, y, ...) {
         } else {
             x_trans <- getBSseq(x, "trans")
             y_trans <- getBSseq(y, "trans")
-            if (!identical(x_trans, y_trans)) {
+            if (!all.equal(x_trans, y_trans)) {
                 stop("'x' and 'y' need to have the same 'trans'")
             }
             trans <- x_trans
@@ -112,7 +112,7 @@ combineList <- function(x, ..., BACKEND = NULL) {
     stopifnot(all(sapply(x, class) == "BSseq"))
     trans <- getBSseq(x[[1]], "trans")
     sameTrans <- sapply(x[-1], function(xx) {
-        identical(trans, getBSseq(xx, "trans"))
+        all.equal(trans, getBSseq(xx, "trans"))
     })
     if (!all(sameTrans)) {
         stop("all elements of '...' in combineList needs to have the same ",
@@ -149,7 +149,7 @@ combineList <- function(x, ..., BACKEND = NULL) {
         } else {
             list_of_trans <- lapply(x, getBSseq, "trans")
             if (!all(vapply(list_of_trans, function(trans) {
-                identical(trans, list_of_trans[[1]])
+                all.equal(trans, list_of_trans[[1]])
             }, logical(1L)))) {
                 stop("All BSseq objects need to have the same 'trans'")
             }
