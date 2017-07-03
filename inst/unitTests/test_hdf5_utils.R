@@ -1,4 +1,3 @@
-
 test_.isHDF5ArrayBacked <- function() {
     matrix <- matrix(1:10, ncol = 2)
     da <- bsseq:::.DelayedMatrix(matrix)
