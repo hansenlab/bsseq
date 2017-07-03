@@ -144,69 +144,56 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
     }
 }
 
+# TODO: getCoverage() realises the result in memory iff regions is not NULL;
+#       discuss with Kasper
+# TODO: Whether or not colnames are added to returned value depends on whether
+#       regions is non-NULL; discuss with Kasper
 getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
-                        what = c("perBase", "perRegionAverage", "perRegionTotal")) {
+                        what = c("perBase", "perRegionAverage",
+                                 "perRegionTotal")) {
     stopifnot(is(BSseq, "BSseq"))
     type <- match.arg(type)
     what <- match.arg(what)
-    if(is.null(regions)) {
-        if(what == "perBase")
+    if (is.null(regions)) {
+        if (what == "perBase") {
             return(getBSseq(BSseq, type = type))
-        if(what == "perRegionTotal")
+        }
+        if (what == "perRegionTotal") {
             return(colSums(getBSseq(BSseq, type = type)))
-        if(what == "perRegionAverage")
+        }
+        if (what == "perRegionAverage") {
             return(colMeans(getBSseq(BSseq, type = type)))
+        }
     }
-    if(class(regions) == "data.frame")
+    if (class(regions) == "data.frame") {
         regions <- data.frame2GRanges(regions)
+    }
     stopifnot(is(regions, "GenomicRanges"))
     grBSseq <- granges(BSseq)
-    mm <- as.matrix(findOverlaps(regions, grBSseq))
-    mmsplit <- split(mm[,2], mm[,1])
-    if(what == "perBase") {
-        if(type == "Cov") {
-            out <- lapply(mmsplit, function(xx) {
-                getBSseq(BSseq, "Cov")[xx,,drop = FALSE]
-            })
-        }
-        if(type == "M") {
-            out <- lapply(mmsplit, function(xx) {
-                getBSseq(BSseq, "M")[xx,,drop = FALSE]
-            })
-        }
+    ov <- findOverlaps(grBSseq, regions)
+    if (type == "Cov") {
+        coverage <- getBSseq(BSseq, "Cov")[queryHits(ov), , drop = FALSE]
+    } else if (type == "M") {
+        coverage <- getBSseq(BSseq, "M")[queryHits(ov), , drop = FALSE]
+    }
+    out <- lapply(split(coverage, subjectHits(ov)), matrix,
+                  ncol = ncol(coverage))
+
+    if (what == "perBase") {
+        # TODO: Don't really understand the logic of the remaining code; how
+        #       could the results end up in the wrong order wrt to regions?
         outList <- vector("list", length(regions))
-        outList[as.integer(names(mmsplit))] <- out
+        outList[as.integer(names(out))] <- out
         return(outList)
+    } else if (what == "perRegionAverage") {
+        out <- do.call(rbind, lapply(out, colMeans2, na.rm = TRUE))
+    } else if (what == "perRegionTotal") {
+        out <- do.call(rbind, lapply(out, colSums2, na.rm = TRUE))
     }
-    if(what == "perRegionAverage") {
-        if(type == "Cov") {
-            out <- lapply(mmsplit, function(xx) {
-                colMeans(getBSseq(BSseq, "Cov")[xx,,drop = FALSE], na.rm = TRUE)
-            })
-        }
-        if(type == "M") {
-            out <- lapply(mmsplit, function(xx) {
-                colMeans(getBSseq(BSseq, "M")[xx,,drop = FALSE], na.rm = TRUE)
-            })
-        }
-    }
-    if(what == "perRegionTotal") {
-        if(type == "Cov") {
-            out <- lapply(mmsplit, function(xx) {
-                colSums(getBSseq(BSseq, "Cov")[xx,,drop = FALSE], na.rm = TRUE)
-            })
-        }
-        if(type == "M") {
-            out <- lapply(mmsplit, function(xx) {
-                colSums(getBSseq(BSseq, "M")[xx,,drop = FALSE], na.rm = TRUE)
-            })
-        }
-    }
-    out <- do.call(rbind, out)
+    # TODO: Don't really understand the logic of the remaining code; how
+    #       could the rows end up in the wrong order?
     outMatrix <- matrix(NA, ncol = ncol(BSseq), nrow = length(regions))
     colnames(outMatrix) <- sampleNames(BSseq)
     outMatrix[as.integer(rownames(out)),] <- out
     .DelayedMatrix(outMatrix)
 }
-
-
