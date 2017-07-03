@@ -41,7 +41,7 @@ collapseBSseq <- function(BSseq, columns) {
 }
 
 chrSelectBSseq <- function(BSseq, seqnames = NULL, order = FALSE) {
-    seqlevels(BSseq, force = TRUE) <- seqnames
+    seqlevels(BSseq, pruning.mode = "coarse") <- seqnames
     if(order)
         BSseq <- orderBSseq(BSseq, seqOrder = seqnames)
     BSseq
@@ -50,7 +50,7 @@ chrSelectBSseq <- function(BSseq, seqnames = NULL, order = FALSE) {
 
 orderBSseq <- function(BSseq, seqOrder = NULL) {
     if(!is.null(seqOrder))
-        seqlevels(BSseq, force = TRUE) <- seqOrder
+        seqlevels(BSseq, pruning.mode = "coarse") <- seqOrder
     BSseq[order(granges(BSseq))]
 }
 
