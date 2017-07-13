@@ -183,24 +183,31 @@ combineList <- function(x, ..., BACKEND = NULL) {
     } else {
         gr <- sort(reduce(do.call(c, unname(lapply(x, granges))),
                           min.gapwidth = 0L))
-        I <- lapply(x, function(xx) {
-            ov <- findOverlaps(gr, xx)
-            queryHits(ov)
-        })
+        ov <- lapply(x, function(xx){
+              findOverlaps( gr, xx )
+        } )
+        I <- lapply( ov, queryHits )
+        I2 <- lapply( ov, subjectHits )
+        X <- lapply( seq_along(x), function(xx){
+            getBSseq(x[[xx]], "M")[I2[[xx]],]
+        } )
         sampleNames <- do.call(c, unname(lapply(x, sampleNames)))
         ## FIXME: there is no check that the sampleNames are unique/disjoint.
         # TODO: Figure out if fill should be 0 or 0L based on X (getting it
         #       right will avoid a copy/cast)
         M <- .combineListOfDelayedMatrixObjects(
-            X = lapply(x, getBSseq, "M"),
+            X = X,
             I = I,
             nrow = length(gr),
             ncol = length(sampleNames),
             dimnames = list(NULL, sampleNames),
             fill = 0,
-            BACKEND = BACKEND)
+            BACKEND = BACKEND )
+        X <- lapply( seq_along(x) , function(xx){
+            getBSseq(x[[xx]], "Cov")[I2[[xx]],]
+        } )
         Cov <- .combineListOfDelayedMatrixObjects(
-            X = lapply(x, getBSseq, "Cov"),
+            X = X,
             I = I,
             nrow = length(gr),
             ncol = length(sampleNames),
