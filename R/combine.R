@@ -57,9 +57,9 @@ setMethod("combine", signature(x = "BSseq", y = "BSseq"), function(x, y, ...) {
         }
     } else {
         gr <- reduce(c(granges(x), granges(y)), min.gapwidth = 0L)
-        mm.x <- as.matrix(findOverlaps(gr, granges(x)))
-        mm.y <- as.matrix(findOverlaps(gr, granges(y)))
-        I <-  list(mm.x[, 1], mm.y[, 1])
+        I <- lapply(list(x, y), function(xx) {
+            findOverlaps(xx, gr, type = "equal", select = "first")
+        })
         ## FIXME: there is no check that the two sampleNames are disjoint.
         sampleNames <- c(sampleNames(x), sampleNames(y))
         X_M <- list(getBSseq(x, "M"), getBSseq(y, "M"))
@@ -184,8 +184,7 @@ combineList <- function(x, ..., BACKEND = NULL) {
         gr <- sort(reduce(do.call(c, unname(lapply(x, granges))),
                           min.gapwidth = 0L))
         I <- lapply(x, function(xx) {
-            ov <- findOverlaps(gr, xx)
-            queryHits(ov)
+            findOverlaps(xx, gr, type = "equal", select = "first")
         })
         sampleNames <- do.call(c, unname(lapply(x, sampleNames)))
         ## FIXME: there is no check that the sampleNames are unique/disjoint.
