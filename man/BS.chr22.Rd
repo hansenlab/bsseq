@@ -20,8 +20,8 @@
 }
 \source{
   Obtained from \url{http://neomorph.salk.edu/human_methylome/data.html}
-  specifically the files \url{mc_h1_r1.tar.gz} and
-  \url{mc_h1_r1.tar.gz}.  A script which downloads these files and
+  specifically the files \url{mc_imr90_r1.tar.gz} and
+  \url{mc_imr90_r2.tar.gz}.  A script which downloads these files and
   constructs the \code{BS.chr22} object may be found in
   \file{inst/scripts/get_BS.chr22.R}, see the example.
 }
