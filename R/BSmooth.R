@@ -29,8 +29,10 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
         if(verbose >= 2)
             cat(sprintf("[BSmooth]   smoothing start: sample:%s, chr:%s, nLoci:%s\n",
                         this_sample_chr[1], this_sample_chr[2], length(idxes)))
-        Cov <- getCoverage(BSseq, type = "Cov")[idxes, sampleIdx, drop = FALSE]
-        M <- getCoverage(BSseq, type = "M")[idxes, sampleIdx, drop = FALSE]
+        Cov <- unname(as.array(
+            getCoverage(BSseq, type = "Cov")[idxes, sampleIdx]))
+        M <- unname(as.array(
+            getCoverage(BSseq, type = "M")[idxes, sampleIdx]))
         pos <- start(BSseq)[idxes]
         stopifnot(all(diff(pos) > 0))
         wh <- which(Cov != 0)
@@ -44,11 +46,10 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8, parallelBy = c("sam
                         se.coef = se.coef,
                         trans = NULL, h = h, nn = nn))
         }
-        # NOTE: as.vector() rather than as.array() to also remove colnames
         sdata <- data.frame(pos = pos[wh],
-                            M = as.vector(pmin2(pmax2(M[wh, ], 0.01),
-                                                Cov[wh, ] - 0.01)),
-                            Cov = as.vector(Cov[wh, ]))
+                            M = pmin(pmax(M[wh], 0.01),
+                                     Cov[wh] - 0.01),
+                            Cov = Cov[wh])
         fit <- locfit(M ~ lp(pos, nn = nn, h = h), data = sdata,
                       weights = Cov, family = "binomial", maxk = 10000)
         pp <- preplot(fit, where = "data", band = "local",
