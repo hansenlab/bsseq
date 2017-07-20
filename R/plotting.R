@@ -225,6 +225,13 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
     rawPs <- getMeth(BSseq, type = "raw")
     coverage <- getCoverage(BSseq)
 
+    # Realise in memory data that are to be plotted
+    if (addPoints) {
+        rawPs <- as.array(rawPs)
+        coverage <- as.array(coverage)
+    }
+    smoothPs <- as.array(smoothPs)
+
     ## get col, lwd, lty
     colEtc <- .bsGetCol(object = BSseq, col = col, lty = lty, lwd = lwd)
 
@@ -288,15 +295,20 @@ plotRegion <- function(BSseq, region = NULL, extend = 0, main = "", addRegions =
     if(!is.null(BSseqStat)) {
         BSseqStat <- subsetByOverlaps(BSseqStat, gr)
         if(is(BSseqStat, "BSseqTstat")) {
-            stat.values <- getStats(BSseqStat, what = stat)
+            stat.values <- as.array(getStats(BSseqStat)[, "tstat.corrected"])
+            stat.values <- as.array(stat.values)
             stat.type <- "tstat"
         }
         if(is(BSseqStat, "BSseqStat")) {
             stat.type <- getStats(BSseqStat, what = "stat.type")
-            if(stat.type == "tstat")
+            if(stat.type == "tstat") {
                 stat.values <- getStats(BSseqStat, what = "stat")
-            if(stat.type == "fstat")
+                stat.values <- as.array(stat.values)
+            }
+            if(stat.type == "fstat") {
                 stat.values <- sqrt(getStats(BSseqStat, what = "stat"))
+                stat.values <- as.array(stat.values)
+            }
         }
         plot(start(gr), 0.5, type = "n", xaxt = "n", yaxt = "n",
              ylim = stat.ylim, xlim = c(start(gr), end(gr)), xlab = "", ylab = stat.type)

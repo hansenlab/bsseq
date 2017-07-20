@@ -12,7 +12,8 @@
              strandCollapse = TRUE,
              fileType = c("cov", "oldBedGraph", "cytosineReport"),
              mc.cores = 1,
-             verbose = TRUE)
+             verbose = TRUE,
+             BACKEND = NULL)
 }
 \arguments{
   \item{files}{Input files. Each sample is in a different file. Input
@@ -31,6 +32,10 @@
     \code{mc.cores} to a value greater than 1 is not  supported on MS
     Windows, see the help page for \code{mclapply}.}
   \item{verbose}{Make the function verbose.}
+  \item{BACKEND}{The backend used for the 'M' and 'Cov' matrices. The default,
+  \code{NULL}, corresponds to using \link[base]{matrix} objects. See
+    \code{?DelayedArray::\link[DelayedArray]{setRealizationBackend}} for
+    alternative backends.}
 }
 \note{
   Input files can either be gzipped or not.
@@ -108,6 +113,19 @@
                                fileType = "cov",
                                verbose = TRUE)
   bismarkBSseq
+
+  #-----------------------------------------------------------------------------
+  # An example constructing a HDF5Array-backed BSseq object
+  #
+  library(HDF5Array)
+  # See ?DelayedArray::setRealizationBackend for details
+  hdf5_bismarkBSseq <- read.bismark(files = infile,
+                                    sampleNames = "test_data",
+                                    rmZeroCov = FALSE,
+                                    strandCollapse = FALSE,
+                                    fileType = "cov",
+                                    verbose = TRUE,
+                                    BACKEND = "HDF5Array")
 }
 
 \author{

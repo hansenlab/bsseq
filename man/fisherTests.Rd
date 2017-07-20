@@ -13,15 +13,15 @@ fisherTests(BSseq, group1, group2, lookup = NULL,
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
   \item{group1}{A vector of sample names or indexes for the
-    \sQuote{treatment} group.} 
+    \sQuote{treatment} group.}
   \item{group2}{A vector of sample names or indexes for the
     \sQuote{control} group.}
   \item{lookup}{A \sQuote{lookup} object, see details.}
   \item{returnLookup}{Should a \sQuote{lookup} object be returned, see
-    details.} 
+    details.}
   \item{mc.cores}{The number of cores used.  Note that setting
     \code{mc.cores} to a value greater than 1 is not  supported on MS
-    Windows, see the help page for \code{mclapply}.} 
+    Windows, see the help page for \code{mclapply}.}
   \item{verbose}{Should the function be verbose.}
 }
 \details{
@@ -60,6 +60,19 @@ colnames(M) <- c("A1", "A2", "A3")
 BStest <- BSseq(pos = 1:3, chr = c("chr1", "chr2", "chr1"),
                 M = M, Cov = M + 2)
 results <- fisherTests(BStest, group1 = "A1", group2 = "A2",
+                       returnLookup = TRUE)
+results
+
+#-------------------------------------------------------------------------------
+# An example using a HDF5Array-backed BSseq object
+#
+library(HDF5Array)
+# See ?SummarizedExperiment::saveHDF5SummarizedExperiment for details
+hdf5_BStest <- saveHDF5SummarizedExperiment(x = BStest,
+                                            dir = tempfile())
+results <- fisherTests(hdf5_BStest,
+                       group1 = "A1",
+                       group2 = "A2",
                        returnLookup = TRUE)
 results
 }

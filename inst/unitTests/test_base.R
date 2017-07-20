@@ -20,8 +20,9 @@ test_BSseq <- function() {
     checkEquals(dim(BStest), c(3,3))
     checkEquals(nrow(BStest), 3)
     checkEquals(ncol(BStest), 3)
-    checkEquals(unname(getCoverage(BStest, type = "M")), unname(M))
-    checkEquals(unname(getCoverage(BStest, type = "Cov")), unname(M + 2))
+    checkEquals(unname(as.array(getCoverage(BStest, type = "M"))), unname(M))
+    checkEquals(unname(as.array(getCoverage(BStest, type = "Cov"))),
+                unname(M + 2))
     checkEquals(sampleNames(BStest), colnames(M))
 
     BStest2 <- BSseq(pos = 3:1, chr = rep("chr1", 3), M = M[3:1,],
@@ -32,7 +33,22 @@ test_BSseq <- function() {
     M2[3,] <- M2[3,] - 1
     Cov2[3,] <- Cov2[3,] - 1
     suppressWarnings(BStest3 <- BSseq(pos = c(3:1,1), chr = rep("chr1", 4), M = M2, Cov = Cov2))
-    checkEquals(BStest, BStest3) 
+    checkEquals(BStest, BStest3)
+}
+
+test_HDF5BackedBSseq <- function() {
+    M <- matrix(1:9, 3,3)
+    colnames(M) <- c("A1", "A2", "A3")
+    Cov <- M + 2L
+    BStest <- BSseq(pos = 1:3, chr = rep("chr1", 3), M = M, Cov = Cov)
+    hdf5_M <- realize(M, BACKEND = "HDF5Array")
+    hdf5_Cov <- realize(Cov, BACKEND = "HDF5Array")
+    hdf5_BStest <- BSseq(pos = 1:3, chr = rep("chr1", 3), M = hdf5_M,
+                         Cov = hdf5_Cov)
+    checkIdentical(as.array(getCoverage(BStest)),
+                   as.array(getCoverage(hdf5_BStest)))
+    checkIdentical(as.array(getCoverage(BStest, type = "M")),
+                   as.array(getCoverage(hdf5_BStest, type = "M")))
 }
 
 test_overlaps <- function() {

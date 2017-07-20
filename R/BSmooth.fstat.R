@@ -9,6 +9,7 @@ BSmooth.fstat <- function(BSseq, design, contrasts, verbose = TRUE){
     ptime1 <- proc.time()
     allPs <- getMeth(BSseq, type = "smooth", what = "perBase",
                      confint = FALSE)
+    allPs <- as.array(allPs)
     fit <- lmFit(allPs, design)
     fitC <- contrasts.fit(fit, contrasts)
     ## Need
@@ -17,7 +18,7 @@ BSmooth.fstat <- function(BSseq, design, contrasts, verbose = TRUE){
     ##   tstats <- fitC$coefficients / fitC$stdev.unscaled / fitC$sigma
     ##   rawSds <- fitC$sigma
     ##   cor.coefficients <- cov2cor(fitC$cov.coefficients)
-    rawSds <- fitC$sigma
+    rawSds <- as.matrix(fitC$sigma)
     cor.coefficients <- cov2cor(fitC$cov.coefficients)
     rawTstats <- fitC$coefficients / fitC$stdev.unscaled / fitC$sigma
     names(dimnames(rawTstats)) <- NULL
@@ -31,7 +32,8 @@ BSmooth.fstat <- function(BSseq, design, contrasts, verbose = TRUE){
                   cor.coefficients = cor.coefficients,
                   rawTstats = rawTstats)
     out <- BSseqStat(gr = granges(BSseq),
-                     stats = stats, parameters = parameters)
+                     stats = stats,
+                     parameters = parameters)
     out
 }
 
@@ -57,8 +59,12 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
     smoothSds <- do.call("c",
                          mclapply(clusterIdx, function(idx) {
-                             smoothSd(getStats(BSseqStat, what = "rawSds")[idx], k = k, qSd = qSd)
+                             rawSds <- getStats(BSseqStat,
+                                                what = "rawSds")[idx, ]
+                             rawSds <- as.array(rawSds)
+                             smoothSd(rawSds, k = k, qSd = qSd)
                          }, mc.cores = mc.cores))
+    smoothSds <- .DelayedMatrix(as.matrix(smoothSds))
     if("smoothSds" %in% names(getStats(BSseqStat)))
         BSseqStat@stats[["smoothSds"]] <- smoothSds
     else
@@ -68,21 +74,30 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
 
 # Quieten R CMD check
 globalVariables("tstat")
+
+# NOTE: Realises in memory a matrix with nrow = length(BSseqStat) and
+#       ncol = length(coef)
 computeStat <- function(BSseqStat, coef = NULL) {
     stopifnot(is(BSseqStat, "BSseqStat"))
     if(is.null(coef)) {
         coef <- 1:ncol(getStats(BSseqStat, what = "rawTstats"))
     }
-    tstats <- getStats(BSseqStat, what = "rawTstats")[, coef, drop = FALSE]
-    tstats <- tstats * getStats(BSseqStat, what = "rawSds") /
+    raw_tstats <- getStats(BSseqStat, what = "rawTstats")[, coef, drop = FALSE]
+    scaled_sds <- getStats(BSseqStat, what = "rawSds") /
         getStats(BSseqStat, what = "smoothSds")
+    scaled_sds_matrix <- do.call(cbind, replicate(ncol(raw_tstats), scaled_sds))
+    tstats <- raw_tstats * scaled_sds_matrix
     if(length(coef) > 1) {
-        cor.coefficients <- getStats(BSseqStat, what = "cor.coefficients")[coef,coef]
-        stat <- as.numeric(classifyTestsF(tstats, cor.coefficients,
-                                          fstat.only = TRUE))
+        cor.coefficients <- getStats(BSseqStat,
+                                     what = "cor.coefficients")[coef,coef]
+        # NOTE: classifyTestsF() calls as.matrix(tstats) and so realises this
+        #       array
+        stat <- .DelayedMatrix(as.matrix(classifyTestsF(tstats,
+                                                        cor.coefficients,
+                                                        fstat.only = TRUE)))
         stat.type <- "fstat"
     } else {
-        stat <- as.numeric(tstats)
+        stat <- .DelayedMatrix(tstats)
         stat.type <- "tstat"
     }
     if("stat" %in% names(getStats(BSseqStat))) {
@@ -114,9 +129,9 @@ localCorrectStat <- function(BSseqStat, threshold = c(-15,15), mc.cores = 1, ver
         xx.reg <- seq(from = min(xx), to = max(xx), by = 2000)
         yy.reg <- tstat.function(xx.reg)
         fit <- locfit(yy.reg ~ lp(xx.reg, h = 25000, deg = 2, nn = 0),
-                      family = "huber", maxk = 50000) 
+                      family = "huber", maxk = 50000)
         correction <- predict(fit, newdata = data.frame(xx.reg = xx))
-        yy - correction 
+        yy - correction
     }
     maxGap <- BSseqStat$parameters$maxGap
     if(verbose) cat("[BSmooth.tstat] preprocessing ... ")
@@ -136,12 +151,17 @@ localCorrectStat <- function(BSseqStat, threshold = c(-15,15), mc.cores = 1, ver
 
 fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
                            coef = NULL, maxGap.sd = 10 ^ 8, maxGap.dmr = 300,
-                           mc.cores = 1) {
+                           type = "dmrs", mc.cores = 1) {
+    type <- match.arg(type, c("dmrs", "blocks"))
     bstat <- BSmooth.fstat(BSseq = BSseq, design = design,
                            contrasts = contrasts)
     bstat <- smoothSds(bstat)
     bstat <- computeStat(bstat, coef = coef)
     dmrs <- dmrFinder(bstat, cutoff = cutoff, maxGap = maxGap.dmr)
+    if (is.null(dmrs)) {
+        stop("No DMRs identified. Consider reducing the 'cutoff' from (",
+             paste0(cutoff, collapse = ", "), ")")
+    }
     idxMatrix <- permuteAll(nperm, design)
     nullDist <- getNullDistribution_BSmooth.fstat(BSseq = BSseq,
                                                   idxMatrix = idxMatrix,
@@ -152,7 +172,7 @@ fstat.pipeline <- function(BSseq, design, contrasts, cutoff, fac, nperm = 1000,
                                                   maxGap.sd = maxGap.sd,
                                                   maxGap.dmr = maxGap.dmr,
                                                   mc.cores = mc.cores)
-    fwer <- getFWER.fstat(null = c(list(dmrs), nullDist), type = "dmrs")
+    fwer <- getFWER.fstat(null = c(list(dmrs), nullDist), type = type)
     dmrs$fwer <- fwer
     meth <- getMeth(BSseq, dmrs, what = "perRegion")
     meth <- t(apply(meth, 1, function(xx) tapply(xx, fac, mean)))

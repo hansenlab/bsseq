@@ -5,6 +5,16 @@ getStats <- function(bstat, regions = NULL, ...) {
     getStats_BSseqStat(bstat, regions = regions, ...)
 }
 
+# NOTE: Realises in memory a matrix with nrow = length(hits) and ncol = 1
+.getRegionStats <- function(stat, hits, na.rm = FALSE) {
+    stat_by_region <- split(as.array(stat[queryHits(hits), ]),
+                            subjectHits(hits))
+    data.frame(areaStat = vapply(stat_by_region, sum, numeric(1),
+                                 na.rm = na.rm, USE.NAMES = FALSE),
+               maxStat = vapply(stat_by_region, max, numeric(1),
+                                na.rm = na.rm, USE.NAMES = FALSE))
+}
+
 getStats_BSseqStat <- function(BSseqStat, regions = NULL, what = NULL) {
     stopifnot(is(BSseqStat, "BSseqStat"))
     if(!is.null(what)) {
@@ -16,22 +26,35 @@ getStats_BSseqStat <- function(BSseqStat, regions = NULL, what = NULL) {
     ## Now we have regions and no what
     if(class(regions) == "data.frame")
         regions <- data.frame2GRanges(regions)
-    ov <- findOverlaps(BSseqStat, regions)
-    ov.sp <- split(queryHits(ov), subjectHits(ov))
-    ## We need areaStat and maxStat
-    ## Could need averageMeth in each group?
-    ## Need to have a specific design for that
-    ## Could at least get contrast coefficient
-    getRegionStats <- function(idx) {
-        areaStat <- sum(BSseqStat@stats$stat[idx], na.rm = TRUE)
-        maxStat <- max(BSseqStat@stats$stat[idx], na.rm = TRUE)
-        c(areaStat, maxStat)
-    }
-    regionStats <- matrix(NA, ncol = 2, nrow = length(regions))
-    colnames(regionStats) <- c("areaStat", "maxStat")
-    tmp <- lapply(ov.sp, getRegionStats)
-    regionStats[as.integer(names(tmp)),] <- do.call(rbind, tmp)
+    hits <- findOverlaps(BSseqStat, regions)
+    regionStats <- .getRegionStats(stat = BSseqStat@stats$stat,
+                                   hits = hits)
     regionStats
+}
+
+# NOTE: Realises in memory a matrix with nrow = length(hits) and ncol = 3
+.getRegionStats_ttest <- function(stats, hits, na.rm = FALSE) {
+    stat_names <- c("group1.means", "group2.means", "tstat.sd")
+    stats <- as.array(stats[queryHits(hits), stat_names])
+    stats_by_region <- lapply(seq_along(stat_names), function(j) {
+        split(stats[, j], subjectHits(hits))
+    })
+    names(stats_by_region) <- stat_names
+    meanDiff <- mapply(function(g1, g2, na.rm) {
+        mean(g1 - g2, na.rm = na.rm)
+    }, g1 = stats_by_region[["group1.means"]],
+    g2 = stats_by_region[["group2.means"]],
+    MoreArgs = list(na.rm = na.rm), SIMPLIFY = TRUE, USE.NAMES = FALSE)
+    group1.mean <- vapply(stats_by_region[["group1.means"]], mean, numeric(1),
+                          na.rm = na.rm, USE.NAMES = FALSE)
+    group2.mean <- vapply(stats_by_region[["group2.means"]], mean, numeric(1),
+                          na.rm = na.rm, USE.NAMES = FALSE)
+    tstat.sd <- vapply(stats_by_region[["tstat.sd"]], mean, numeric(1),
+                       na.rm = na.rm, USE.NAMES = FALSE)
+    data.frame(meanDiff = meanDiff,
+               group1.mean = group1.mean,
+               group2.mean = group2.mean,
+               tstat.sd = tstat.sd)
 }
 
 getStats_BSseqTstat <- function(BSseqTstat, regions = NULL, stat = "tstat.corrected") {
@@ -43,33 +66,13 @@ getStats_BSseqTstat <- function(BSseqTstat, regions = NULL, stat = "tstat.correc
     stopifnot(stat %in% colnames(BSseqTstat@stats))
     stopifnot(length(stat) == 1)
     stopifnot(is(regions, "GenomicRanges"))
-    ov <- findOverlaps(BSseqTstat, regions)
-    ov.sp <- split(queryHits(ov), subjectHits(ov))
-    getRegionStats <- function(idx) {
-        mat <- BSseqTstat@stats[idx,, drop=FALSE]
-        areaStat <- sum(mat[, stat])
-        maxStat <- max(mat[, stat])
-        c(areaStat, maxStat)
-    }
-    stats <- matrix(NA, ncol = 2, nrow = length(regions))
-    colnames(stats) <- c("areaStat", "maxStat")
-    tmp <- lapply(ov.sp, getRegionStats)
-    stats[as.integer(names(tmp)),] <- do.call(rbind, tmp)
-    out <- as.data.frame(stats)
+    hits <- findOverlaps(BSseqTstat, regions)
+    out <- .getRegionStats(stat = BSseqTstat@stats[, stat, drop = FALSE],
+                           hits = hits)
     if(! stat %in% c("tstat.corrected", "tstat"))
         return(out)
-    getRegionStats_ttest <- function(idx) {
-        mat <- BSseqTstat@stats[idx,, drop=FALSE]
-        group1.mean <- mean(mat[, "group1.means"])
-        group2.mean <- mean(mat[, "group2.means"])
-        meanDiff <- mean(mat[, "group1.means"] - mat[, "group2.means"])
-        tstat.sd <- mean(mat[, "tstat.sd"])
-        c(meanDiff, group1.mean, group2.mean, tstat.sd)
-    }
-    stats_ttest<- matrix(NA, ncol = 4, nrow = length(regions))
-    colnames(stats_ttest) <- c("meanDiff", "group1.mean", "group2.mean", "tstat.sd")
-    tmp <- lapply(ov.sp, getRegionStats_ttest)
-    stats_ttest[as.integer(names(tmp)),] <- do.call(rbind, tmp)
-    out <- cbind(out, as.data.frame(stats_ttest))
+    stats_ttest <- .getRegionStats_ttest(stats = BSseqTstat@stats,
+                                         hits = hits)
+    out <- cbind(out, stats_ttest)
     out
 }

@@ -45,8 +45,10 @@
     \code{\linkS4class{BSseqStat}} also describes the return class.  This
     function is likely to be followed by the use of \code{\link{computeStat}}.}
 \examples{
-  \dontrun{
+  \donttest{
     if(require(bsseqData)) {
+        # library(limma) required for makeContrasts()
+        library(limma)
         data(keepLoci.ex)
         data(BS.cancer.ex.fit)
         BS.cancer.ex.fit <- updateObject(BS.cancer.ex.fit)
