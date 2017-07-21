@@ -29,18 +29,18 @@ setMethod("combine", signature(x = "BSseq", y = "BSseq"), function(x, y, ...) {
             trans <- NULL
             parameters <- NULL
         } else {
-            x_trans <- getBSseq(x, "trans")
-            y_trans <- getBSseq(y, "trans")
-            if (!identical(x_trans, y_trans)) {
+            trans_x <- getBSseq(x, "trans")
+            trans_y <- getBSseq(y, "trans")
+            if (!all.equal(trans_x, trans_y)) {
                 stop("'x' and 'y' need to have the same 'trans'")
             }
-            trans <- x_trans
-            x_parameters <- getBSseq(x, "parameters")
-            y_parameters <- getBSseq(y, "parameters")
-            if (!identical(x_parameters, y_parameters)) {
+            trans <- trans_x
+            parameters_x <- getBSseq(x, "parameters")
+            parameters_y <- getBSseq(y, "parameters")
+            if (!identical(parameters_x, parameters_y)) {
                 stop("'x' and 'y' need to have the same 'parameters'")
             }
-            parameters <- x_parameters
+            parameters <- parameters_x
             coef <- cbind(getBSseq(x, "coef"), getBSseq(y, "coef"))
             if (!is.null(getBSseq(x, "se.coef")) &&
                 !is.null(getBSseq(y, "se.coef"))) {
@@ -57,40 +57,40 @@ setMethod("combine", signature(x = "BSseq", y = "BSseq"), function(x, y, ...) {
         }
     } else {
         gr <- reduce(c(granges(x), granges(y)), min.gapwidth = 0L)
-        mm.x <- as.matrix(findOverlaps(gr, granges(x)))
-        mm.y <- as.matrix(findOverlaps(gr, granges(y)))
-        I <-  list(mm.x[, 1], mm.y[, 1])
+        I <- lapply(list(x, y), function(xx) {
+            findOverlaps(xx, gr, type = "equal", select = "first")
+        })
         ## FIXME: there is no check that the two sampleNames are disjoint.
         sampleNames <- c(sampleNames(x), sampleNames(y))
-        M_X <- list(getBSseq(x, "M"), getBSseq(y, "M"))
-        if (any(vapply(M_X, .isHDF5ArrayBacked, logical(1L)))) {
-            M_BACKEND <- "HDF5Array"
+        X_M <- list(getBSseq(x, "M"), getBSseq(y, "M"))
+        if (any(vapply(X_M, .isHDF5ArrayBacked, logical(1L)))) {
+            BACKEND_M <- "HDF5Array"
         } else {
-            M_BACKEND <- NULL
+            BACKEND_M <- NULL
         }
-        # TODO: Figure out if fill should be 0 or 0L based on M_X
+        # TODO: Figure out if fill should be 0 or 0L based on X_M
         M <- .combineListOfDelayedMatrixObjects(
-            X = M_X,
+            X = X_M,
             I = I,
             nrow = length(gr),
             ncol = length(sampleNames),
             dimnames = list(NULL, sampleNames),
             fill = 0L,
-            BACKEND = M_BACKEND)
-        Cov_X <- list(getBSseq(x, "Cov"), getBSseq(y, "Cov"))
-        if (any(vapply(Cov_X, .isHDF5ArrayBacked, logical(1L)))) {
-            Cov_BACKEND <- "HDF5Array"
+            BACKEND = BACKEND_M)
+        X_Cov <- list(getBSseq(x, "Cov"), getBSseq(y, "Cov"))
+        if (any(vapply(X_Cov, .isHDF5ArrayBacked, logical(1L)))) {
+            BACKEND_Cov <- "HDF5Array"
         } else {
-            Cov_BACKEND <- NULL
+            BACKEND_Cov <- NULL
         }
         Cov <- .combineListOfDelayedMatrixObjects(
-            X = list(getBSseq(x, "Cov"), getBSseq(y, "Cov")),
+            X = X_Cov,
             I = I,
             nrow = length(gr),
             ncol = length(sampleNames),
             dimnames = list(NULL, sampleNames),
             fill = 0L,
-            BACKEND = Cov_BACKEND)
+            BACKEND = BACKEND_Cov)
         if (hasBeenSmoothed(x) || hasBeenSmoothed(y)) {
             warning("Setting 'coef' and 'se.coef' to NULL: Cannot combine() ",
                     "these because 'x' and 'y' have different rowRanges")
@@ -112,7 +112,7 @@ combineList <- function(x, ..., BACKEND = NULL) {
     stopifnot(all(sapply(x, class) == "BSseq"))
     trans <- getBSseq(x[[1]], "trans")
     sameTrans <- sapply(x[-1], function(xx) {
-        identical(trans, getBSseq(xx, "trans"))
+        all.equal(trans, getBSseq(xx, "trans"))
     })
     if (!all(sameTrans)) {
         stop("all elements of '...' in combineList needs to have the same ",
@@ -140,16 +140,20 @@ combineList <- function(x, ..., BACKEND = NULL) {
         #       object as a new HDF5Matrix can take a long time.
         M <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "M")))
         Cov <- do.call(cbind, lapply(x, function(xx) getBSseq(xx, "Cov")))
-        if (any(!vapply(x, hasBeenSmoothed, logical(1L)))) {
-            warning("Setting 'coef' and 'se.coef' to NULL: Cannot combine() ",
-                    "these because BSseq objects have different rowRanges")
+        has_been_smoothed <- vapply(x, hasBeenSmoothed, logical(1L))
+        if (!all(has_been_smoothed)) {
+            if (any(has_been_smoothed)) {
+                warning("Setting 'coef' and 'se.coef' to NULL: Cannot ",
+                        "combine() these because not all BSseq objects have ",
+                        "been smoothed")
+            }
             coef <- NULL
             se.coef <- NULL
             trans <- NULL
         } else {
             list_of_trans <- lapply(x, getBSseq, "trans")
             if (!all(vapply(list_of_trans, function(trans) {
-                identical(trans, list_of_trans[[1]])
+                all.equal(trans, list_of_trans[[1]])
             }, logical(1L)))) {
                 stop("All BSseq objects need to have the same 'trans'")
             }
@@ -164,10 +168,11 @@ combineList <- function(x, ..., BACKEND = NULL) {
             list_of_coef <- lapply(x, function(xx) getBSseq(xx, "coef"))
             coef <- do.call(cbind, list_of_coef)
             list_of_se.coef <- lapply(x, function(xx) getBSseq(xx, "se.coef"))
-            if (all(!vapply(list_of_coef, is.null, logical(1L)))) {
+            has_se.coef <- !vapply(list_of_se.coef, is.null, logical(1L))
+            if (all(has_se.coef)) {
                 se.coef <- do.call(cbind, list_of_se.coef)
             } else {
-                if (any(vapply(list_of_coef, is.null, logical(1L)))) {
+                if (any(has_se.coef) && any(!has_se.coef)) {
                     warning("Setting 'se.coef' to NULL: Cannot combine() ",
                             "these because at least of the BSseq objects ",
                             "is missing 'se.coef'")
@@ -179,8 +184,7 @@ combineList <- function(x, ..., BACKEND = NULL) {
         gr <- sort(reduce(do.call(c, unname(lapply(x, granges))),
                           min.gapwidth = 0L))
         I <- lapply(x, function(xx) {
-            ov <- findOverlaps(gr, xx)
-            queryHits(ov)
+            findOverlaps(xx, gr, type = "equal", select = "first")
         })
         sampleNames <- do.call(c, unname(lapply(x, sampleNames)))
         ## FIXME: there is no check that the sampleNames are unique/disjoint.
@@ -202,7 +206,8 @@ combineList <- function(x, ..., BACKEND = NULL) {
             dimnames = list(NULL, sampleNames),
             fill = 0,
             BACKEND = BACKEND)
-        if (any(vapply(x, hasBeenSmoothed, logical(1L)))) {
+        has_been_smoothed <- vapply(x, hasBeenSmoothed, logical(1L))
+        if (any(has_been_smoothed)) {
             warning("Setting 'coef' and 'se.coef' to NULL: Cannot combine() ",
                     "these because BSseq objects have different rowRanges")
         }

@@ -16,7 +16,8 @@ importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
 import(parallel)
 importFrom(locfit, "locfit", "lp")
-importFrom(matrixStats, "rowSds", "rowVars", "rowMaxs", "rowMins")
+importFrom(matrixStats, "rowSds", "rowVars", "rowMaxs", "rowMins", "colMeans2",
+           "colSums2")
 import(IRanges)
 import(GenomicRanges)
 import(SummarizedExperiment)

@@ -166,3 +166,57 @@ test_combineList <- function() {
     Z <- combineList(BSSEQ_FIT[, 1], BSSEQ_FIT[, 2])
     checkBSseqIdentical(Z, BSSEQ_FIT)
 }
+
+# Test bug fix reported in pull request 54
+# (https://github.com/kasperdanielhansen/bsseq/pull/54/files)
+test_PR54 <- function() {
+    M <- matrix(0:8, 3, 3)
+    Cov <- matrix(1:9, 3, 3)
+
+    BS1 <- BSseq(chr = c("chr1", "chr2", "chr1"),
+                 pos = c(1, 2, 3),
+                 M = M,
+                 Cov = Cov,
+                 sampleNames = c("A","B", "C"))
+    BS2 <- BSseq(chr = c("chr2", "chr1", "chr2"),
+                 pos = c(1, 2, 3),
+                 M = M,
+                 Cov = Cov, sampleNames = c("D", "E", "F"))
+    # NOTE: Using combineList()
+    combined <- combineList(list(BS1, BS2))
+    over <- findOverlaps(BS2, combined, type = "equal")
+    methAlone <- getMeth( BS2[queryHits(over), c("D", "E", "F")], type = "raw")
+    methCombined <- getMeth(combined[subjectHits(over), c("D", "E", "F")],
+                             type = "raw")
+    checkEquals(as.matrix(methAlone), as.matrix(methCombined))
+    # NOTE: Using combine()
+    combined2 <- combine(BS1, BS2)
+    over2 <- findOverlaps(BS2, combined2, type = "equal")
+    methAlone2 <- getMeth( BS2[queryHits(over2), c("D", "E", "F")],
+                           type = "raw")
+    methCombined2 <- getMeth(combined2[subjectHits(over2), c("D", "E", "F")],
+                            type = "raw")
+    checkEquals(as.matrix(methAlone2), as.matrix(methCombined2))
+
+    # Extended version with 3 BSseq objects
+    BS3 <- BSseq(chr = c("chr2", "chr1", "chr2"),
+        pos = c(3, 2, 1),
+        M = M,
+        Cov = Cov,
+        sampleNames = c("G", "H", "I")
+    )
+    # NOTE: Using combineList()
+    combined <- combineList(BS2, BS1, BS3)
+    over <- findOverlaps(BS3, combined, type = "equal")
+    methAlone <- getMeth(BS3[queryHits(over), c("G", "H", "I")], type = "raw")
+    methCombined <- getMeth(combined[subjectHits(over), c("G", "H", "I")],
+                            type = "raw")
+    checkEquals(as.matrix(methAlone), as.matrix(methCombined))
+    # NOTE: Using combine()
+    combined2 <- combine(BS2, BS1, BS3)
+    over2 <- findOverlaps(BS3, combined2, type = "equal")
+    methAlone2 <- getMeth(BS3[queryHits(over2), c("G", "H", "I")], type = "raw")
+    methCombined2 <- getMeth(combined2[subjectHits(over2), c("G", "H", "I")],
+                            type = "raw")
+    checkEquals(as.matrix(methAlone), as.matrix(methCombined))
+}
