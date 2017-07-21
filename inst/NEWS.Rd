@@ -2,6 +2,30 @@
 \title{bsseq news}
 \encoding{UTF-8}
 
+\section{Version 1.13.x}{
+  \itemize{
+    \item{1.13.6: Fix performance regression in \code{BSmooth()}. Thanks to
+    Shan Andrews for the report
+    (\url{https://github.com/kasperdanielhansen/bsseq/pull/57}).}
+    \item{1.13.5: Fix major bug in \code{combine()} and \code{combineList()}.
+    \strong{This bug led to bad BSseq objects with incorrect methylation
+    estimates due to incorrect 'M', 'Cov', 'coef', and 'se.coef' assays.} To be
+    safe, BSseq objects created with versions 1.13.0 to 1.13.4 should be
+    re-created using a newer version. More specifically, any BSseq objects
+    created with \code{combine()} or \code{combineList()} should be re-created.
+    Also, BSseq objects created using \code{read.bismark()} or
+    \code{read.bsmooth()} with multiple '\code{files}' should be re-created.
+    Thanks to Alejandro Reyes (@areyesq89) for the report
+    (\url{https://github.com/kasperdanielhansen/bsseq/pull/54}).}
+    \item{1.13.4: Fix performance regression in getMeth() and
+    getCoverage() when '\code{regions}' were supplied. Thanks to Alejandro
+    Reyes (@areyesq89) for the report
+    (\url{https://support.bioconductor.org/p/97611/}).}
+  }
+}
+
+
+
 \section{Version 1.11.x}{
 This version brings some new features for working with large
 bisulfite-sequencing datasets. Adding these features has involved substantial
