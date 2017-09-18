@@ -19,9 +19,6 @@
 \alias{strand,hasGRanges-method}
 \alias{strand<-,hasGRanges-method}
 \alias{strand<-,hasGRanges,ANY-method}
-\alias{subsetByOverlaps,GenomicRanges,hasGRanges-method}
-\alias{subsetByOverlaps,hasGRanges,GenomicRanges-method}
-\alias{subsetByOverlaps,hasGRanges,hasGRanges-method}
 \alias{findOverlaps,GenomicRanges,hasGRanges-method}
 \alias{findOverlaps,hasGRanges,GenomicRanges-method}
 \alias{findOverlaps,hasGRanges,hasGRanges-method}
@@ -68,15 +65,6 @@ Objects can be created by calls of the form \code{new("hasGRanges", ...)}.
     \item{findOverlaps}{\code{(query = "hasGRanges", subject =
 	"GenomicRanges")}: finds overlaps between the \code{granges()}
       of the query and the subject.}
-    \item{subsetByOverlaps}{\code{(query = "hasGRanges", subject =
-	"hasGRanges")}: Subset the query, keeping the genomic locations that 
-      overlaps the subject.}
-    \item{subsetByOverlaps}{\code{(query = "hasGRanges", subject =
-	"GenomicRanges")}: Subset the query, keeping the genomic
-      locations that overlaps the subject.}
-    \item{subsetByOverlaps}{\code{(query = "GenomicRanges",
-	subject = "hasGRanges")}: Subset the query, keeping the genomic
-      locations that overlaps the subject.}
   }
 }
 \author{
@@ -85,8 +73,8 @@ Objects can be created by calls of the form \code{new("hasGRanges", ...)}.
 \note{
   If you extend the \code{hasGRanges} class, you should consider writing
   a subset method (\code{[}), and a \code{show} method.  If the new
-  class supports single index subsetting, the \code{subsetByOverlaps}
-  methods show extend without problems.
+  class supports single index subsetting, objects of the class will support
+  \code{subsetByOverlaps} out-of-the-box.
 }
 \examples{
 showClass("hasGRanges")

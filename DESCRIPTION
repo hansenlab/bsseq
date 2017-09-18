@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.13.6
+Version: 1.13.7
 Encoding: UTF-8
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
@@ -11,11 +11,11 @@ Depends:
     R (>= 3.3),
     methods,
     BiocGenerics,
-    GenomicRanges (>= 1.23.7),
-    SummarizedExperiment (>= 0.1.1),
+    GenomicRanges (>= 1.29.14),
+    SummarizedExperiment (>= 1.7.8),
     parallel
 Imports:
-    IRanges (>= 2.5.17),
+    IRanges (>= 2.11.16),
     GenomeInfoDb,
     scales,
     stats,
