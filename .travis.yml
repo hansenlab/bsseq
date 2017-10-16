@@ -1,4 +1,4 @@
-language: R
+language: r
 r: bioc-devel
 sudo: false
 cache: packages
@@ -10,4 +10,3 @@ before_install:
   - tlmgr install nowidow
   - tlmgr install parnotes
   - tlmgr install marginfix
-
