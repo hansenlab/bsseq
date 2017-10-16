@@ -19,9 +19,9 @@
 \alias{strand,hasGRanges-method}
 \alias{strand<-,hasGRanges-method}
 \alias{strand<-,hasGRanges,ANY-method}
-\alias{subsetByOverlaps,GenomicRanges,hasGRanges-method}
-\alias{subsetByOverlaps,hasGRanges,GenomicRanges-method}
-\alias{subsetByOverlaps,hasGRanges,hasGRanges-method}
+%\alias{subsetByOverlaps,GenomicRanges,hasGRanges-method}
+%\alias{subsetByOverlaps,hasGRanges,GenomicRanges-method}
+%\alias{subsetByOverlaps,hasGRanges,hasGRanges-method}
 \alias{findOverlaps,GenomicRanges,hasGRanges-method}
 \alias{findOverlaps,hasGRanges,GenomicRanges-method}
 \alias{findOverlaps,hasGRanges,hasGRanges-method}
@@ -86,7 +86,7 @@ Objects can be created by calls of the form \code{new("hasGRanges", ...)}.
   If you extend the \code{hasGRanges} class, you should consider writing
   a subset method (\code{[}), and a \code{show} method.  If the new
   class supports single index subsetting, the \code{subsetByOverlaps}
-  methods show extend without problems.
+  methods will automatically extend.
 }
 \examples{
 showClass("hasGRanges")

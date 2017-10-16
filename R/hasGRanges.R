@@ -80,46 +80,45 @@ setReplaceMethod("strand", "hasGRanges", function(x, value) {
 
 setMethod("length", "hasGRanges", function(x) length(x@gr))
 
+## setMethod("subsetByOverlaps",
+##           signature(query = "hasGRanges", subject = "GenomicRanges"),
+##           function(query, subject, maxgap = 0L, minoverlap = 1L,
+##                    type = c("any", "start", "end", "within", "equal"),
+##                    ignore.strand = FALSE, ...) {
+##               ov <- findOverlaps(query = granges(query), subject = subject,
+##                                  maxgap = maxgap, minoverlap = minoverlap,
+##                                  type = match.arg(type), select = "arbitrary",
+##                                  ignore.strand = ignore.strand, ... )
+##               query[!is.na(ov)]
+##           })
 
-setMethod("subsetByOverlaps",
-          signature(query = "hasGRanges", subject = "GenomicRanges"),
-          function(query, subject, maxgap = 0L, minoverlap = 1L,
-                   type = c("any", "start", "end", "within", "equal"),
-                   ignore.strand = FALSE, ...) {
-              ov <- findOverlaps(query = granges(query), subject = subject,
-                                 maxgap = maxgap, minoverlap = minoverlap,
-                                 type = match.arg(type), select = "arbitrary",
-                                 ignore.strand = ignore.strand, ... )
-              query[!is.na(ov)]
-          })
+## setMethod("subsetByOverlaps",
+##           signature(query = "hasGRanges", subject = "hasGRanges"),
+##           function(query, subject, maxgap = 0L, minoverlap = 1L,
+##                    type = c("any", "start", "end", "within", "equal"),
+##                    ignore.strand = FALSE, ...) {
+##               ov <- findOverlaps(query = granges(query), subject = granges(subject),
+##                                  maxgap = maxgap, minoverlap = minoverlap,
+##                                  type = match.arg(type), select = "arbitrary",
+##                                  ignore.strand = ignore.strand, ... )
+##               query[!is.na(ov)]
+##           })
 
-setMethod("subsetByOverlaps",
-          signature(query = "hasGRanges", subject = "hasGRanges"),
-          function(query, subject, maxgap = 0L, minoverlap = 1L,
-                   type = c("any", "start", "end", "within", "equal"),
-                   ignore.strand = FALSE, ...) {
-              ov <- findOverlaps(query = granges(query), subject = granges(subject),
-                                 maxgap = maxgap, minoverlap = minoverlap,
-                                 type = match.arg(type), select = "arbitrary",
-                                 ignore.strand = ignore.strand, ... )
-              query[!is.na(ov)]
-          })
-
-setMethod("subsetByOverlaps",
-          signature(query = "GenomicRanges", subject = "hasGRanges"),
-          function(query, subject, maxgap = 0L, minoverlap = 1L,
-                   type = c("any", "start", "end", "within", "equal"),
-                   ignore.strand = FALSE, ...) {
-              ov <- findOverlaps(query = query, subject = granges(subject),
-                                 maxgap = maxgap, minoverlap = minoverlap,
-                                 type = match.arg(type), select = "arbitrary",
-                                 ignore.strand = ignore.strand, ... )
-              query[!is.na(ov)]
-          })
+## setMethod("subsetByOverlaps",
+##           signature(query = "GenomicRanges", subject = "hasGRanges"),
+##           function(query, subject, maxgap = 0L, minoverlap = 1L,
+##                    type = c("any", "start", "end", "within", "equal"),
+##                    ignore.strand = FALSE, ...) {
+##               ov <- findOverlaps(query = query, subject = granges(subject),
+##                                  maxgap = maxgap, minoverlap = minoverlap,
+##                                  type = match.arg(type), select = "arbitrary",
+##                                  ignore.strand = ignore.strand, ... )
+##               query[!is.na(ov)]
+##           })
 
 setMethod("findOverlaps",
           signature(query = "hasGRanges", subject = "GenomicRanges"),
-          function (query, subject, maxgap = 0L, minoverlap = 1L,
+          function (query, subject, maxgap = -1L, minoverlap = 0L,
                     type = c("any", "start", "end", "within", "equal"),
                     select = c("all", "first", "last", "arbitrary"),
                     ignore.strand = FALSE, ...) {
@@ -131,7 +130,7 @@ setMethod("findOverlaps",
 
 setMethod("findOverlaps",
           signature(query = "hasGRanges", subject = "hasGRanges"),
-          function (query, subject, maxgap = 0L, minoverlap = 1L,
+          function (query, subject, maxgap = -1L, minoverlap = 0L,
                     type = c("any", "start", "end", "within", "equal"),
                     select = c("all", "first", "last", "arbitrary"),
                     ignore.strand = FALSE, ...) {
@@ -143,7 +142,7 @@ setMethod("findOverlaps",
 
 setMethod("findOverlaps",
           signature(query = "GenomicRanges", subject = "hasGRanges"),
-          function (query, subject, maxgap = 0L, minoverlap = 1L,
+          function (query, subject, maxgap = -1L, minoverlap = 0L,
                     type = c("any", "start", "end", "within", "equal"),
                     select = c("all", "first", "last", "arbitrary"),
                     ignore.strand = FALSE, ...) {
