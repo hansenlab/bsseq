@@ -35,6 +35,7 @@ Suggests:
     RUnit,
     bsseqData,
     BiocStyle,
+    rmarkdown,
     knitr,
 Collate:
     utils.R
