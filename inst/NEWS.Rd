@@ -21,6 +21,7 @@
     getCoverage() when '\code{regions}' were supplied. Thanks to Alejandro
     Reyes (@areyesq89) for the report
     (\url{https://support.bioconductor.org/p/97611/}).}
+    \item Moved vignettes to Rmd.
   }
 }
 
