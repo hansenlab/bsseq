@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.13.9
+Version: 1.13.10
 Encoding: UTF-8
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
@@ -29,7 +29,7 @@ Imports:
     matrixStats (>= 0.50.0),
     permute,
     limma,
-    DelayedArray,
+    DelayedArray (>= 0.5.27),
     HDF5Array
 Suggests:
     RUnit,

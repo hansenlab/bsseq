@@ -4,8 +4,12 @@
 #
 
 .getSeedClasses <- function(seed) {
-    if (is(seed, "SeedBinder") || is(seed, "ConformableSeedCombiner")) {
-        seeds <- seed@seeds
+    if (is(seed, "DelayedOp")) {
+        seeds <- try(seed@seeds, silent = TRUE)
+        if (is(seeds, "try-error")) {
+            seed <- seed@seed
+            return(.getSeedClasses(seed))
+        }
         return(lapply(seeds, .getSeedClasses))
     } else if (is(seed, "DelayedArray")) {
         # A DelayedArray can have another DelayedArray as a seed
