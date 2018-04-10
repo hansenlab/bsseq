@@ -120,7 +120,7 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     }
     if(!is(gr, "GRanges"))
         stop("'gr' needs to be a GRanges")
-    if(any(width(gr)) != 1)
+    if(any(width(gr) != 1))
         stop("'gr' needs to have widths of 1")
     if(is.null(M) || is.null(Cov))
         stop("Need M and Cov")
