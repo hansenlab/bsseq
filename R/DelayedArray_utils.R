@@ -44,15 +44,15 @@
     is(x@seed, "matrix")
 }
 
-# NOTE: Equivalent to rowSums(x[, j, drop = FALSE]) but does it using a
+# NOTE: Equivalent to rowSums2(x[, j, drop = FALSE]) but does it using a
 #       delayed operation and always returns a nrow(x) x 1 DelayedMatrix
-.delayed_rowSums <- function(x, j) {
+.delayed_rowSums2 <- function(x, j) {
     Reduce(`+`, lapply(j, function(jj) x[, jj, drop = FALSE]))
 }
 
-# NOTE: Equivalent to colSums(x[i, , drop = FALSE]) but does it using a
+# NOTE: Equivalent to colSums2(x[i, , drop = FALSE]) but does it using a
 #       delayed operation and always returns a 1 x ncol(x) DelayedMatrix
-.delayed_colSums <- function(x, i) {
+.delayed_colSums2 <- function(x, i) {
     Reduce(`+`, lapply(i, function(ii) x[ii, , drop = FALSE]))
 }
 
@@ -63,11 +63,11 @@
     if (MARGIN == 1) {
         if (is.null(BACKEND)) {
             collapsed_x <- do.call(cbind, lapply(sp, function(j) {
-                rowSums(x[, j, drop = FALSE])
+                rowSums2(x[, j, drop = FALSE])
             }))
         } else {
             collapsed_x <- do.call(cbind, lapply(sp, function(j) {
-                .delayed_rowSums(x, j)
+                .delayed_rowSums2(x, j)
             }))
             # NOTE: Need to manually add colnames when using this method
             colnames(collapsed_x) <- names(sp)
@@ -75,11 +75,11 @@
     } else if (MARGIN == 2) {
         if (is.null(BACKEND)) {
             collapsed_x <- do.call(rbind, lapply(sp, function(i) {
-                colSums(x[i, , drop = FALSE])
+                colSums2(x[i, , drop = FALSE])
             }))
         } else {
             collapsed_x <- do.call(rbind, lapply(sp, function(i) {
-                .delayed_colSums(x, i)
+                .delayed_colSums2(x, i)
             }))
             # NOTE: Need to manually add rownames when using this method
             rownames(collapsed_x) <- names(sp)

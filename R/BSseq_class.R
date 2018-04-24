@@ -166,7 +166,7 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
         }
     }
     if(rmZeroCov) {
-        wh <- which(rowSums(Cov) == 0)
+        wh <- which(rowSums2(Cov) == 0)
         if(length(wh) > 0) {
             gr <- gr[-wh]
             M <- M[-wh,,drop = FALSE]

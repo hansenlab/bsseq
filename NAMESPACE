@@ -16,8 +16,8 @@ importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
 import(parallel)
 importFrom(locfit, "locfit", "lp")
-importFrom(matrixStats, "rowSds", "rowVars", "rowMaxs", "rowMins", "colMeans2",
-           "colSums2")
+importFrom(DelayedMatrixStats, "rowSds", "rowVars", "colMeans2", "colSums2",
+           "rowSums2", "rowMeans2")
 import(IRanges)
 import(GenomicRanges)
 import(SummarizedExperiment)
@@ -36,7 +36,8 @@ importFrom(R.utils, "isGzipped", "gunzip")
 import(limma)
 importFrom(permute, "shuffleSet", "how")
 importClassesFrom(DelayedArray, "DelayedArray", "DelayedMatrix")
-importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2")
+importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2", "rowMaxs",
+           "rowMins")
 
 ##
 ## Exporting

@@ -11,7 +11,7 @@ read.umtab2 <- function(dirs, sampleNames = NULL, rmZeroCov = FALSE,
                                    readCycle = readCycle, keepFilt = keepFilt,
                                    verbose = verbose)
         if(rmZeroCov && length(chrRead) != 0){
-            wh <- which(rowSums(chrRead$U + chrRead$M) > 0)
+            wh <- which(rowSums2(chrRead$U + chrRead$M) > 0)
             chrRead$M <- chrRead$M[wh,]
             chrRead$U <- chrRead$U[wh,]
             if(readCycle) {
@@ -62,7 +62,7 @@ read.umtab2 <- function(dirs, sampleNames = NULL, rmZeroCov = FALSE,
 }
 
 
-read.umtab2.chr <- function(files, sampleNames = NULL, 
+read.umtab2.chr <- function(files, sampleNames = NULL,
                             keepM, keepU, readCycle = FALSE, keepFilt = FALSE,
                             verbose = TRUE) {
     columnHeaders <- strsplit(readLines(files[1], n = 1), "\t")[[1]]
@@ -148,7 +148,7 @@ read.umtab2.chr <- function(files, sampleNames = NULL,
                 csums = csums))
 }
 
-read.umtab2.chr2 <- function(files, sampleNames = NULL, 
+read.umtab2.chr2 <- function(files, sampleNames = NULL,
                              keepM, keepU, verbose = TRUE) {
     columnHeaders <- strsplit(readLines(files[1], n = 1), "\t")[[1]]
     if("strand" %in% columnHeaders)
@@ -187,7 +187,7 @@ read.umtab2.chr2 <- function(files, sampleNames = NULL,
     }, grLoc)
     nPos <- length(grLoc)
     nSamples <- length(files)
-    
+
     M <- matrix(0L, nrow = nPos, ncol = nSamples)
     colnames(M)  <- sampleNames
     U <- Mcy <- Ucy <- M
@@ -248,7 +248,7 @@ read.umtab <- function(dirs, sampleNames = NULL, rmZeroCov = FALSE,
                                   keepM = keepM, keepU = keepU, sampleNames = sampleNames,
                                   verbose = verbose)
         if(rmZeroCov && length(chrRead) != 0){
-            wh <- which(rowSums(chrRead$U + chrRead$M) > 0)
+            wh <- which(rowSums2(chrRead$U + chrRead$M) > 0)
             chrRead$M <- chrRead$M[wh,]
             chrRead$U <- chrRead$U[wh,]
             chrRead$Mcy <- chrRead$Mcy[wh,]
@@ -369,7 +369,7 @@ read.bsmoothDirRaw <- function(dir, seqnames = NULL, keepCycle = FALSE, keepFilt
     what0[int] <- replicate(length(int), integer(0))
     if(!keepCycle)
         what0[c("Mcy", "Ucy")] <- replicate(2, NULL)
-    if(!keepFilt) 
+    if(!keepFilt)
         what0[grep("^filt", names(what0))] <- replicate(length(grep("^filt", names(what0))), NULL)
     outList <- lapply(allChrFiles, function(thisfile) {
         if(verbose)
@@ -448,7 +448,7 @@ read.bsmooth <- function(dirs, sampleNames = NULL, seqnames = NULL, returnRaw = 
         }
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
-        if(verbose) cat(sprintf("done in %.1f secs\n", stime)) 
+        if(verbose) cat(sprintf("done in %.1f secs\n", stime))
         out
     })
     if(!returnRaw) {
