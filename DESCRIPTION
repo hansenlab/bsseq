@@ -29,14 +29,14 @@ Imports:
     DelayedMatrixStats (>= 1.1.12),
     permute,
     limma,
-    DelayedArray (>= 0.5.27),
-    HDF5Array
+    DelayedArray (>= 0.5.27)
 Suggests:
     RUnit,
     bsseqData,
     BiocStyle,
     rmarkdown,
     knitr,
+    HDF5Array
 Collate:
     utils.R
     hasGRanges.R
