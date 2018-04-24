@@ -54,7 +54,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         ##       we skip it for the time being. Really noticeable when Cov
         ##       needs row subsetted/reordered (i.e. has Cov@index[[1]] exists)
         ##
-        if(any(rowSums(getCoverage(BSseq)[, c(group1, group2)]) == 0)) {
+        if(any(rowSums2(getCoverage(BSseq)[, c(group1, group2)]) == 0)) {
             warning("Computing t-statistics at locations where there is no data; consider subsetting the 'BSseq' object first")
         }
     }
@@ -75,8 +75,8 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
     ptime1 <- proc.time()
     allPs <- getMeth(BSseq, type = "smooth", what = "perBase",
                      confint = FALSE)
-    group1.means <- rowMeans(allPs[, group1, drop = FALSE], na.rm = TRUE)
-    group2.means <- rowMeans(allPs[, group2, drop = FALSE], na.rm = TRUE)
+    group1.means <- rowMeans2(allPs[, group1, drop = FALSE], na.rm = TRUE)
+    group2.means <- rowMeans2(allPs[, group2, drop = FALSE], na.rm = TRUE)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))

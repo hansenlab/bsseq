@@ -12,7 +12,7 @@ fisherTests <- function(BSseq, group1, group2, lookup = NULL,
     if(is.character(group2)) {
         stopifnot(all(group2 %in% sampleNames(BSseq)))
         group2 <- match(group2, sampleNames(BSseq))
-    }    
+    }
     if(is.numeric(group2)) {
         stopifnot(min(group2) >= 1 & max(group2) <= ncol(BSseq))
     } else stop("problems with argument 'group2'")
@@ -26,10 +26,10 @@ fisherTests <- function(BSseq, group1, group2, lookup = NULL,
     }
     if(verbose) cat("[fisherTests] setup ... ")
     ptime1 <- proc.time()
-    M1 <- rowSums(getCoverage(BSseq, type = "M")[, group1, drop = FALSE])
-    M2 <- rowSums(getCoverage(BSseq, type = "M")[, group2, drop = FALSE])
-    Cov1 <- rowSums(getCoverage(BSseq, type = "Cov")[, group1, drop = FALSE])
-    Cov2 <- rowSums(getCoverage(BSseq, type = "Cov")[, group2, drop = FALSE])
+    M1 <- rowSums2(getCoverage(BSseq, type = "M")[, group1, drop = FALSE])
+    M2 <- rowSums2(getCoverage(BSseq, type = "M")[, group2, drop = FALSE])
+    Cov1 <- rowSums2(getCoverage(BSseq, type = "Cov")[, group1, drop = FALSE])
+    Cov2 <- rowSums2(getCoverage(BSseq, type = "Cov")[, group2, drop = FALSE])
     keys <- paste(Cov1, Cov2, M1, M2, sep = "_")
     newkeys <- setdiff(keys, oldkeys)
     expand <- matrix(as.integer(do.call(rbind, strsplit(newkeys, "_"))), ncol = 4)

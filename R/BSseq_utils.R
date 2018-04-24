@@ -159,10 +159,10 @@ getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
             return(getBSseq(BSseq, type = type))
         }
         if (what == "perRegionTotal") {
-            return(colSums(getBSseq(BSseq, type = type)))
+            return(colSums2(getBSseq(BSseq, type = type)))
         }
         if (what == "perRegionAverage") {
-            return(colMeans(getBSseq(BSseq, type = type)))
+            return(colMeans2(getBSseq(BSseq, type = type)))
         }
     }
     if (class(regions) == "data.frame") {

@@ -1,8 +1,8 @@
 poissonGoodnessOfFit <- function(BSseq, nQuantiles = 10^5) {
     Cov <- getBSseq(BSseq, type = "Cov")
-    lambda <- rowMeans(Cov)
+    lambda <- rowMeans2(Cov)
     out <- list(chisq = NULL, df = ncol(Cov) - 1)
-    out$chisq <- rowSums((Cov - lambda)^2 / lambda)
+    out$chisq <- rowSums2((Cov - lambda)^2 / lambda)
     if(nQuantiles > length(out$chisq))
         nQuantiles <- length(out$chisq)
     probs <- seq(from = 0, to = 1, length.out = nQuantiles)
@@ -22,14 +22,14 @@ binomialGoodnessOfFit <- function(BSseq, method = c("MLE"), nQuantiles = 10^5) {
     M <- getCoverage(BSseq, type = "M", what = "perBase")
     Cov <- getCoverage(BSseq, type = "Cov", what = "perBase")
     if(method == "MLE") # This is the MLE under iid
-        p <- rowSums(M) / rowSums(Cov) 
+        p <- rowSums2(M) / rowSums2(Cov)
     ## p <- rowMeans(M / Cov, na.rm = TRUE)
     out <- list(chisq = NULL, quantiles = NULL, df = ncol(Cov) - 1)
     ## This gets tricky.  For the binomial model, we need Cov > 0, but
     ## this implies that a given location may have less then nCol(BSseq)
     ## number of observations, and hence the degrees of freedom will
-    ## vary.  
-    out$chisq <- rowSums((M - Cov*p)^2 / sqrt(Cov * p * (1-p)))
+    ## vary.
+    out$chisq <- rowSums2((M - Cov*p)^2 / sqrt(Cov * p * (1-p)))
     probs <- seq(from = 0, to = 1, length.out = nQuantiles)
     ## Next line will remove all locations where not all samples have coverage
     out$quantiles <- quantile(out$chisq, prob = probs, na.rm = TRUE)
