@@ -38,6 +38,7 @@ importFrom(permute, "shuffleSet", "how")
 importClassesFrom(DelayedArray, "DelayedArray", "DelayedMatrix")
 importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2", "rowMaxs",
            "rowMins")
+importClassesFrom(HDF5Array, "HDF5Array")
 
 ##
 ## Exporting
