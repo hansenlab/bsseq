@@ -265,6 +265,8 @@ setMethod("updateObject", "BSseq",
                   object@trans <- plogis
               }
               if (.hasSlot(object, "assays")) {
+                  # call method for RangedSummarizedExperiment objects
+                  object <- callNextMethod()
                   assays(object) <- endoapply(
                       assays(object, withDimnames = FALSE), function(assay) {
                           if (is.null(assay)) {
@@ -273,8 +275,7 @@ setMethod("updateObject", "BSseq",
                               .DelayedMatrix(assay)
                           }
                       })
-                  # call method for RangedSummarizedExperiment objects
-                  callNextMethod()
+                  object
               } else {
                   BSseq(gr = object@gr, M = object@M, Cov = object@Cov,
                         coef = object@coef, se.coef = object@se.coef,
