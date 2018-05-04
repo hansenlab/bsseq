@@ -31,14 +31,18 @@ importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo", "seqinf
                   "seqnames", "seqnames<-", "seqlevels", "seqlevels<-")
 import(S4Vectors)
 importFrom(gtools, "combinations")
-importFrom(data.table, "fread", "setnames")
+# importFrom(data.table, "setnames", "setDT", "data.table", ":=", "setkey")
+import(data.table)
 importFrom(R.utils, "isGzipped", "gunzip")
 import(limma)
 importFrom(permute, "shuffleSet", "how")
 importClassesFrom(DelayedArray, "DelayedArray", "DelayedMatrix")
 importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2", "rowMaxs",
-           "rowMins")
+           "rowMins", "getRealizationBackend", "setRealizationBackend", "close",
+           "RegularArrayGrid", "write_block_to_sink")
 importClassesFrom(HDF5Array, "HDF5Array")
+importFrom(readr, "count_fields", "cols_only", "col_character", "col_integer",
+           "col_skip", "col_double", "read_tsv", "tokenizer_tsv")
 
 ##
 ## Exporting
