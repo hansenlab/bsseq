@@ -1,68 +1,25 @@
-collapseBSseq <- function(BSseq, columns) {
-    ## columns is a vector of new names, names(columns) is sampleNames or empty
-    stopifnot(is.character(columns))
-    if(is.null(names(columns)) && length(columns) != ncol(BSseq))
-        stop("if `columns' does not have names, it needs to be of the same length as `BSseq` has columns (samples)")
-    if(!is.null(names(columns)) && !all(names(columns) %in% sampleNames(BSseq)))
-        stop("if `columns` has names, they need to be sampleNames(BSseq)")
-    if(is.null(names(columns)))
-        columns.idx <- 1:ncol(BSseq)
-    else
-        columns.idx <- match(names(columns), sampleNames(BSseq))
-    sp <- split(columns.idx, columns)
-    # TODO: .collapseDelayedMatrix() always return numeric; it may be
-    #       worth coercing M and Cov to integer DelayedMatrix objects,
-    #       which would halve storage requirements and impose some more
-    #       structure on the BSseq class (via new validity method
-    #       checks)
-    # NOTE: Tries to be smart about how collapsed DelayedMatrix should
-    #       be realized
-    M <- getBSseq(BSseq, "M")
-    if (.isHDF5ArrayBacked(M)) {
-        M_BACKEND <- "HDF5Array"
-    } else {
-        M_BACKEND <- NULL
-    }
-    M <- .collapseDelayedMatrix(x = M,
-                                sp = sp,
-                                MARGIN = 1,
-                                BACKEND = M_BACKEND)
-    Cov <- getBSseq(BSseq, "Cov")
-    if (.isHDF5ArrayBacked(Cov)) {
-        Cov_BACKEND <- "HDF5Array"
-    } else {
-        Cov_BACKEND <- NULL
-    }
-    Cov <- .collapseDelayedMatrix(x = Cov,
-                                  sp = sp,
-                                  MARGIN = 1,
-                                  BACKEND = Cov_BACKEND)
-    BSseq(gr = getBSseq(BSseq, "gr"), M = M, Cov = Cov, sampleNames = names(sp))
-}
-
 chrSelectBSseq <- function(BSseq, seqnames = NULL, order = FALSE) {
     seqlevels(BSseq, pruning.mode = "coarse") <- seqnames
-    if(order)
-        BSseq <- orderBSseq(BSseq, seqOrder = seqnames)
+    if (order) BSseq <- orderBSseq(BSseq, seqOrder = seqnames)
     BSseq
 }
 
-
 orderBSseq <- function(BSseq, seqOrder = NULL) {
-    if(!is.null(seqOrder))
+    if (!is.null(seqOrder)) {
         seqlevels(BSseq, pruning.mode = "coarse") <- seqOrder
+    }
     BSseq[order(granges(BSseq))]
 }
-
 
 # TODO: getMeth() realises the result in memory iff regions is not NULL;
 #       discuss with Kasper
 # TODO: Whether or not colnames are added to returned value depends on whether
 #       regions is non-NULL; discuss with Kasper
 # TODO: Add parallel support
+# TODO: Document withDimnames
 getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
                     what = c("perBase", "perRegion"), confint = FALSE,
-                    alpha = 0.95) {
+                    alpha = 0.95, withDimnames = TRUE) {
     p.conf <- function(p, n, alpha) {
         z <- abs(qnorm((1 - alpha)/2, mean = 0, sd = 1))
         upper <- (p + z ^ 2 / (2 * n) +
@@ -85,21 +42,21 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
     }
     z <- abs(qnorm((1 - alpha)/2, mean = 0, sd = 1))
     if (is.null(regions) && type == "smooth") {
-        coef <- getBSseq(BSseq, type = "coef")
-        meth <- getBSseq(BSseq, type = "trans")(coef)
+        coef <- getBSseq(BSseq, "coef", withDimnames)
+        meth <- getBSseq(BSseq, "trans", withDimnames)(coef)
         if (confint) {
-            upper <- meth + z * getBSseq(BSseq, type = "se.coef")
-            lower <- meth - z * getBSseq(BSseq, type = "se.coef")
+            upper <- meth + z * getBSseq(BSseq, "se.coef", withDimnames)
+            lower <- meth - z * getBSseq(BSseq, "se.coef", withDimnames)
             return(list(meth = meth, lower = lower, upper = upper))
         } else {
             return(meth)
         }
     }
     if (is.null(regions) && type == "raw") {
-        meth <- getBSseq(BSseq, type = "M") / getBSseq(BSseq, type = "Cov")
+        meth <- getBSseq(BSseq, "M", withDimnames) /
+            getBSseq(BSseq, "Cov", withDimnames)
         if (confint) {
-            return(p.conf(meth, n = getBSseq(BSseq, type = "Cov"),
-                          alpha = alpha))
+            return(p.conf(meth, getBSseq(BSseq, "Cov", withDimnames), alpha))
         } else {
             return(meth)
         }
@@ -119,12 +76,14 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
     #       chunks if what = perRegion
     if (type == "smooth") {
         meth <- as.matrix(
-            getBSseq(BSseq, "trans")(getBSseq(BSseq, "coef"))[queryHits(ov), ,
-                                                              drop = FALSE])
+            getBSseq(BSseq, "trans", withDimnames)(
+                getBSseq(BSseq, "coef", withDimnames))[
+                    queryHits(ov), , drop = FALSE])
     } else if (type == "raw") {
         meth <- as.matrix(
-            (getBSseq(BSseq, "M") / getBSseq(BSseq, "Cov"))[queryHits(ov), ,
-                                                            drop = FALSE])
+            (getBSseq(BSseq, "M", withDimnames) /
+                 getBSseq(BSseq, "Cov", withDimnames))[
+                     queryHits(ov), , drop = FALSE])
     }
     out <- lapply(split(meth, subjectHits(ov)), matrix, ncol = ncol(meth))
     if (what == "perBase") {
@@ -138,9 +97,9 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
         # TODO: Don't really understand the logic of the remaining code; how
         #       could the rows end up in the wrong order?
         outMatrix <- matrix(NA, ncol = ncol(BSseq), nrow = length(regions))
-        colnames(outMatrix) <- sampleNames(BSseq)
+        if (withDimnames) colnames(outMatrix) <- sampleNames(BSseq)
         outMatrix[as.integer(rownames(out)), ] <- out
-        .DelayedMatrix(outMatrix)
+        outMatrix
     }
 }
 
@@ -148,21 +107,23 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
 #       discuss with Kasper
 # TODO: Whether or not colnames are added to returned value depends on whether
 #       regions is non-NULL; discuss with Kasper
+# TODO: Document withDimnames
 getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
                         what = c("perBase", "perRegionAverage",
-                                 "perRegionTotal")) {
+                                 "perRegionTotal"),
+                        withDimnames = TRUE) {
     stopifnot(is(BSseq, "BSseq"))
     type <- match.arg(type)
     what <- match.arg(what)
     if (is.null(regions)) {
         if (what == "perBase") {
-            return(getBSseq(BSseq, type = type))
+            return(getBSseq(BSseq, type, withDimnames))
         }
         if (what == "perRegionTotal") {
-            return(colSums2(getBSseq(BSseq, type = type)))
+            return(colSums2(getBSseq(BSseq, type, withDimnames)))
         }
         if (what == "perRegionAverage") {
-            return(colMeans2(getBSseq(BSseq, type = type)))
+            return(colMeans2(getBSseq(BSseq, type, withDimnames)))
         }
     }
     if (class(regions) == "data.frame") {
@@ -171,11 +132,8 @@ getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
     stopifnot(is(regions, "GenomicRanges"))
     grBSseq <- granges(BSseq)
     ov <- findOverlaps(grBSseq, regions)
-    if (type == "Cov") {
-        coverage <- getBSseq(BSseq, "Cov")[queryHits(ov), , drop = FALSE]
-    } else if (type == "M") {
-        coverage <- getBSseq(BSseq, "M")[queryHits(ov), , drop = FALSE]
-    }
+    coverage <- getBSseq(BSseq, type, withDimnames)[
+        queryHits(ov), , drop = FALSE]
     out <- lapply(split(coverage, subjectHits(ov)), matrix,
                   ncol = ncol(coverage))
 
@@ -193,7 +151,7 @@ getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
     # TODO: Don't really understand the logic of the remaining code; how
     #       could the rows end up in the wrong order?
     outMatrix <- matrix(NA, ncol = ncol(BSseq), nrow = length(regions))
-    colnames(outMatrix) <- sampleNames(BSseq)
-    outMatrix[as.integer(rownames(out)),] <- out
-    .DelayedMatrix(outMatrix)
+    if (withDimnames) colnames(outMatrix) <- sampleNames(BSseq)
+    outMatrix[as.integer(rownames(out)), ] <- out
+    outMatrix
 }

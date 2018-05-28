@@ -12,8 +12,7 @@ Depends:
     methods,
     BiocGenerics,
     GenomicRanges (>= 1.29.14),
-    SummarizedExperiment (>= 1.9.18),
-    parallel
+    SummarizedExperiment (>= 1.9.18)
 Imports:
     IRanges (>= 2.11.16),
     GenomeInfoDb,
@@ -30,17 +29,24 @@ Imports:
     permute,
     limma,
     DelayedArray (>= 0.5.34),
-    HDF5Array
+    Rcpp,
+    BiocParallel,
+    readr
 Suggests:
-    RUnit,
+    testthat,
     bsseqData,
     BiocStyle,
     rmarkdown,
     knitr,
+    beachmat,
+    Matrix,
+    HDF5Array,
+    doParallel,
+    testthat
 Collate:
     utils.R
     hasGRanges.R
-    BSseq_class.R
+    BSseq-class.R
     BSseqTstat_class.R
     BSseq_utils.R
     combine.R
@@ -57,8 +63,8 @@ Collate:
     BSseqStat_class.R
     getStats.R
     hdf5_utils.R
-    combine_utils.R
     DelayedArray_utils.R
+    collapseBSseq.R
 License: Artistic-2.0
 VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq
@@ -66,3 +72,6 @@ LazyData: yes
 LazyDataCompression: xz
 BugReports: https://github.com/kasperdanielhansen/bsseq/issues
 biocViews: DNAMethylation
+SystemRequirements: C++11
+LinkingTo: Rcpp, Rhdf5lib, beachmat
+NeedsCompilation: yes

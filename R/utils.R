@@ -26,38 +26,53 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
     gr
 }
 
-.checkAssayNames <- function(object, names) {
-    nms <- assayNames(object)
-    if(!all(names %in% nms))
-        return(sprintf("object of class '%s' needs to have assay slots with names '%s'",
-                       class(object), paste0(names, collapse = ", ")))
-    else
-        NULL
-}
+.ON_DISK_SEEDS <- c("HDF5ArraySeed")
+.ON_DISK_BACKENDS <- c("HDF5Array")
 
-.checkAssayClasses <- function(object, names) {
-    nms <- intersect(assayNames(object), names)
-    is_DelayedMatrix <- vapply(assays(object, withDimnames = FALSE)[nms],
-                               function(assay) {
-                                   if (is.null(assay)) {
-                                       return(TRUE)
-                                   }
-                                   is(assay, "DelayedMatrix")
-                               }, logical(1L))
-    if (!all(is_DelayedMatrix)) {
-        return(paste0("assay slots '", paste0(nms, collapse = "', '"),
-                      "' of object of class '", class(object),
-                      "' need be DelayedMatrix objects"))
-    } else {
-        NULL
+.areBackendsInMemory <- function(realization_backends) {
+    if (is.null(realization_backends)) {
+        return(TRUE)
     }
+    vapply(realization_backends, function(realization_backend) {
+        is.null(realization_backend) ||
+            !realization_backend %in% .ON_DISK_BACKENDS
+    }, logical(1L))
 }
 
-.oldTrans <- function(x) {
-    y <- x
-    ix <- which(x < 0)
-    ix2 <- which(x > 0)
-    y[ix] <- exp(x[ix])/(1 + exp(x[ix]))
-    y[ix2] <- 1/(1 + exp(-x[ix2]))
-    y
+.getBSseqBackends <- function(x) {
+    assay_backends <- lapply(assays(x, withDimnames = FALSE), function(assay) {
+        if (is.matrix(assay)) return(NULL)
+        seed_classes <- .getSeedClasses(assay)
+        if (all(vapply(seed_classes, function(x) x == "matrix", logical(1)))) {
+            return(NULL)
+        }
+        if (is.list(seed_classes)) {
+            seed_packages <- lapply(seed_classes, attr, "package")
+        } else {
+            seed_packages <- attr(seed_classes, "package")
+        }
+        seed_packages <- unique(seed_packages)
+        srb <- supportedRealizationBackends()
+        srb[srb[["package"]] == seed_packages, "BACKEND"]
+    })
+    unique(unlist(assay_backends))
+}
+
+# TODO: https://github.com/Bioconductor/BiocParallel/issues/76
+.isSingleMachineBackend <- function(BPPARAM) {
+    if (is(BPPARAM, "SerialParam") || is(BPPARAM, "MulticoreParam")) {
+        return(TRUE)
+    } else if (is(BPPARAM, "SnowParam")) {
+        if (is.numeric(bpworkers(BPPARAM)) &&
+            BPPARAM$.clusterargs$type == "SOCK") {
+            return(TRUE)
+        } else {
+            return(FALSE)
+        }
+    } else if (is(BPPARAM, "DoparParam")) {
+        # TODO: Can't figure this one out, so returning FALSE for now
+        return(FALSE)
+    } else {
+        return(FALSE)
+    }
 }

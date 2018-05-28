@@ -17,7 +17,7 @@ importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
 import(parallel)
 importFrom(locfit, "locfit", "lp")
 importFrom(DelayedMatrixStats, "rowSds", "rowVars", "colMeans2", "colSums2",
-           "rowSums2", "rowMeans2")
+           "rowSums2", "rowMeans2", "rowAlls")
 import(IRanges)
 import(GenomicRanges)
 import(SummarizedExperiment)
@@ -35,10 +35,9 @@ importFrom(data.table, "fread", "setnames")
 importFrom(R.utils, "isGzipped", "gunzip")
 import(limma)
 importFrom(permute, "shuffleSet", "how")
-importClassesFrom(DelayedArray, "DelayedArray", "DelayedMatrix")
-importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2", "rowMaxs",
-           "rowMins")
-importClassesFrom(HDF5Array, "HDF5Array")
+import(DelayedArray)
+import(BiocParallel)
+importFrom(Rcpp, "sourceCpp")
 
 ##
 ## Exporting
@@ -86,3 +85,5 @@ S3method("plot", "BSseqTstat")
 
 exportMethods("assays", "assayNames")
 
+# C++ code registration
+useDynLib(bsseq, .registration = TRUE, .fixes = "cxx_")
