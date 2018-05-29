@@ -31,14 +31,15 @@ importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo", "seqinf
                   "seqnames", "seqnames<-", "seqlevels", "seqlevels<-")
 import(S4Vectors)
 importFrom(gtools, "combinations")
-importFrom(data.table, "fread", "setnames")
+# importFrom(data.table, "setnames", "setDT", "data.table", ":=", "setkey")
+import(data.table)
 importFrom(R.utils, "isGzipped", "gunzip")
 import(limma)
 importFrom(permute, "shuffleSet", "how")
 import(DelayedArray)
 import(BiocParallel)
-importFrom(Rcpp, "sourceCpp")
-
+importFrom(readr, "count_fields", "cols_only", "col_character", "col_integer",
+           "col_skip", "col_double", "read_tsv", "tokenizer_tsv")
 ##
 ## Exporting
 ##
