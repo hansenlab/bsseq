@@ -109,10 +109,16 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
         write_block_to_sink(as.matrix(se.coef), se.coef_sink, grid[[b]])
         ipcunlock(se.coef_sink_lock)
     }
+    NULL
 }
 
 # Exported functions -----------------------------------------------------------
 
+# TODO: Add BACKEND = getRealizationBackend() argument, replaces
+#       realization_backend.
+# TODO: If BSmooth() encounteres errors, return `BPREDO`` as `metadata(BSseq)`
+#       so as not to clobber the user's BSseq object; see
+#       https://support.bioconductor.org/p/109374/#109459.
 # TODO: Make 'mc.cores', 'mc.preschedule', and 'verbose' defunct one release
 #       cycle with them deprecated.
 # TODO: Consider having BSmooth() create a 'smoothed' assay in addition to or
@@ -157,22 +163,24 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
         # Check for deprecated arguments and issue warning(s) if found.
         if (!missing(parallelBy)) {
             warning(
-                "'parallelBy' is deprecated.\n",
+                "'parallelBy' is deprecated and ignored.\n",
                 "See help(\"BSmooth\") for details.",
                 call. = FALSE,
                 immediate. = TRUE)
         }
         if (!missing(mc.preschedule)) {
             warning(
-                "'mc.preschedule' is deprecated.\n",
+                "'mc.preschedule' is deprecated and ignored.\n",
                 "See help(\"BSmooth\") for details.",
                 call. = FALSE,
                 immediate. = TRUE)
         }
         if (!missing(mc.cores)) {
+            # TODO: What if user has provided a BPPARAM?
             warning(
                 "'mc.cores' is deprecated.\n",
-                "See help(\"BSmooth\").",
+                "Replaced with 'BPPARAM = MulticoreParam(workers = mc.cores)'",
+                ".\nSee help(\"BSmooth\").",
                 call. = FALSE,
                 immediate. = TRUE)
             BPPARAM <- MulticoreParam(workers = mc.cores)
@@ -180,6 +188,7 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
         if (!missing(verbose)) {
             warning(
                 "'verbose' is deprecated.\n",
+                "Replaced by setting 'bpprogressbar(BPPARAM) <- TRUE'.\n",
                 "See help(\"BSmooth\") for details.",
                 call. = FALSE,
                 immediate. = TRUE)

@@ -29,6 +29,7 @@
     validMsg(msg, .Call(cxx_check_M_and_Cov, M, Cov))
 }
 
+# TODO: Benchmark validity method
 setValidity2("BSseq", function(object) {
     msg <- NULL
 
