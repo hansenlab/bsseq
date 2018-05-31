@@ -1,9 +1,21 @@
 # Internal functions -----------------------------------------------------------
 
+# TODO: Test against some of Bismark's other output files. May need a stricter
+#       and more accurate heuristic to avoid 'passing' bad files.
+# NOTE: Not using readr::count_fields() because it is very slow on large,
+#       compressed files. This is because it reads the entire file into memory
+#       as a raw vector regardless of the value of `n_max` (see
+#       https://github.com/tidyverse/readr/issues/610). But good old
+#       utils::read.delim() doesn't have this limitation!
 .guessBismarkFileType <- function(files, n_max = 10L) {
     guessed_file_types <- setNames(vector("character", length(files)), files)
     for (file in files) {
-        n_fields <- count_fields(file, tokenizer_tsv(), n_max = n_max)
+        x <- read.delim(
+            file = file,
+            header = FALSE,
+            nrows = n_max,
+            stringsAsFactors = FALSE)
+        n_fields <- ncol(x)
         if (isTRUE(all(n_fields == 6L))) {
             guessed_file_types[file] <- "cov"
         } else if (isTRUE(all(n_fields == 7L))) {
@@ -15,15 +27,30 @@
     guessed_file_types
 }
 
+# TODO: (longterm, see "Alternatively ..." for a better idea)
+#       .readBismarkAsDT2(): exact same as .readBismarkAsDT() but
+#       uses utils::read.delim() instead of readr::read_tsv(). In brief
+#       benchmarking, readr::read_csv() is ~1.3-1.6x faster than
+#       utils::read.delim() when reading a gzipped file, albeit it with ~1.6-2x
+#       more total memory allocated. Therefore, there may be times users prefer
+#       to trade off faster speed for lower memory usage. When written, move
+#       readr to Suggests. Alternatively, re-write .readBismarkAsDT() using
+#       data.table::fread() for uncompressed files and utils::read.delim() for
+#       compressed files. This removes the dependency on readr, albeit it with
+#       slightly slower reading of compressed files. Could even then use
+#       data.table::fread() coupled with shell commands (where available) to
+#       pass compressed files. Ultimately, we want to use data.table beyond
+#       data.table::fread() whereas readr is only used for file input.
 # NOTE: This returns the file as a data.table. However, to do this it uses
 #       readr::read_tsv() + data.table::setDT() instead of data.table::fread()!
 #       Although the latter is faster, this uses the former because Bismark
 #       files are commonly compressed and readr::read_tsv() supports reading
-#       directly from compressed files  whereas data.table::fread() does not.
+#       directly from compressed files whereas data.table::fread() does not.
 .readBismarkAsDT <- function(file,
-                         col_spec = c("all", "BSseq", "GRanges"),
-                         check = FALSE,
-                         verbose = FALSE) {
+                             col_spec = c("all", "BSseq", "GRanges"),
+                             check = FALSE,
+                             verbose = FALSE,
+                             ...) {
     col_spec <- match.arg(col_spec)
     file_type <- .guessBismarkFileType(file)
     stopifnot(S4Vectors:::isTRUEorFALSE(check))
@@ -61,7 +88,7 @@
             cols <- cols_only(
                 seqnames = col_character(),
                 start = col_integer(),
-                strand = col_character(),
+                strand = col_factor(levels(strand())),
                 M = col_integer(),
                 U = col_integer(),
                 dinucleotide_context = col_skip(),
@@ -70,7 +97,7 @@
             cols <- cols_only(
                 seqnames = col_character(),
                 start = col_integer(),
-                strand = col_character(),
+                strand = col_factor(levels(strand())),
                 M = col_skip(),
                 U = col_skip(),
                 dinucleotide_context = col_skip(),
@@ -79,7 +106,7 @@
             cols <- cols_only(
                 seqnames = col_character(),
                 start = col_integer(),
-                strand = col_character(),
+                strand = col_factor(levels(strand())),
                 M = col_integer(),
                 U = col_integer(),
                 dinucleotide_context = col_character(),
@@ -94,13 +121,11 @@
         file = file,
         col_names = col_names,
         col_types = cols,
-        progress = FALSE)
+        na = character(),
+        quoted_na = FALSE,
+        progress = verbose,
+        ...)
     x <- setDT(x)
-    ptime2 <- proc.time()
-    stime <- (ptime2 - ptime1)[3]
-    if (verbose) {
-        cat(sprintf("done in %.1f secs\n", stime))
-    }
     if (check && all(c("M", "U") %in% colnames(x))) {
         if (verbose) {
             message("[.readBismarkAsDT] Checking validity of counts in file.")
@@ -130,67 +155,24 @@
             }
         }
     }
+    ptime2 <- proc.time()
+    stime <- (ptime2 - ptime1)[3]
+    if (verbose) {
+        cat(sprintf("done in %.1f secs\n", stime))
+    }
     x
 }
 
-.strandCollapseDT <- function(dt, has_counts = TRUE) {
-    # TODO: Shortcut (and warning?) if all loci are unstranded.
-    # Shift loci on negative strand by 1 to the left
-    dt[strand == "-", start := start - 1L]
-    # Unstrand all loci
-    dt[, strand := "*"]
-    # Set key
-    setkey(dt, seqnames, strand, start)
-    # TODO: Is by correct?
-    if (has_counts) return(dt[, .(M = sum(M), U = sum(U)), by = key(dt)])
-    unique(dt)
-}
-
-.readBismarkAsBSseqDT <- function(file, rmZeroCov, strandCollapse, check,
-                                  verbose) {
-    dt <- .readBismarkAsDT(file, "BSseq", check, verbose)
-    # Data is unstranded if none is provided
-    # TODO: What's the data.table way to check if column exists and if create
-    #       it if it doesn't exist?
-    if (is.null(dt[["strand"]])) {
-        dt[, strand := "*"]
-    }
-    if (strandCollapse) {
-        dt <- .strandCollapseDT(dt, has_counts = TRUE)
-    }
-    if (rmZeroCov) {
-        # TODO: setkey()?
-        return(dt[(M + U) > 0])
-    }
-    setkey(dt, seqnames, strand, start)
-    dt
-}
-
-.readBismarkAsLociDT <- function(file, rmZeroCov, strandCollapse, verbose) {
-    dt <- .readBismarkAsBSseqDT(
-        file = files[1L],
-        rmZeroCov = rmZeroCov,
-        strandCollapse = strandCollapse,
-        check = FALSE,
-        verbose = subverbose)
-    # Drop 'M' and 'U'
-    dt[, c("M", "U") := .(NULL, NULL)]
-}
-
-.constructSeqinfoFromLociDT <- function(loci_dt) {
-    unique_seqnames <- loci_dt[, as.character(unique(seqnames))]
-    sortSeqlevels(Seqinfo(seqnames = unique_seqnames))
-}
-
-.contructLociDTFromBismarkFiles <- function(files,
-                                            rmZeroCov,
-                                            strandCollapse,
-                                            seqinfo,
-                                            verbose,
-                                            BPPARAM) {
+.contructLociDTAndSeqinfoFromBismarkFiles <- function(files,
+                                                      rmZeroCov,
+                                                      strandCollapse,
+                                                      seqinfo,
+                                                      verbose,
+                                                      BPPARAM) {
     subverbose <- max(as.integer(verbose) - 1L, 0L)
 
-    # TODO: Initialise using the 'largest' file (i.e. largest number of lines)?       #       Would like to do this without reading the data into memory.
+    # TODO: Initialise using the 'largest' file (i.e. largest number of lines)?
+    #       Would like to do this without reading the data into memory.
     #       Some benchmarks can be found at
     #       https://gist.github.com/peterhurford/0d62f49fd43b6cf078168c043412f70a
     #       My initial tests using /users/phickey/GTExScripts/FlowSortingProject/hdf5/extdata/methylation/nonCG/5248_BA9_neg_CHG_report.txt (32 GB) give:
@@ -212,7 +194,7 @@
                 "'", files[1L], "'")
     }
     loci_dt <- .readBismarkAsLociDT(
-        file = files[1L],
+        file = files[[1L]],
         rmZeroCov = rmZeroCov,
         strandCollapse = strandCollapse,
         verbose = subverbose)
@@ -229,42 +211,22 @@
             rmZeroCov = rmZeroCov,
             strandCollapse = strandCollapse,
             verbose = subverbose)
-        # Identify loci unique to this file.
-        fsetdiff(loci_from_this_file_dt, loci_dt)
+        .subsetByOverlaps_lociDT(loci_from_this_file_dt, loci_dt,
+                                 type = "equal", invert = TRUE)
     }, loci_dt = loci_dt, BPPARAM = BPPARAM)
     # Take union of loci.
     loci_dt <- funion(loci_dt, Reduce(funion, loci_from_other_files_dt))
 
     # Construct seqinfo if none supplied
     if (is.null(seqinfo)) {
-        seqinfo <- .constructSeqinfoFromLociDT(loci_dt)
+        # TODO: Document that sort = TRUE is used.
+        seqinfo <- .constructSeqinfoFromLociDT(loci_dt, sort = TRUE)
     }
     # Sort the loci using the "natural order" of ordering the elements of a
     # GenomicRanges object (see ?`sort,GenomicRanges-method`)
-    loci_dt[,
-            c("seqnames", "strand") :=
-                .(factor(seqnames, levels = seqlevels(seqinfo)),
-                  strand(strand))]
+    loci_dt[, seqnames := factor(seqnames, levels = seqlevels(seqinfo))]
     setkey(loci_dt, seqnames, strand, start)
-    loci_dt
-}
-
-.lociDTAsGRanges <- function(loci_dt, seqinfo = NULL) {
-    GRanges(
-        seqnames = loci_dt[["seqnames"]],
-        ranges = IRanges(loci_dt[["start"]], width = 1L),
-        strand = loci_dt[["strand"]],
-        seqinfo = seqinfo)
-}
-
-.grAsLociDT <- function(gr) {
-    # NOTE: Don't use as.data.table(gr) because it will modify gr by
-    #       reference (https://github.com/Rdatatable/data.table/issues/2278)
-    data.table(
-        seqnames = as.factor(seqnames(gr)),
-        start = start(gr),
-        strand = as.factor(strand(gr)),
-        key = c("seqnames", "strand", "start"))
+    list(loci_dt = loci_dt, seqinfo = seqinfo)
 }
 
 .constructCountsFromBismarkFileAndLociDT <- function(b, files, strandCollapse,
@@ -280,14 +242,22 @@
     }
     bsseq_dt <- .readBismarkAsBSseqDT(
         file = file,
+        # NOTE: No need to remove zero coverage loci because we combine with
+        #       loci_dt, which by construction only contains loci with non-zero
+        #       coverage.
         rmZeroCov = FALSE,
         strandCollapse = strandCollapse,
         check = TRUE,
         verbose = verbose)
+    # Sort bsseq_dt to use same order as loci_dt.
+    bsseq_dt[, c("seqnames", "strand") :=
+                 .(factor(seqnames, levels(loci_dt[["seqnames"]])),
+                   strand(strand))]
+    setkeyv(bsseq_dt, key(loci_dt))
 
     # Combine data for b-th file with loci_dt and construct counts -------------
-    # TODO: Need to use GenomicRanges' strand matching behaviour
-    # TODO: `nomatch = NA_integer_`?
+    # TODO: (UP TO HERE) Need to use GenomicRanges' strand matching behaviour
+    # NOTE: Can't use use nomatch = 0, so have to do this in two steps.
     counts <- bsseq_dt[loci_dt, c("M", "U"), nomatch = NA]
     counts[is.na(M), M := 0L]
     counts[is.na(U), U := 0L]
@@ -405,6 +375,8 @@
 # TODO: Support BPREDO?
 # TODO: Support passing a colData so that metadata is automatically added to
 #       samples?
+# TODO: Probably pass down verbose as subverbose to functions that take verbose
+#       argument.
 read.bismark <- function(files,
                          sampleNames = basename(files),
                          rmZeroCov = FALSE,
@@ -489,16 +461,15 @@ read.bismark <- function(files,
             message("[read.bismark] Reading files to construct GRanges with ",
                     "valid loci ...")
         }
-        loci_dt <- .contructLociDTFromBismarkFiles(
+        loci_dt_and_seqinfo <- .contructLociDTAndSeqinfoFromBismarkFiles(
             files = files,
             rmZeroCov = rmZeroCov,
             strandCollapse = strandCollapse,
             seqinfo = seqinfo,
             verbose = subverbose,
             BPPARAM = BPPARAM)
-        if (is.null(seqinfo)) {
-            seqinfo <- .constructSeqinfoFromLociDT(loci_dt)
-        }
+        loci_dt <- loci_dt_and_seqinfo[["loci_dt"]]
+        seqinfo <- loci_dt_and_seqinfo[["seqinfo"]]
         gr <- .lociDTAsGRanges(loci_dt, seqinfo)
     } else {
         if (verbose) message("[read.bismark] Using 'gr' as GRanges with loci")
@@ -508,7 +479,7 @@ read.bismark <- function(files,
                 message("[read.bismark] Collapsing strand of loci in 'gr' ...")
             }
             # ptime1 <- proc.time()
-            loci_dt <- .strandCollapseDT(loci_dt, has_counts = FALSE)
+            loci_dt <- .strandCollapseLociDT(loci_dt, has_counts = FALSE)
             # ptime2 <- proc.time()
             # stime <- (ptime2 - ptime1)[3]
             # if (verbose) {
@@ -614,3 +585,19 @@ read.bismark <- function(files,
 # TODO: Document internal functions for my own sanity. Also, some may be useful
 #       to users of bsseq (although I still won't export these for the time
 #       being).
+# TODO: Allow user to specify HDF5 file and have both M and Cov written to that
+#       file.
+# TODO: Helper function to obtain CpX loci from BSgenome as GRanges to pass as
+#       'gr' argument in read.bismark().
+# TODO: (long term) Current implementation requires that user can load at least
+#       one sample's worth of data into memory per worker. Could instead read
+#       chunks of data, write to sink, load next chunk, etc.
+# TODO: Add big note to documentation that .cov file does not contain strand
+#       information, which means strandCollapse can't be used (unless 'gr' is
+#       supplied or one of the other files is a cytosineReport file).
+# TODO: Document that if 'gr' is NULL and any 'files' (especially the first
+#       file) are .cov files, then any loci present in the .cov files will have
+#       their strand set to *. If you are mixing and matching .cov and
+#       .cytosineReport files and don't want this behaviour (i.e. you want to
+#       retain strand) then you'll need to construct your own 'gr' and pass
+#       this to the function. Add unit tests for this behaviour.

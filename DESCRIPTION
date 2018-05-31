@@ -65,6 +65,8 @@ Collate:
     hdf5_utils.R
     DelayedArray_utils.R
     collapseBSseq.R
+    BSseqDT.R
+    lociDT.R
 License: Artistic-2.0
 VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq

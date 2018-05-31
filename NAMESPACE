@@ -32,14 +32,16 @@ importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo", "seqinf
 import(S4Vectors)
 importFrom(gtools, "combinations")
 # importFrom(data.table, "setnames", "setDT", "data.table", ":=", "setkey")
+# TODO: More careful use of imports to avoid clashes (e.g., S4Vectors::shift()
+#       and data.table::shift()).
 import(data.table)
 importFrom(R.utils, "isGzipped", "gunzip")
 import(limma)
 importFrom(permute, "shuffleSet", "how")
 import(DelayedArray)
 import(BiocParallel)
-importFrom(readr, "count_fields", "cols_only", "col_character", "col_integer",
-           "col_skip", "col_double", "read_tsv", "tokenizer_tsv")
+importFrom(readr, "cols", "cols_only", "col_character", "col_integer",
+           "col_skip", "col_double", "col_factor", "read_tsv", "tokenizer_tsv")
 ##
 ## Exporting
 ##
