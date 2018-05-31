@@ -356,3 +356,5 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
 #       futile.logger syntax; see the BiocParalell vignette 'Errors, Logs and
 #       Debugging in BiocParallel'.
 # TODO: Remove NOTEs that are really documentation issues to the docs
+# TODO: Allow user to specify HDF5 file and have both coef and se.coef written
+#       to that file.
