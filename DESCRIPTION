@@ -67,6 +67,8 @@ Collate:
     collapseBSseq.R
     BSseqDT.R
     lociDT.R
+    FWIRanges-class.R
+    FWGRanges-class.R
 License: Artistic-2.0
 VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq
