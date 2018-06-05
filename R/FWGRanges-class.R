@@ -224,8 +224,8 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
             col_spec = "BSseq",
             check = TRUE,
             verbose = verbose)
-        # NOTE: Can only collapse by strand if the data are stranded!
-        if (strandCollapse && !is.null(dt[["strand"]])) {
+        if (strandCollapse && !is.null(dt[["strand"]]) &&
+            !dt[, all(strand == "*")]) {
             # Shift loci on negative strand by 1 to the left and then remove
             # strand since no longer valid.
             dt[strand == "-", start := start - 1L][, strand := NULL]
@@ -241,11 +241,12 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
             col_spec = "GRanges",
             check = FALSE,
             verbose = verbose)
-        # NOTE: Can only collapse by strand if the data are stranded!
-        if (strandCollapse && !is.null(dt[["strand"]])) {
+        if (strandCollapse && !is.null(dt[["strand"]]) &&
+            !dt[, all(strand == "*")]) {
             # Shift loci on negative strand by 1 to the left and then remove
             # strand since no longer valid.
             dt[strand == "-", start := start - 1L][, strand := NULL]
+            dt <- data.table:::funique(dt)
         }
     }
 
@@ -317,195 +318,40 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
         message("[.contructFWGRangesFromBismarkFiles] Extracting loci from ",
                 "'", files[1L], "'")
     }
-    fwgranges_from_first_file <- .readBismarkAsFWGRanges(
+    loci_from_first_file <- .readBismarkAsFWGRanges(
         file = files[[1L]],
         rmZeroCov = rmZeroCov,
         strandCollapse = strandCollapse,
         verbose = subverbose)
     # Identify loci not found in first file.
-    # TODO: Pre-process fwgranges as a GNCList?
-    list_of_fwgranges_from_other_files <- bplapply(
-        files[-1L], function(file, fwgranges_from_first_file) {
+    # TODO: Pre-process loci as a GNCList?
+    list_of_loci_from_other_files_not_in_first_file <- bplapply(
+        files[-1L], function(file, loci_from_first_file) {
             # TODO: This message won't appear in main process, so probably remove.
             if (verbose) {
                 message("[.contructFWGRangesFromBismarkFiles] Extracting loci ",
                         "from '", file, "'")
             }
             # Read this file.
-            fwgranges_from_this_file <- .readBismarkAsFWGRanges(
+            loci_from_this_file <- .readBismarkAsFWGRanges(
                 file = file,
                 rmZeroCov = rmZeroCov,
                 strandCollapse = strandCollapse,
                 verbose = subverbose)
             subsetByOverlaps(
-                x = fwgranges_from_this_file,
-                ranges = fwgranges_from_first_file,
+                x = loci_from_this_file,
+                ranges = loci_from_first_file,
                 type = "equal",
                 invert = TRUE)
-        }, fwgranges_from_first_file = fwgranges_from_first_file,
+        }, loci_from_first_file = loci_from_first_file,
         BPPARAM = BPPARAM)
     # Identify unique FWGRanges.
-    fwgranges_non_found_in_first_file <- unique(
-        do.call(c, list_of_fwgranges_from_other_files))
-    fwgranges <- c(fwgranges_from_first_file, fwgranges_non_found_in_first_file)
+    loci_non_found_in_first_file <- unique(
+        do.call(c, list_of_loci_from_other_files_not_in_first_file))
+    loci <- c(loci_from_first_file, loci_non_found_in_first_file)
 
     # Sort the loci
-    sort(sortSeqlevels(fwgranges))
-}
-
-.constructCountsFromSingleFile <- function(b, files, strandCollapse, fwgranges,
-                                           grid, M_sink, Cov_sink, M_sink_lock,
-                                           Cov_sink_lock, verbose, BPPARAM) {
-    # Read b-th file to construct data.table of valid loci and their counts ----
-
-    file <- files[b]
-    if (verbose) {
-        message("[.constructCountsFromBismarkFileAndFWGRanges] Extracting ",
-                "counts from ", "'", file, "'")
-    }
-    dt <- .readBismarkAsDT(
-        file = file,
-        col_spec = "BSseq",
-        check = TRUE,
-        verbose = verbose)
-    # NOTE: Can only collapse by strand if the data are stranded!
-    if (strandCollapse && !is.null(dt[["strand"]])) {
-        # Shift loci on negative strand by 1 to the left and then remove
-        # strand since no longer valid.
-        dt[strand == "-", start := start - 1L][, strand := NULL]
-        # Aggregate counts at loci with the same 'seqnames' and 'start'.
-        dt <- dt[, .(M = sum(M), U = sum(U)), by = c("seqnames", "start")]
-    }
-
-    # Construct FWGRanges ------------------------------------------------------
-
-    seqnames <- Rle(dt[["seqnames"]])
-    dt[, seqnames := NULL]
-    seqinfo <- Seqinfo(seqnames = levels(seqnames))
-    ranges <- .FWIRanges(start = dt[["start"]], width = 1L)
-    dt[, start := NULL]
-    mcols <- S4Vectors:::make_zero_col_DataFrame(length(ranges))
-    if (is.null(dt[["strand"]])) {
-        strand <- strand(Rle("*", length(seqnames)))
-    } else {
-        strand <- Rle(dt[["strand"]])
-        dt[, strand := NULL]
-    }
-    this_sample_fwgranges <- .FWGRanges(
-        seqnames = seqnames,
-        ranges = ranges,
-        strand = strand,
-        seqinfo = seqinfo,
-        elementMetadata = mcols)
-
-    # Construct 'M' and 'Cov' matrices -----------------------------------------
-
-    ol <- findOverlaps(this_sample_fwgranges, fwgranges)
-    M <- matrix(rep(0L, length(fwgranges)), ncol = 1)
-    Cov <- matrix(rep(0L, length(fwgranges)), ncol = 1)
-    M[subjectHits(ol)] <- dt[queryHits(ol), ][["M"]]
-    Cov[subjectHits(ol)] <- dt[queryHits(ol), .(Cov = (M + U))][["Cov"]]
-
-    # Return 'M' and 'Cov' or write them to the RealizationSink objects --------
-
-    if (is.null(M_sink)) {
-        return(list(M = M, Cov = Cov))
-    }
-    # Write to M_sink and Cov_sink while respecting the IPC locks.
-    ipclock(M_sink_lock)
-    write_block_to_sink(M, M_sink, grid[[b]])
-    ipcunlock(M_sink_lock)
-    ipclock(Cov_sink_lock)
-    write_block_to_sink(Cov, Cov_sink, grid[[b]])
-    ipcunlock(Cov_sink_lock)
-    NULL
-}
-
-.constructCounts <- function(files, fwgranges, strandCollapse, verbose, BPPARAM,
-                             BACKEND) {
-    # Set up ArrayGrid so that each block contains data for a single sample.
-    ans_nrow <- length(fwgranges)
-    ans_ncol <- length(files)
-    grid <- RegularArrayGrid(c(ans_nrow, ans_ncol), c(ans_nrow, 1L))
-    # Construct RealizationSink objects.
-    if (is.null(BACKEND)) {
-        M_sink <- NULL
-        Cov_sink <- NULL
-        M_sink_lock <- NULL
-        Cov_sink_lock <- NULL
-    } else {
-        M_sink <- DelayedArray:::RealizationSink(
-            dim = c(ans_nrow, ans_ncol),
-            type = "integer")
-        on.exit(close(M_sink), add = TRUE)
-        Cov_sink <- DelayedArray:::RealizationSink(
-            dim = c(ans_nrow, ans_ncol),
-            type = "integer")
-        on.exit(close(Cov_sink), add = TRUE)
-        M_sink_lock <- ipcid()
-        on.exit(ipcremove(M_sink_lock), add = TRUE)
-        Cov_sink_lock <- ipcid()
-        on.exit(ipcremove(Cov_sink_lock), add = TRUE)
-    }
-    # Set number of tasks to ensure the progress bar gives frequent updates.
-    # NOTE: The progress bar increments once per task
-    #       (https://github.com/Bioconductor/BiocParallel/issues/54).
-    #       Although it is somewhat of a bad idea to overrides a user-specified
-    #       bptasks(BPPARAM), the value of bptasks(BPPARAM) doesn't affect
-    #       performance in this instance, and so we opt for a useful progress
-    #       bar. Only SnowParam (and MulticoreParam by inheritance) have a
-    #       bptasks<-() method.
-    # TODO: Check that setting number of tasks doesn't affect things (e.g.,
-    #       the cost of transfering loci_dt to the workers may be substantial).
-    if (is(BPPARAM, "SnowParam") && bpprogressbar(BPPARAM)) {
-        bptasks(BPPARAM) <- length(grid)
-    }
-    counts <- bptry(bplapply(
-        X = seq_along(grid),
-        FUN = .constructCountsFromSingleFile,
-        files = files,
-        strandCollapse = strandCollapse,
-        fwgranges = fwgranges,
-        grid = grid,
-        M_sink = M_sink,
-        Cov_sink = Cov_sink,
-        M_sink_lock = M_sink_lock,
-        Cov_sink_lock = Cov_sink_lock,
-        verbose = verbose,
-        BPPARAM = BPPARAM))
-    if (!all(bpok(counts))) {
-        # TODO: This isn't yet properly impelemented
-        # TODO: Feels like stop() rather than warning() should be used, but
-        #       stop() doesn't allow for the return of partial results;
-        #       see https://support.bioconductor.org/p/109374/
-        warning("read.bismark() encountered errors: ",
-                sum(!bpok(counts)), " of ", length(counts),
-                " files failed.\n",
-                "read.bismark() has returned partial results, including ",
-                "errors, for debugging purposes.\n",
-                "It may be possible to re-run just these failed files.\n",
-                "See help(\"read.bismark\")",
-                call. = FALSE)
-        # NOTE: Return intermediate results as well as all derived variables.
-        return(list(counts = counts,
-                    M_sink = M_sink,
-                    Cov_sink = Cov_sink,
-                    BACKEND = BACKEND))
-    }
-    # Construct M and Cov from results of
-    if (is.null(BACKEND)) {
-        # Returning matrix objects.
-        M <- do.call(c, lapply(counts, "[[", "M"))
-        attr(M, "dim") <- c(ans_nrow, ans_ncol)
-        Cov <- do.call(c, lapply(counts, "[[", "Cov"))
-        attr(Cov, "dim") <- c(ans_nrow, ans_ncol)
-    } else {
-        # Returning DelayedMatrix objects.
-        M <- as(M_sink, "DelayedArray")
-        Cov <- as(Cov_sink, "DelayedArray")
-    }
-
-    return(list(M = M, Cov = Cov))
+    sort(sortSeqlevels(loci))
 }
 
 # TODOs ------------------------------------------------------------------------
