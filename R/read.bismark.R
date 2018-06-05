@@ -176,7 +176,7 @@ read.bismark <- function(files,
                          rmZeroCov = FALSE,
                          strandCollapse = TRUE,
                          fileType = c("cov", "oldBedGraph", "cytosineReport"),
-                         gr = NULL,
+                         loci = NULL,
                          mc.cores = 1,
                          verbose = TRUE,
                          BPPARAM = bpparam(),
@@ -240,90 +240,70 @@ read.bismark <- function(files,
     # NOTE: "Valid loci" are those that remain after collapsing by strand (if
     #       strandCollapse == TRUE) and then removing loci with zero coverage
     #       in all samples (if rmZeroCov == TRUE).
-    ptime1 <- proc.time()
-    if (is.null(gr)) {
+    if (is.null(loci)) {
+        ptime1 <- proc.time()
         if (verbose) {
-            message("[read.bismark] Reading files to construct GRanges with ",
-                    "valid loci ...")
+            message("[read.bismark] Parsing files to construct valid loci ...")
         }
-        fwgranges <- .contructFWGRangesFromBismarkFiles(
+        loci <- .contructFWGRangesFromBismarkFiles(
             files = files,
             rmZeroCov = rmZeroCov,
             strandCollapse = strandCollapse,
             verbose = subverbose,
             BPPARAM = BPPARAM)
-        gr <- as(fwgranges, "GRanges")
+        ptime2 <- proc.time()
+        stime <- (ptime2 - ptime1)[3]
+        if (verbose) {
+            cat(sprintf("done in %.1f secs\n", stime))
+        }
     } else {
-        # TODO: Update this branch with FWGRanges support.
-        if (verbose) message("[read.bismark] Using 'gr' as GRanges with loci")
-        loci_dt <- .grAsLociDT(gr)
+        stopifnot(all(width(loci)) == 1 || !is(loci, "GenomicRanges"))
+        ptime1 <- proc.time()
+        if (verbose) message("[read.bismark] Using 'loci' as valid loci")
         if (strandCollapse) {
             if (verbose) {
-                message("[read.bismark] Collapsing strand of loci in 'gr' ...")
+                message("[read.bismark] Collapsing strand of 'loci' ...")
             }
-            # ptime1 <- proc.time()
-            loci_dt <- .strandCollapseLociDT(loci_dt, has_counts = FALSE)
-            # ptime2 <- proc.time()
-            # stime <- (ptime2 - ptime1)[3]
-            # if (verbose) {
-            #     cat(sprintf("done in %.1f secs\n", stime))
-            # }
+            ptime1 <- proc.time()
+            loci <- .strandCollapse(loci)
+            ptime2 <- proc.time()
+            stime <- (ptime2 - ptime1)[3]
+            if (verbose) {
+                cat(sprintf("done in %.1f secs\n", stime))
+            }
         }
         if (rmZeroCov) {
-            # NOTE: Have to parse files in order to identify loci with zero
-            #       coverage in all samples.
             if (verbose) {
-                message("[read.bismark] Identifying loci in 'gr' with zero ",
-                        "coverage in all samples ...")
+                message("[read.bismark] Parsing files to identify elements of ",
+                        "'loci' with non-zero coverage ...")
             }
-            # ptime1 <- proc.time()
-            loci_from_files_dt <- .contructLociDTFromBismarkFiles(
+            ptime1 <- proc.time()
+            # Construct loci with non-zero coverage in files.
+            loci_from_files <- .contructFWGRangesFromBismarkFiles(
                 files = files,
                 rmZeroCov = rmZeroCov,
                 strandCollapse = strandCollapse,
-                seqinfo = seqinfo,
-                verbose = subverbose)
-            # Retain the intersection of loci_dt and loci_from_files_dt
-            # TODO: Need to use GenomicRanges' strand matching behaviour
-            loci_dt <- loci_from_files_dt[loci_dt]
-            # ptime2 <- proc.time()
-            # stime <- (ptime2 - ptime1)[3]
-            # if (verbose) {
-            #     cat(sprintf("done in %.1f secs\n", stime))
-            # }
-        }
-        if (strandCollapse || rmZeroCov) {
-            # NOTE: Have to update 'gr' if loci have been collapsed by strand
-            #       or loci have been filtered to remove loci with zero
-            #       coverage.
+                verbose = subverbose,
+                BPPARAM = BPPARAM)
+            # Retain those elements of 'loci' with non-zero coverage.
+            loci <- subsetByOverlaps(loci, loci_from_files, type = "equal")
+            ptime2 <- proc.time()
+            stime <- (ptime2 - ptime1)[3]
             if (verbose) {
-                message("[read.bismark] Filtering 'gr' to retain valid loci ",
-                        "...")
+                cat(sprintf("done in %.1f secs\n", stime))
             }
-            # ptime1 <- proc.time()
-            gr <- .lociDTAsGRanges(loci_dt, seqinfo)
-            # ptime2 <- proc.time()
-            # stime <- (ptime2 - ptime1)[3]
-            # if (verbose) {
-            #     cat(sprintf("done in %.1f secs\n", stime))
-            # }
         }
-    }
-    ptime2 <- proc.time()
-    stime <- (ptime2 - ptime1)[3]
-    if (verbose) {
-        cat(sprintf("done in %.1f secs\n", stime))
     }
 
     # Construct 'M' and 'Cov' matrices -----------------------------------------
     ptime1 <- proc.time()
     if (verbose) {
-        message("[read.bismark] Reading files to construct 'M' and 'Cov' ",
+        message("[read.bismark] Parsing files to construct 'M' and 'Cov' ",
                 "matrices ...")
     }
-    counts <- .constructCountsFromBismarkFilesAndFWGRanges(
+    counts <- .constructCounts(
         files = files,
-        fwgranges = fwgranges,
+        fwgranges = loci,
         strandCollapse = strandCollapse,
         verbose = subverbose,
         BPPARAM = BPPARAM,
@@ -341,9 +321,13 @@ read.bismark <- function(files,
     }
     se <- SummarizedExperiment(
         assays = counts,
-        rowRanges = gr,
+        # NOTE: For now, have to use GRanges instance as rowRanges but
+        #       ultimately would like to use a FWGRanges instance.
+        rowRanges = as(loci, "GRanges"),
         colData = DataFrame(row.names = sampleNames))
     # TODO: Is there a way to use the internal constructor with `check = FALSE`?
+    #       Don't need to check M and Cov because this has already happened
+    #       when files were parsed.
     # .BSseq(se, trans = function(x) NULL, parameters = list())
     new2("BSseq", se, check = FALSE)
 }
@@ -359,9 +343,8 @@ read.bismark <- function(files,
 # TODO: May receive warning "In read_tokens_(data, tokenizer, col_specs, col_names,  ... : length of NULL cannot be changed". This is fixed in devel version of
 #       readr (https://github.com/tidyverse/readr/issues/833)
 # TODO: Decide whether to preserve verbose argument of several functions.
-# TODO: Document that if seqinfo is supplied then only loci from those
-#       seqlevels will be retained. Similarly, if gr is supplied then only loci
-#       in the gr will be retained.
+# TODO: Document that if 'loci' is supplied then only loci in it will be
+#       retained.
 # TODO: Think about naming scheme for functions. Try to have the function that
 #       is bpapply()-ed have a similar name to its parent.
 # TODO: Document internal functions for my own sanity. Also, some may be useful
