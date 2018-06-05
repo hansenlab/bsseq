@@ -65,8 +65,6 @@ Collate:
     hdf5_utils.R
     DelayedArray_utils.R
     collapseBSseq.R
-    BSseqDT.R
-    lociDT.R
     FWIRanges-class.R
     FWGRanges-class.R
 License: Artistic-2.0

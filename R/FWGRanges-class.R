@@ -200,16 +200,15 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
 
 # Internal functions -----------------------------------------------------------
 
-.strandCollapseFWGRanges <- function(fwgranges) {
-    if (all(strand(fwgranges) == "*")) return(fwgranges)
+.strandCollapse <- function(x) {
+    stopifnot(is(x, "GenomicRanges"))
+    if (all(strand(x) == "*")) return(x)
     # Shift loci on negative strand by 1 to the left
-    fwgranges[strand(fwgranges) == "-"] <- shift(
-        x = fwgranges[strand(fwgranges) == "-"],
-        shift = -1L)
+    x[strand(x) == "-"] <- IRanges::shift(x[strand(x) == "-"], -1L)
     # Unstrand all loci
-    fwgranges <- unstrand(fwgranges)
+    x <- unstrand(x)
     # Extract unique loci
-    unique(fwgranges)
+    unique(x)
 }
 
 # TODO: Document that the default 'sort = TRUE' applies sort(sortSeqlevels())
@@ -218,76 +217,69 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
 .readBismarkAsFWGRanges <- function(file, rmZeroCov = FALSE,
                                     strandCollapse = FALSE, sort = TRUE,
                                     verbose = FALSE) {
-    if (!rmZeroCov) {
+    # Read file to construct data.table of valid loci --------------------------
+    if (rmZeroCov) {
+        dt <- .readBismarkAsDT(
+            file = file,
+            col_spec = "BSseq",
+            check = TRUE,
+            verbose = verbose)
+        # NOTE: Can only collapse by strand if the data are stranded!
+        if (strandCollapse && !is.null(dt[["strand"]])) {
+            # Shift loci on negative strand by 1 to the left and then remove
+            # strand since no longer valid.
+            dt[strand == "-", start := start - 1L][, strand := NULL]
+            # Aggregate counts at loci with the same 'seqnames' and 'start'.
+            dt <- dt[, .(M = sum(M), U = sum(U)), by = c("seqnames", "start")]
+        }
+        # Identify loci with non-zero coverage then drop 'M' and 'U' as no
+        # longer required.
+        dt <- dt[(M + U) > 0][, c("M", "U") := .(NULL, NULL)]
+    } else {
         dt <- .readBismarkAsDT(
             file = file,
             col_spec = "GRanges",
             check = FALSE,
             verbose = verbose)
-        if (sort) {
-            if (is.null(dt[["strand"]])) {
-                setkey(dt, seqnames, start)
-            } else {
-                setkey(dt, seqnames, strand, start)
-            }
+        # NOTE: Can only collapse by strand if the data are stranded!
+        if (strandCollapse && !is.null(dt[["strand"]])) {
+            # Shift loci on negative strand by 1 to the left and then remove
+            # strand since no longer valid.
+            dt[strand == "-", start := start - 1L][, strand := NULL]
         }
-        seqnames <- Rle(dt[["seqnames"]])
-        dt[, seqnames := NULL]
-        seqinfo <- Seqinfo(seqnames = levels(seqnames))
-        ranges <- .FWIRanges(start = dt[["start"]], width = 1L)
-        dt[, start := NULL]
-        mcols <- S4Vectors:::make_zero_col_DataFrame(length(ranges))
-        if (is.null(dt[["strand"]])) {
-            strand <- strand(Rle("*", length(seqnames)))
-        } else {
-            strand <- Rle(dt[["strand"]])
-            dt[, strand := NULL]
-        }
-        fwgranges <- .FWGRanges(
-            seqnames = seqnames,
-            ranges = ranges,
-            strand = strand,
-            seqinfo = seqinfo,
-            elementMetadata = mcols)
-        if (strandCollapse) {
-            fwgranges <- .strandCollapseFWGRanges(fwgranges)
-        }
-    } else {
-        # Require M and U to remove loci with zero coverage
-        dt <- .readBismarkAsBSseqDT(
-            file = file,
-            rmZeroCov = rmZeroCov,
-            strandCollapse = strandCollapse,
-            check = FALSE,
-            verbose = verbose)
-        # Drop 'M' and 'U' as no longer required.
-        dt[, c("M", "U") := .(NULL, NULL)]
-        if (sort) {
-            if (is.null(dt[["strand"]])) {
-                setkey(dt, seqnames, start)
-            } else {
-                setkey(dt, seqnames, strand, start)
-            }
-        }
-        seqnames <- Rle(dt[["seqnames"]])
-        dt[, seqnames := NULL]
-        seqinfo <- Seqinfo(seqnames = levels(seqnames))
-        ranges <- .FWIRanges(start = dt[["start"]], width = 1L)
-        dt[, start := NULL]
-        mcols <- S4Vectors:::make_zero_col_DataFrame(length(ranges))
-        if (is.null(dt[["strand"]])) {
-            strand <- strand(Rle("*", nrow(dt)))
-        } else {
-            strand <- Rle(dt[["strand"]])
-            dt[, strand := NULL]
-        }
-        fwgranges <- .FWGRanges(
-            seqnames = seqnames,
-            ranges = ranges,
-            strand = strand,
-            seqinfo = seqinfo,
-            elementMetadata = mcols)
     }
+
+    # Construct FWGRanges from 'dt' --------------------------------------------
+
+    # NOTE: Sorting results in a smaller FWGRanges object because the
+    #       'seqnames' and 'strand' slots are more compressible in their Rle
+    #       representation.
+    if (sort) {
+        if (is.null(dt[["strand"]])) {
+            setkey(dt, seqnames, start)
+        } else {
+            setkey(dt, seqnames, strand, start)
+        }
+    }
+    seqnames <- Rle(dt[["seqnames"]])
+    dt[, seqnames := NULL]
+    seqinfo <- Seqinfo(seqnames = levels(seqnames))
+    ranges <- .FWIRanges(start = dt[["start"]], width = 1L)
+    dt[, start := NULL]
+    mcols <- S4Vectors:::make_zero_col_DataFrame(length(ranges))
+    if (is.null(dt[["strand"]])) {
+        strand <- strand(Rle("*", length(seqnames)))
+    } else {
+        strand <- Rle(dt[["strand"]])
+        dt[, strand := NULL]
+    }
+    fwgranges <- .FWGRanges(
+        seqnames = seqnames,
+        ranges = ranges,
+        strand = strand,
+        seqinfo = seqinfo,
+        elementMetadata = mcols)
+    # NOTE: Final sort is to re-order with respect to sorted seqlevels.
     if (sort) {
         fwgranges <- sort(sortSeqlevels(fwgranges))
     }
@@ -361,37 +353,43 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
     sort(sortSeqlevels(fwgranges))
 }
 
-.constructCountsFromBismarkFileAndFWGRanges <- function(b, files,
-                                                        strandCollapse,
-                                                        fwgranges, grid,
-                                                        M_sink, Cov_sink,
-                                                        M_sink_lock,
-                                                        Cov_sink_lock,
-                                                        verbose, BPPARAM) {
-    # Read in data for b-th file -----------------------------------------------
+.constructCountsFromSingleFile <- function(b, files, strandCollapse, fwgranges,
+                                           grid, M_sink, Cov_sink, M_sink_lock,
+                                           Cov_sink_lock, verbose, BPPARAM) {
+    # Read b-th file to construct data.table of valid loci and their counts ----
+
     file <- files[b]
     if (verbose) {
         message("[.constructCountsFromBismarkFileAndFWGRanges] Extracting ",
                 "counts from ", "'", file, "'")
     }
-    bsseq_dt <- .readBismarkAsBSseqDT(
+    dt <- .readBismarkAsDT(
         file = file,
-        # NOTE: Don't remove loci with zero coverage (it's unnecessary).
-        rmZeroCov = FALSE,
-        strandCollapse = strandCollapse,
+        col_spec = "BSseq",
         check = TRUE,
         verbose = verbose)
-    seqnames <- Rle(bsseq_dt[["seqnames"]])
-    bsseq_dt[, seqnames := NULL]
+    # NOTE: Can only collapse by strand if the data are stranded!
+    if (strandCollapse && !is.null(dt[["strand"]])) {
+        # Shift loci on negative strand by 1 to the left and then remove
+        # strand since no longer valid.
+        dt[strand == "-", start := start - 1L][, strand := NULL]
+        # Aggregate counts at loci with the same 'seqnames' and 'start'.
+        dt <- dt[, .(M = sum(M), U = sum(U)), by = c("seqnames", "start")]
+    }
+
+    # Construct FWGRanges ------------------------------------------------------
+
+    seqnames <- Rle(dt[["seqnames"]])
+    dt[, seqnames := NULL]
     seqinfo <- Seqinfo(seqnames = levels(seqnames))
-    ranges <- .FWIRanges(start = bsseq_dt[["start"]], width = 1L)
-    bsseq_dt[, start := NULL]
+    ranges <- .FWIRanges(start = dt[["start"]], width = 1L)
+    dt[, start := NULL]
     mcols <- S4Vectors:::make_zero_col_DataFrame(length(ranges))
-    if (is.null(bsseq_dt[["strand"]])) {
+    if (is.null(dt[["strand"]])) {
         strand <- strand(Rle("*", length(seqnames)))
     } else {
-        strand <- Rle(bsseq_dt[["strand"]])
-        bsseq_dt[, strand := NULL]
+        strand <- Rle(dt[["strand"]])
+        dt[, strand := NULL]
     }
     this_sample_fwgranges <- .FWGRanges(
         seqnames = seqnames,
@@ -399,13 +397,16 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
         strand = strand,
         seqinfo = seqinfo,
         elementMetadata = mcols)
+
+    # Construct 'M' and 'Cov' matrices -----------------------------------------
+
+    ol <- findOverlaps(this_sample_fwgranges, fwgranges)
     M <- matrix(rep(0L, length(fwgranges)), ncol = 1)
     Cov <- matrix(rep(0L, length(fwgranges)), ncol = 1)
-    ol <- findOverlaps(this_sample_fwgranges, fwgranges)
-    M[subjectHits(ol)] <- bsseq_dt[["M"]][queryHits(ol)]
-    Cov[subjectHits(ol)] <- bsseq_dt[, Cov := M + U][["Cov"]][queryHits(ol)]
+    M[subjectHits(ol)] <- dt[queryHits(ol), ][["M"]]
+    Cov[subjectHits(ol)] <- dt[queryHits(ol), .(Cov = (M + U))][["Cov"]]
 
-    # Return M and U or write them to the RealizationSink objects --------------
+    # Return 'M' and 'Cov' or write them to the RealizationSink objects --------
 
     if (is.null(M_sink)) {
         return(list(M = M, Cov = Cov))
@@ -420,12 +421,8 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
     NULL
 }
 
-.constructCountsFromBismarkFilesAndFWGRanges <- function(files,
-                                                         fwgranges,
-                                                         strandCollapse,
-                                                         verbose,
-                                                         BPPARAM,
-                                                         BACKEND) {
+.constructCounts <- function(files, fwgranges, strandCollapse, verbose, BPPARAM,
+                             BACKEND) {
     # Set up ArrayGrid so that each block contains data for a single sample.
     ans_nrow <- length(fwgranges)
     ans_ncol <- length(files)
@@ -465,7 +462,7 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
     }
     counts <- bptry(bplapply(
         X = seq_along(grid),
-        FUN = .constructCountsFromBismarkFileAndFWGRanges,
+        FUN = .constructCountsFromSingleFile,
         files = files,
         strandCollapse = strandCollapse,
         fwgranges = fwgranges,
@@ -496,7 +493,6 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
                     BACKEND = BACKEND))
     }
     # Construct M and Cov from results of
-    # .constructCountsFromBismarkFileAndLociDT().
     if (is.null(BACKEND)) {
         # Returning matrix objects.
         M <- do.call(c, lapply(counts, "[[", "M"))
@@ -511,3 +507,11 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
 
     return(list(M = M, Cov = Cov))
 }
+
+# TODOs ------------------------------------------------------------------------
+
+# TODO: Document internal classes, methods, and functions for my own sanity.
+#       Also, some may be useful to users of bsseq (although I still won't
+#       export these for the time being). Ultimately, I'd like to promote
+#       FWGRanges and FWIRanges to 'official' GenomicRanges and IntegerRanges
+#       subclasses.
