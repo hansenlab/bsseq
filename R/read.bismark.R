@@ -371,6 +371,11 @@
 #       BiocParallelParam class (RealizationSinkParam) i.e. something that
 #       encapsulates the various arguments available when constructing a
 #       RealizationSink.
+# TODO: sampleNames = basename(files) isn't guaranteed to be unique.
+# TODO: Document that you can't use strandCollapse with files that lack strand
+#       (e.g., .cov files).
+# TODO: (long term) Report a run-time warning/message if strandCollapse = TRUE
+#       is used in conjunction with files without strand information.
 read.bismark <- function(files,
                          sampleNames = basename(files),
                          rmZeroCov = FALSE,
