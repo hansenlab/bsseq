@@ -325,6 +325,17 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
         verbose = subverbose)
     # Identify loci not found in first file.
     # TODO: Pre-process loci as a GNCList?
+    # Set number of tasks to ensure the progress bar gives frequent updates.
+    # NOTE: The progress bar increments once per task
+    #       (https://github.com/Bioconductor/BiocParallel/issues/54).
+    #       Although it is somewhat of a bad idea to overrides a user-specified
+    #       bptasks(BPPARAM), the value of bptasks(BPPARAM) doesn't affect
+    #       performance in this instance, and so we opt for a useful progress
+    #       bar. Only SnowParam (and MulticoreParam by inheritance) have a
+    #       bptasks<-() method.
+    if (is(BPPARAM, "SnowParam") && bpprogressbar(BPPARAM)) {
+        bptasks(BPPARAM) <- length(files) - 1L
+    }
     list_of_loci_from_other_files_not_in_first_file <- bplapply(
         files[-1L], function(file, loci_from_first_file) {
             # TODO: This message won't appear in main process, so probably remove.
