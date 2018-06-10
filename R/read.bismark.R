@@ -166,8 +166,8 @@
 
 
 .constructCountsFromSingleFile <- function(b, files, strandCollapse, loci,
-                                           grid, M_sink, Cov_sink, M_sink_lock,
-                                           Cov_sink_lock, verbose, BPPARAM) {
+                                           grid, M_sink, Cov_sink, sink_lock,
+                                           verbose, BPPARAM) {
     # Read b-th file to construct data.table of valid loci and their counts ----
 
     file <- files[b]
@@ -223,13 +223,11 @@
     if (is.null(M_sink)) {
         return(list(M = M, Cov = Cov))
     }
-    # Write to M_sink and Cov_sink while respecting the IPC locks.
-    ipclock(M_sink_lock)
+    # Write to M_sink and Cov_sink while respecting the IPC lock.
+    ipclock(sink_lock)
     write_block_to_sink(M, M_sink, grid[[b]])
-    ipcunlock(M_sink_lock)
-    ipclock(Cov_sink_lock)
     write_block_to_sink(Cov, Cov_sink, grid[[b]])
-    ipcunlock(Cov_sink_lock)
+    ipcunlock(sink_lock)
     NULL
 }
 
@@ -243,8 +241,7 @@
     if (is.null(BACKEND)) {
         M_sink <- NULL
         Cov_sink <- NULL
-        M_sink_lock <- NULL
-        Cov_sink_lock <- NULL
+        sink_lock <- NULL
     } else if (identical(BACKEND, "HDF5Array")) {
         # TODO: HDF5Array is only in suggests, so need to qualify the use of
         #       HDF5RealizationSink()
@@ -274,10 +271,8 @@
             # level = NULL,
             ...)
         on.exit(close(Cov_sink), add = TRUE)
-        M_sink_lock <- ipcid()
-        on.exit(ipcremove(M_sink_lock), add = TRUE)
-        Cov_sink_lock <- ipcid()
-        on.exit(ipcremove(Cov_sink_lock), add = TRUE)
+        sink_lock <- ipcid()
+        on.exit(ipcremove(sink_lock), add = TRUE)
     } else {
         # TODO: This branch should probably never be entered because we
         #       (implicitly) only support in-memory or HDF5Array backends.
@@ -291,10 +286,8 @@
             dim = c(ans_nrow, ans_ncol),
             type = "integer")
         on.exit(close(Cov_sink), add = TRUE)
-        M_sink_lock <- ipcid()
-        on.exit(ipcremove(M_sink_lock), add = TRUE)
-        Cov_sink_lock <- ipcid()
-        on.exit(ipcremove(Cov_sink_lock), add = TRUE)
+        sink_lock <- ipcid()
+        on.exit(ipcremove(sink_lock), add = TRUE)
     }
     # Set number of tasks to ensure the progress bar gives frequent updates.
     # NOTE: The progress bar increments once per task
@@ -318,8 +311,7 @@
         grid = grid,
         M_sink = M_sink,
         Cov_sink = Cov_sink,
-        M_sink_lock = M_sink_lock,
-        Cov_sink_lock = Cov_sink_lock,
+        sink_lock = sink_lock,
         verbose = verbose,
         BPPARAM = BPPARAM))
     if (!all(bpok(counts))) {
