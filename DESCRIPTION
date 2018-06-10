@@ -67,6 +67,7 @@ Collate:
     collapseBSseq.R
     FWIRanges-class.R
     FWGRanges-class.R
+    findCytosines.R
 License: Artistic-2.0
 VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq
