@@ -242,7 +242,7 @@
         M_sink <- NULL
         Cov_sink <- NULL
         sink_lock <- NULL
-    } else if (identical(BACKEND, "HDF5Array")) {
+    } else if (BACKEND == "HDF5Array") {
         # TODO: HDF5Array is only in suggests, so need to qualify the use of
         #       HDF5RealizationSink()
         M_sink <- HDF5RealizationSink(
@@ -250,7 +250,6 @@
             # NOTE: Never allow dimnames.
             dimnames = NULL,
             type = "integer",
-            # filepath = filepath,
             name = "M",
             # TODO: Can chunkdim be specified if data are written to
             #       column-by-column?
@@ -263,7 +262,6 @@
             # NOTE: Never allow dimnames.
             dimnames = NULL,
             type = "integer",
-            # filepath = filepath,
             name = "Cov",
             # TODO: Can chunkdim be specified if data are written to
             #       column-by-column?
