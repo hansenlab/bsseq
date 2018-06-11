@@ -122,7 +122,11 @@ combineList <- function(x, ..., BACKEND = NULL) {
     stopifnot(isTRUE(all(x_has_same_parameters)))
     # Check if all inputs have the same set of loci
     x_rowRanges <- lapply(x, rowRanges)
-    ans_rowRanges <- Reduce(union, x_rowRanges)
+    ans_rowRanges <- Reduce(
+        f = function(x, y) {
+            reduce(c(x, y), drop.empty.ranges = TRUE, min.gapwidth = 0L)
+        },
+        x = x_rowRanges)
     intersect_rowRanges <- Reduce(intersect, x_rowRanges)
     all_x_have_same_loci <- identical(ans_rowRanges, intersect_rowRanges)
     # Check if safe to combine smoothed representations (coef and se.coef).
