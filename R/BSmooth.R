@@ -30,9 +30,8 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
     clusterIdx
 }
 
-.BSmooth <- function(b, M, Cov, pos, coef_sink, se.coef_sink,
-                     coef_sink_lock, se.coef_sink_lock, grid, pos_grid,
-                     ns, h, keep.se) {
+.BSmooth <- function(b, M, Cov, pos, coef_sink, se.coef_sink, sink_lock, grid,
+                     pos_grid, ns, h, keep.se) {
     # Load packages on worker (required for SnowParam) -------------------------
 
     suppressPackageStartupMessages({
@@ -100,22 +99,18 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
     if (is.null(coef_sink)) {
         return(list(coef = coef, se.coef = se.coef))
     }
-    # Write to coef_sink and se.coef_sink while respecting the IPC lock(s).
-    ipclock(coef_sink_lock)
+    # Write to coef_sink and se.coef_sink while respecting the IPC lock.
+    ipclock(sink_lock)
     write_block_to_sink(as.matrix(coef), coef_sink, grid[[b]])
-    ipcunlock(coef_sink_lock)
     if (keep.se) {
-        ipclock(se.coef_sink_lock)
         write_block_to_sink(as.matrix(se.coef), se.coef_sink, grid[[b]])
-        ipcunlock(se.coef_sink_lock)
     }
+    ipcunlock(sink_lock)
     NULL
 }
 
 # Exported functions -----------------------------------------------------------
 
-# TODO: Add BACKEND = getRealizationBackend() argument, replaces
-#       realization_backend.
 # TODO: If BSmooth() encounteres errors, return `BPREDO`` as `metadata(BSseq)`
 #       so as not to clobber the user's BSseq object; see
 #       https://support.bioconductor.org/p/109374/#109459.
@@ -129,7 +124,8 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
 BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
                     parallelBy = c("sample", "chromosome"),
                     mc.preschedule = FALSE, mc.cores = 1, keep.se = FALSE,
-                    verbose = TRUE, BPREDO = list(), BPPARAM = bpparam()) {
+                    verbose = TRUE, BPREDO = list(), BPPARAM = bpparam(),
+                    BACKEND = getRealizationBackend(), ...) {
     # Argument checks-----------------------------------------------------------
 
     # Check if this is a re-do.
@@ -139,14 +135,14 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
     if (length(BPREDO)) {
         if (!is.list(BPREDO) ||
             identical(names(BPREDO), c("smooth", "coef_sink", "se.coef_sink",
-                                       "realization_backend"))) {
+                                       "BACKEND"))) {
             stop("'BPREDO' should be a list with elements 'smooth', ",
-                 "'coef_sink', 'se.coef_sink', and 'realization_backend'.")
+                 "'coef_sink', 'se.coef_sink', and 'BACKEND'.")
         }
         is_redo <- TRUE
         coef_sink <- BPREDO[["coef_sink"]]
         se.coef_sink <- BPREDO[["se.coef_sink"]]
-        realization_backend <- BPREDO[["realization_sink"]]
+        BACKEND <- BPREDO[["BACKEND"]]
         BPREDO <- BPREDO[["smooth"]]
     } else {
         is_redo <- FALSE
@@ -194,11 +190,13 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
                 immediate. = TRUE)
             if (verbose) bpprogressbar(BPPARAM) <- TRUE
         }
-        # Check compatability of realization backend with backend(s) of BSseq
-        # object.
-        realization_backend <- getRealizationBackend()
+        # Register 'BACKEND' and return to current value on exit
+        current_BACKEND <- getRealizationBackend()
+        on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
+        setRealizationBackend(BACKEND)
+        # Check compatability of 'BACKEND' with backend(s) of BSseq object.
         BSseq_backends <- .getBSseqBackends(BSseq)
-        if (.areBackendsInMemory(realization_backend) &&
+        if (.areBackendsInMemory(BACKEND) &&
             !.areBackendsInMemory(BSseq_backends)) {
             stop("Using an in-memory backend for a disk-backed BSseq object ",
                  "is not supported.\n",
@@ -206,7 +204,7 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
                  call. = FALSE)
         }
         # Check compatability of 'BPPARAM' with the realization backend.
-        if (!.areBackendsInMemory(realization_backend)) {
+        if (!.areBackendsInMemory(BACKEND)) {
             if (!.isSingleMachineBackend(BPPARAM)) {
                 stop("The parallelisation strategy must use a single machine ",
                      "when using an on-disk realization backend.\n",
@@ -214,13 +212,12 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
                      call. = FALSE)
             }
         } else {
-            if (!is.null(realization_backend)) {
+            if (!is.null(BACKEND)) {
                 # NOTE: Currently do not support any in-memory realization
-                #       backends. If the realization backend is NULL then an
-                #       ordinary matrix is returned rather than a matrix-backed
-                #       DelayedMatrix.
-                stop("The '", realization_backend, "' realization backend is ",
-                     "not supported.\n",
+                #       backends. If 'BACKEND' is NULL then an ordinary matrix
+                #       is returned rather than a matrix-backed DelayedMatrix.
+                stop("The '", BACKEND, "' realization backend is not ",
+                     "supported.\n",
                      "See help(\"BSmooth\") for details.",
                      call. = FALSE)
             }
@@ -242,25 +239,49 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
     pos_grid <- ArbitraryArrayGrid(list(row_tickmarks, 1L))
     # Construct RealizationSink objects (as required)
     if (!is_redo) {
-        if (is.null(realization_backend)) {
+        if (is.null(BACKEND)) {
             coef_sink <- NULL
-            coef_sink_lock <- NULL
             se.coef_sink <- NULL
-            se.coef_sink_lock <- NULL
-        } else {
-            coef_sink <- DelayedArray:::RealizationSink(dim(M), type = "double")
+            sink_lock <- NULL
+        } else if (BACKEND == "HDF5Array") {
+            coef_sink <- HDF5RealizationSink(
+                dim = dim(M),
+                # NOTE: Never allow dimnames.
+                dimnames = NULL,
+                type = "double",
+                name = "coef",
+                ...)
             on.exit(close(coef_sink), add = TRUE)
-            coef_sink_lock <- ipcid()
-            on.exit(ipcremove(coef_sink_lock), add = TRUE)
+            sink_lock <- ipcid()
+            on.exit(ipcremove(sink_lock), add = TRUE)
             if (keep.se) {
-                se.coef_sink <- DelayedArray:::RealizationSink(dim(M),
-                                                               type = "double")
+                se.coef_sink <- HDF5RealizationSink(
+                    dim = dim(M),
+                    # NOTE: Never allow dimnames.
+                    dimnames = NULL,
+                    type = "double",
+                    name = "se.coef",
+                    ...)
                 on.exit(close(se.coef_sink), add = TRUE)
-                se.coef_sink_lock <- ipcid()
-                on.exit(ipcremove(se.coef_sink_lock), add = TRUE)
             } else {
                 se.coef_sink <- NULL
-                se.coef_sink_lock <- NULL
+            }
+        } else {
+            # TODO: This branch should probably never be entered because we
+            #       (implicitly) only support in-memory or HDF5Array backends.
+            #       However, we retain it for now (e.g., fstArray backend would
+            #       use this until a dedicated branch was implemented).
+            coef_sink <- DelayedArray:::RealizationSink(dim(M), type = "double")
+            on.exit(close(coef_sink), add = TRUE)
+            sink_lock <- ipcid()
+            on.exit(ipcremove(sink_lock), add = TRUE)
+            if (keep.se) {
+                se.coef_sink <- DelayedArray:::RealizationSink(
+                    dim(M),
+                    type = "double")
+                on.exit(close(se.coef_sink), add = TRUE)
+            } else {
+                se.coef_sink <- NULL
             }
         }
     }
@@ -284,8 +305,7 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
         pos = pos,
         coef_sink = coef_sink,
         se.coef_sink = se.coef_sink,
-        coef_sink_lock = coef_sink_lock,
-        se.coef_sink_lock = se.coef_sink_lock,
+        sink_lock = sink_lock,
         grid = grid,
         pos_grid = pos_grid,
         ns = ns,
@@ -309,10 +329,10 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
         return(list(smooth = smooth,
                     coef_sink = coef_sink,
                     se.coef_sink = se.coef_sink,
-                    realization_backend = realization_backend))
+                    BACKEND = BACKEND))
     }
     # Construct coef and se.coef from results of smooth().
-    if (is.null(realization_backend)) {
+    if (is.null(BACKEND)) {
         # Returning matrix objects.
         coef <- do.call(c, lapply(smooth, "[[", "coef"))
         attr(coef, "dim") <- dim(M)
@@ -356,5 +376,5 @@ BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
 #       futile.logger syntax; see the BiocParalell vignette 'Errors, Logs and
 #       Debugging in BiocParallel'.
 # TODO: Remove NOTEs that are really documentation issues to the docs
-# TODO: Allow user to specify HDF5 file and have both coef and se.coef written
-#       to that file.
+# TODO: If the BSseq object is backed by a single HDF5 file then use that to
+#       write the 'coef' and 'se.coef' data.

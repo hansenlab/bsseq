@@ -10,7 +10,7 @@
 BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
   parallelBy = c("sample", "chromosome"), mc.preschedule = FALSE,
   mc.cores = 1, keep.se = FALSE, verbose = TRUE, BPREDO = list(),
-  BPPARAM = bpparam())
+  BPPARAM = bpparam(), BACKEND = getRealizationBackend(), ...)
 }
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
@@ -40,6 +40,12 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
     \linkS4class{BatchJobsParam} (Unix, Mac, Windows, only with the in-memory
     realization backend). See sections 'Parallelization and progress
     monitoring' and 'Realization backends' for further details.}
+  \item{BACKEND}{\code{NULL} or a single string specifying the name of the
+    realization backend. When the backend is set to \code{NULL}, the
+    \code{coef} and \code{se.coef} assays are realized in memory as an ordinary
+    matrix.}
+  \item{...}{Additional arguments passed to the \linkS4class{RealizationSink}
+    constructor. See section, 'Realization backends'.}
 }
 \details{
   \code{ns} and \code{h} are passed to the \code{locfit} function. The
@@ -56,12 +62,9 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
   stored in-memory as an ordinary \link[base]{matrix} or on-disk as a
   \linkS4class{HDF5Array}, for example.
 
-  The choice of realization backend is controlled by
-  \code{\link[DelayedArray]{setRealizationBackend()}} from
-  the \pkg{DelayedArray} package. The current realization backend can be
-  queried by calling
-  \code{DelayedArray::\link[DelayedArray]{getRealizationBackend()}}. Please see
-  the examples at the bottom of this page.
+  The choice of realization backend is controlled by the \code{BACKEND}
+  argument, which defaults to the current value of
+  \code{DelayedArray::\link[DelayedArray]{getRealizationBackend()}}.
 
   \code{BSmooth} supports the following realization backends:
 
@@ -82,6 +85,13 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
   avoid memory usage blow-ups, \code{BSmooth()} will issue an error if an
   in-memory realization backend is used when smoothing a disk-backed
   \linkS4class{BSseq} object.
+
+  Additional arguments related to the realization backend can be passed via the
+  \code{...} argument. These arguments must be named and are passed to the
+  relevant \linkS4class{RealizationSink} constructor. For example, the
+  \code{...} argument can be used to specify the path to the HDF5 file to be
+  used by \code{BSmooth()}. Please see the examples at the bottom of the page.
+
 }
 
 \section{Parallelization and progress monitoring}{
@@ -171,31 +181,36 @@ BSmooth(BSseq, ns = 70, h = 1000, maxGap = 10^8,
   doi:\href{http://www.dx.doi.org/10.1186/gb-2012-13-10-r83}{10.1186/gb-2012-13-10-r83}.
 }
 \seealso{
-  \code{\link[locfit]{locfit}} in the locfit package, as well as \code{\linkS4class{BSseq}}.
+  \code{\link[locfit]{locfit}} in the locfit package, as well as
+  \code{\linkS4class{BSseq}}.
 }
 \examples{
 \dontrun{
   # Run BSmooth() on a matrix-backed BSseq object using an in-memory realization
-  # backend and use serial evaluation.
+  # backend with serial evaluation.
   data(BS.chr22)
-  # This is a matrix-backed BSseq object
+  # This is a matrix-backed BSseq object.
   sapply(assays(BS.chr22, withDimnames = FALSE), class)
-  setRealizationBackend(NULL)
   BS.fit <- BSmooth(BS.chr22, BPPARAM = SerialParam(progressbar = TRUE))
-  # The new 'coef' assay is an ordinary matrix
+  # The new 'coef' assay is an ordinary matrix.
   sapply(assays(BS.fit, withDimnames = FALSE), class)
   BS.fit
 
-  # Run BSmooth() on a disk-backed BSseq object using a disk-backed realization
-  # backend and use multi-core parallel evaluation.
+  # Run BSmooth() on a disk-backed BSseq object using the HDF5Array realization
+  # backend (with data written to the file 'BSmooth_example.h5') with
+  # multi-core parallel evaluation.
   BS.chr22 <- realize(BS.chr22, "HDF5Array")
-  # This is a disk-backed BSseq object
+  # This is a disk-backed BSseq object.
   sapply(assays(BS.chr22, withDimnames = FALSE), class)
-  setRealizationBackend("HDF5Array")
   BS.fit <- BSmooth(BS.chr22,
-              BPPARAM = MulticoreParam(workers = 2, progressbar = TRUE))
-  # The new 'coef' assay is an HDF5Matrix
+              BPPARAM = MulticoreParam(workers = 2, progressbar = TRUE),
+              BACKEND = "HDF5Array",
+              filepath = "BSmooth_example.h5")
+  # The new 'coef' assay is an HDF5Matrix.
   sapply(assays(BS.fit, withDimnames = FALSE), class)
   BS.fit
+  # The new 'coef' assay is in the HDF5 file 'BSmooth_example.h5' (in the
+  # current working directory).
+  sapply(assays(BS.fit, withDimnames = FALSE), path)
 }
 }
