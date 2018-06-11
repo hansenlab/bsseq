@@ -433,7 +433,7 @@ read.bismark <- function(files,
     }
     # Set verbosity used by internal functions
     subverbose <- as.logical(max(verbose - 1L, 0L))
-    # Register BACKEND and return to current value on exit
+    # Register 'BACKEND' and return to current value on exit
     current_BACKEND <- getRealizationBackend()
     on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
     setRealizationBackend(BACKEND)
