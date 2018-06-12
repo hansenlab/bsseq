@@ -2,14 +2,16 @@
 
 # TODO: Test against some of Bismark's other output files. May need a stricter
 #       and more accurate heuristic to avoid 'passing' bad files.
-# NOTE: Not using readr::count_fields() because it is very slow on large,
-#       compressed files. This is because it reads the entire file into memory
-#       as a raw vector regardless of the value of `n_max` (see
-#       https://github.com/tidyverse/readr/issues/610). But good old
-#       utils::read.delim() doesn't have this limitation!
+# TODO: Test for 'bismark_methylation_extractor' and 'bedGraph' formats
+#       (https://github.com/FelixKrueger/Bismark/tree/master/Docs#output-1)
 .guessBismarkFileType <- function(files, n_max = 10L) {
     guessed_file_types <- setNames(vector("character", length(files)), files)
     for (file in files) {
+        # NOTE: Not using readr::count_fields() because it is very slow on
+        #       large, compressed files. This is because it reads the entire
+        #       file into memory as a raw vector regardless of the value of
+        #       `n_max` (see https://github.com/tidyverse/readr/issues/610).
+        #       But good old utils::read.delim() doesn't have this limitation!
         x <- read.delim(
             file = file,
             header = FALSE,
@@ -53,8 +55,9 @@
                              ...) {
     col_spec <- match.arg(col_spec)
     file_type <- .guessBismarkFileType(file)
+    # TODO: Test for 'bismark_methylation_extractor' and 'bedGraph' formats,
+    #       and error out (they're not supported).
     stopifnot(S4Vectors:::isTRUEorFALSE(check))
-    # TODO: Read in seqnames as a factor?
     if (file_type == "cov") {
         col_names <- c("seqnames", "start", "end", "beta", "M", "U")
         if (col_spec == "BSseq") {
@@ -353,9 +356,7 @@
 # TODO: Support BPREDO?
 # TODO: Support passing a colData so that metadata is automatically added to
 #       samples?
-# TODO: Properly pass down verbose as subverbose to functions that take verbose
-#       argument.
-# NOTE: `...` are used to pass filepath, chunkdim, level, etc. to
+# TODO: Document that `...` are used to pass filepath, chunkdim, level, etc. to
 #       HDF5RealizationSink().
 # TODO: (long term) Formalise `...` by something analogous to the
 #       BiocParallelParam class (RealizationSinkParam) i.e. something that
@@ -368,15 +369,15 @@
 #       is used in conjunction with files without strand information.
 read.bismark <- function(files,
                          sampleNames = basename(files),
+                         loci = NULL,
                          rmZeroCov = FALSE,
                          strandCollapse = TRUE,
-                         fileType = c("cov", "oldBedGraph", "cytosineReport"),
-                         loci = NULL,
-                         mc.cores = 1,
                          verbose = TRUE,
                          BPPARAM = bpparam(),
                          BACKEND = getRealizationBackend(),
-                         ...) {
+                         ...,
+                         fileType = c("cov", "oldBedGraph", "cytosineReport"),
+                         mc.cores = 1) {
     # Argument checks ----------------------------------------------------------
 
     # Check for deprecated arguments and issue warning(s) if found.
@@ -557,32 +558,20 @@ read.bismark <- function(files,
 
 # TODOs ------------------------------------------------------------------------
 
-# TODO: The documentation needs a complete overhaul and checked against Bismark
-#       docs (e.g., the description of the .cov file is wrong)
 # TODO: Consolidate use of message()/cat()/etc.
 # TODO: Add function like minfi::read.metharray.sheet()?
 # TODO: Should BACKEND really be an argument of read.bismark(); see related
 #       issue on minfi repo https://github.com/hansenlab/minfi/issues/140
 # TODO: May receive warning "In read_tokens_(data, tokenizer, col_specs, col_names,  ... : length of NULL cannot be changed". This is fixed in devel version of
 #       readr (https://github.com/tidyverse/readr/issues/833)
-# TODO: Decide whether to preserve verbose argument of several functions.
-# TODO: Document that if 'loci' is supplied then only loci in it will be
-#       retained.
 # TODO: Think about naming scheme for functions. Try to have the function that
 #       is bpapply()-ed have a similar name to its parent.
 # TODO: Document internal functions for my own sanity. Also, some may be useful
 #       to users of bsseq (although I still won't export these for the time
 #       being).
-# TODO: Allow user to specify HDF5 file and have both M and Cov written to that
-#       file.
-# TODO: Helper function to obtain CpX loci from BSgenome as GRanges to pass as
-#       'gr' argument in read.bismark().
 # TODO: (long term) Current implementation requires that user can load at least
 #       one sample's worth of data into memory per worker. Could instead read
 #       chunks of data, write to sink, load next chunk, etc.
-# TODO: Add big note to documentation that .cov file does not contain strand
-#       information, which means strandCollapse can't be used (unless 'gr' is
-#       supplied or one of the other files is a cytosineReport file).
 # TODO: Document that if 'gr' is NULL and any 'files' (especially the first
 #       file) are .cov files, then any loci present in the .cov files will have
 #       their strand set to *. If you are mixing and matching .cov and
