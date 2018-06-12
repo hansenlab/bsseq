@@ -8,6 +8,7 @@
     set to \code{2 * maxGap + 1} instead of \code{maxGap}. This likely did not
     affect results for users who left the default value of \code{maxGap = 10^8}
     but may have affected results for small values of \code{maxGap}.
+    }
   }
 }
 

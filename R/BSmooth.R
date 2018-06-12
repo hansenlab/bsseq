@@ -121,11 +121,19 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
 # TODO: To benefit from error recovery requires that bpStopOnError(BPPARAM) is
 #       TRUE but the default is FALSE. How to help the user? Probably don't
 #       want to override the user-specified value.
-BSmooth <- function(BSseq, ns = 70, h = 1000, maxGap = 10^8,
+BSmooth <- function(BSseq,
+                    ns = 70,
+                    h = 1000,
+                    maxGap = 10^8,
+                    keep.se = FALSE,
+                    verbose = TRUE,
+                    BPREDO = list(),
+                    BPPARAM = bpparam(),
+                    BACKEND = getRealizationBackend(),
+                    ...,
                     parallelBy = c("sample", "chromosome"),
-                    mc.preschedule = FALSE, mc.cores = 1, keep.se = FALSE,
-                    verbose = TRUE, BPREDO = list(), BPPARAM = bpparam(),
-                    BACKEND = getRealizationBackend(), ...) {
+                    mc.preschedule = FALSE,
+                    mc.cores = 1) {
     # Argument checks-----------------------------------------------------------
 
     # Check if this is a re-do.

@@ -41,8 +41,7 @@ Suggests:
     beachmat,
     Matrix,
     HDF5Array,
-    doParallel,
-    testthat
+    doParallel
 Collate:
     utils.R
     hasGRanges.R
