@@ -89,3 +89,40 @@
     }
     realize(collapsed_x, BACKEND = BACKEND)
 }
+
+.zero_type <- function(type) {
+    if (identical(type, "integer")) {
+        fill <- 0L
+    } else if (identical(type, "double")) {
+        fill <- 0
+    } else {
+        stop("'type' = ", type, " is not supported")
+    }
+}
+
+# Missing methods --------------------------------------------------------------
+
+# TODO: DelayedArray::type() for all RealizationSink subclasses
+setMethod("type", "HDF5RealizationSink", function(x) {
+    x@type
+})
+setMethod("type", "arrayRealizationSink", function(x) {
+    DelayedArray::type(x@result_envir$result)
+})
+setMethod("type", "RleRealizationSink", function(x) {
+    x@type
+})
+# TODO: dimnames() for all RealizationSink subclasses
+setMethod("dimnames", "arrayRealizationSink", function(x) {
+    dimnames(x@result_envir$result)
+})
+
+# Helper functions for setting up ArrayGrid instances --------------------------
+
+colGrid <- function(x) {
+    max_block_len <- max(nrow(x), DelayedArray:::get_max_block_length(type(x)))
+    spacings <- DelayedArray:::get_spacings_for_linear_capped_length_blocks(
+        refdim = dim(x),
+        max_block_len = max_block_len)
+    RegularArrayGrid(dim(x), spacings)
+}

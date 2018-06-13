@@ -13,94 +13,10 @@ checkBSseqAssaysIdentical <- function(x, y) {
 
 checkBSseqIdentical <- function(x, y) {
     checkTrue(identical(rowRanges(x), rowRanges(y)) &&
-                  identical(getBSseq(x, "trans"), getBSseq(y, "trans")) &&
+                  all.equal(getBSseq(x, "trans"), getBSseq(y, "trans")) &&
                   identical(getBSseq(x, "parameters"),
                             getBSseq(y, "parameters")) &&
                   checkBSseqAssaysIdentical(x, y))
-}
-
-test_.subassignRowsDelayedMatrix <- function() {
-    nrow <- 1000L
-    ncol <- 10L
-    x <- writeHDF5Array(matrix(seq_len(nrow * ncol), ncol = ncol))
-    x_i <- seq(1L, 2L * nrow, 2L)
-    y <- writeHDF5Array(matrix(seq(-1L, -nrow * ncol, -1L), ncol = 10))
-    y_i <- seq(2L, nrow, 2L)
-
-    z1 <- bsseq:::.subassignRowsDelayedMatrix(x = x,
-                                              i = x_i,
-                                              nrow = 2L * nrow,
-                                              fill = NA_integer_,
-                                              BACKEND = NULL)
-    z2 <- bsseq:::.subassignRowsDelayedMatrix(x = x,
-                                              i = x_i,
-                                              nrow = 2L * nrow,
-                                              fill = NA_integer_,
-                                              BACKEND = "HDF5Array",
-                                              by_row = FALSE)
-    z3 <- bsseq:::.subassignRowsDelayedMatrix(x = x,
-                                              i = x_i,
-                                              nrow = 2L * nrow,
-                                              fill = NA_integer_,
-                                              BACKEND = "HDF5Array",
-                                              by_row = TRUE)
-    checkIdentical(as.array(z1), as.array(z2))
-    checkIdentical(as.array(z1), as.array(z3))
-}
-
-test_.combineListOfDelayedMatrixObjects <- function() {
-    nrow <- 10
-    ncol <- 4
-    x <- matrix(seq_len(nrow),
-                ncol = ncol / 2,
-                dimnames = list(NULL, letters[1:2]))
-    y <- matrix(100L + seq_len(nrow),
-                ncol = ncol / 2,
-                dimnames = list(NULL, letters[3:4]))
-    x_i <- seq(1, nrow, ncol / 2)
-    y_i <- seq(2, nrow, ncol / 2)
-    fill <- NA_integer_
-
-    # The expected output
-    z <- matrix(fill,
-                nrow = nrow,
-                ncol = ncol,
-                dimnames = list(NULL, letters[seq_len(ncol)]))
-    # NOTE: as.array(x) is a no-op if x is a matrix and realises a
-    #       DelayedMtrix in memory
-    z[x_i, seq(1, ncol(x))] <- x
-    z[y_i, seq(ncol(x) + 1, ncol(x) + ncol(y))] <- y
-
-    # # Test with in-memory DelayedMatrix objects
-    X <- bsseq:::.DelayedMatrix(x)
-    Y <- bsseq:::.DelayedMatrix(y)
-
-    Z <- bsseq:::.combineListOfDelayedMatrixObjects(
-        X = list(X, Y),
-        I = list(x_i, y_i),
-        nrow = nrow,
-        ncol = ncol,
-        dimnames = list(NULL, c(colnames(X), colnames(Y))),
-        fill = fill,
-        BACKEND = NULL)
-    checkIdentical(z, as.array(Z))
-    checkTrue(!bsseq:::.isHDF5ArrayBacked(Z))
-
-
-    # Test with HDF5Array-backed DelayedMatrix objects
-    hdf5_X <- realize(X, BACKEND = "HDF5Array")
-    hdf5_Y <- realize(Y, BACKEND = "HDF5Array")
-
-    hdf5_Z <- bsseq:::.combineListOfDelayedMatrixObjects(
-        X = list(hdf5_X, hdf5_Y),
-        I = list(x_i, y_i),
-        nrow = nrow,
-        ncol = ncol,
-        dimnames = list(NULL, c(colnames(hdf5_X), colnames(hdf5_Y))),
-        fill = fill,
-        BACKEND = "HDF5Array")
-    checkIdentical(z, as.array(hdf5_Z))
-    checkTrue(bsseq:::.isHDF5ArrayBacked(hdf5_Z))
 }
 
 test_combine <- function() {
@@ -213,7 +129,7 @@ test_PR54 <- function() {
                             type = "raw")
     checkEquals(as.matrix(methAlone), as.matrix(methCombined))
     # NOTE: Using combine()
-    combined2 <- combine(BS2, BS1, BS3)
+    combined2 <- combine(combine(BS2, BS1), BS3)
     over2 <- findOverlaps(BS3, combined2, type = "equal")
     methAlone2 <- getMeth(BS3[queryHits(over2), c("G", "H", "I")], type = "raw")
     methCombined2 <- getMeth(combined2[subjectHits(over2), c("G", "H", "I")],

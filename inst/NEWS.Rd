@@ -2,6 +2,13 @@
 \title{bsseq news}
 \encoding{UTF-8}
 
+\section{Version 1.16.x}{
+  \itemize{
+    \item{1.16.1} Fix performance regression in \code{combine()}. Thanks to Scott
+    Gigante (@scottgigante) for the report (\url{https://github.com/hansenlab/bsseq/issues/71}).
+  }
+}
+
 \section{Version 1.13.x}{
   \itemize{
     \item{1.13.6: Fix performance regression in \code{BSmooth()}. Thanks to

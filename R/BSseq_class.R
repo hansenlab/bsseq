@@ -292,6 +292,7 @@ strandCollapse <- function(BSseq, shift = TRUE) {
     }
     if(!(all(runValue(strand(BSseq)) %in% c("+", "-"))))
         stop("'BSseq' object has a mix of stranded and unstranded loci.")
+    assays(BSseq) <- endoapply(assays(BSseq), unname)
     BS.forward <- BSseq[strand(BSseq) == "+"]
     strand(BS.forward) <- "*"
     BS.reverse <- BSseq[strand(BSseq) == "-"]

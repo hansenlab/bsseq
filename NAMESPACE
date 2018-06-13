@@ -37,7 +37,8 @@ import(limma)
 importFrom(permute, "shuffleSet", "how")
 importClassesFrom(DelayedArray, "DelayedArray", "DelayedMatrix")
 importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2", "rowMaxs",
-           "rowMins")
+           "rowMins", "close", "write_block_to_sink", "RegularArrayGrid",
+           "type")
 importClassesFrom(HDF5Array, "HDF5Array")
 
 ##
