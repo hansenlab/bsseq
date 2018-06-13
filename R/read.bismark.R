@@ -215,7 +215,7 @@
 
     # Construct 'M' and 'Cov' matrices -----------------------------------------
 
-    ol <- findOverlaps(loci_from_this_sample, loci)
+    ol <- findOverlaps(loci_from_this_sample, loci, type = "equal")
     M <- matrix(rep(0L, length(loci)), ncol = 1)
     Cov <- matrix(rep(0L, length(loci)), ncol = 1)
     M[subjectHits(ol)] <- dt[queryHits(ol), ][["M"]]
