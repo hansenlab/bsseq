@@ -1,75 +1,56 @@
-# TODO: Need to update NAMESPACE
-# TODO: Search both forward and reverse strands in a single search.
-# TODO: Default value of seqlevels as missing or NULL? Check what other
-#       functions with this arg use.
-findCytosines <- function(BSgenome, context = c("CG", "CA", "CC", "CT"),
-                          seqlevels, verbose = getOption("verbose")) {
-    stopifnot(is(BSgenome, "BSgenome"))
-    context <- match.arg(context)
-    context <- DNAString(context)
-    seqinfo <- seqinfo(BSgenome)
-    if (missing(seqlevels)) {
-        seqlevels <- seqlevels(seqinfo)
-    } else {
-        seqinfo <- seqinfo[seqlevels]
+# Exported generics ------------------------------------------------------------
+
+setGeneric(
+    "findCytosines",
+    function(x, context, seqlevels) standardGeneric("findCytosines"),
+    signature = "x")
+
+# Exported methods -------------------------------------------------------------
+
+setMethod(
+    "findCytosines",
+    "BSgenome",
+    function(x, context, seqlevels = seqlevels(x)) {
+        # NOTE: vmatchPattern,BSgenome-method returns a GRanges instance.
+        gr <- vmatchPattern(
+            pattern = context,
+            subject = x,
+            exclude = setdiff(seqlevels(x), seqlevels),
+            fixed = "subject")
+        # NOTE: Want just the position of the cytosine.
+        resize(gr, width = 1L, fix = "start")
     }
-    bsparams <- new(
-        "BSParams",
-        X = BSgenome,
-        FUN = matchPattern,
-        exclude = setdiff(seqlevels(BSgenome), seqlevels))
-    current_verbose <- getOption("verbose")
-    options(verbose = verbose)
-    on.exit(options(verbose = current_verbose), add = TRUE)
-    fwd_strand <- IRangesList(
-        endoapply(bsapply(bsparams, pattern = context), as, "IRanges"))
-    n <- sum(as.numeric(lengths(fwd_strand)))
-    fwd_strand <- .FWGRanges(
-        seqnames = Rle(
-            factor(names(fwd_strand), levels = seqlevels(seqinfo)),
-            lengths(fwd_strand)),
-        ranges = .FWIRanges(
-            start = unlist(start(fwd_strand), use.names = FALSE),
-            width = 1L),
-        strand = Rle(strand("+"), n),
-        seqinfo = seqinfo,
-        elementMetadata = S4Vectors:::make_zero_col_DataFrame(n))
-    rev_strand <- IRangesList(
-        endoapply(
-            bsapply(bsparams, pattern = reverseComplement(context)),
-            as,
-            "IRanges"))
-    n <- sum(as.numeric(lengths(rev_strand)))
-    rev_strand <- .FWGRanges(
-        seqnames = Rle(
-            factor(names(rev_strand), levels = seqlevels(seqinfo)),
-            lengths(rev_strand)),
-        ranges = .FWIRanges(
-            start = unlist(start(rev_strand), use.names = FALSE),
-            width = 1L),
-        strand = Rle(strand("-"), n),
-        seqinfo = seqinfo,
-        elementMetadata = S4Vectors:::make_zero_col_DataFrame(n))
-    sort(c(fwd_strand, rev_strand))
-}
+)
 
-# TODO: findCytosines from a FASTA file (e.g., for lambda phage)
-# lambda <- import("http://www.ebi.ac.uk/ena/data/view/J02459&display=fasta&download=fasta&filename=J02459.fasta")
+# TODO: Replace with vmatchPDict() when/if this is available, where the pdict
+#       argument is a DNAStringSet including the original context and its
+#       reverse complement.
+setMethod(
+    "findCytosines",
+    "DNAStringSet",
+    function(x, context, seqlevels = seqlevels(x)) {
+        context <- DNAString(context)
+        x <- x[seqlevels]
+        fwd_gr <- as(
+            vmatchPattern(
+                pattern = context,
+                subject = x,
+                fixed = "subject"),
+            "GRanges")
+        strand(fwd_gr) <- "+"
+        rev_gr <- as(
+            vmatchPattern(
+                pattern = reverseComplement(context),
+                subject = x,
+                fixed = "subject"),
+            "GRanges")
+        strand(rev_gr) <- "-"
+        gr <- c(fwd_gr, rev_gr)
+        # NOTE: Want just the position of the cytosine.
+        resize(gr, width = 1L, fix = "start")
+    }
+)
 
-#
-# hg19_si <- suppressWarnings(keepStandardChromosomes(
-#     seqinfo(BSgenome.Hsapiens.UCSC.hg19)))
-# params <- new("BSParams",
-#               X = BSgenome.Hsapiens.UCSC.hg19,
-#               FUN = matchPattern,
-#               exclude = setdiff(seqnames(BSgenome.Hsapiens.UCSC.hg19),
-#                                 seqnames(hg19_si)))
-# options(verbose = TRUE)
-# hg19_cpgs <- IRangesList(
-#     endoapply(bsapply(params, pattern = "CG"), as, "IRanges"))
-# options(verbose = FALSE)
-# hg19_cpgs <- GRanges(seqnames = Rle(names(hg19_cpgs), lengths(hg19_cpgs)),
-#                      ranges = unlist(hg19_cpgs, use.names = FALSE),
-#                      strand = "*",
-#                      seqinfo = hg19_si)
-# width(hg19_cpgs) <- 1L
+# TODOs ------------------------------------------------------------------------
+
+# TODO: Default value of seqlevels isn't working.

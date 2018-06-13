@@ -31,7 +31,9 @@ Imports:
     DelayedArray (>= 0.5.34),
     Rcpp,
     BiocParallel,
-    readr
+    readr,
+    BSgenome,
+    Biostrings
 Suggests:
     testthat,
     bsseqData,
