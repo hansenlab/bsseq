@@ -578,3 +578,4 @@ read.bismark <- function(files,
 #       .cytosineReport files and don't want this behaviour (i.e. you want to
 #       retain strand) then you'll need to construct your own 'gr' and pass
 #       this to the function. Add unit tests for this behaviour.
+# TODO: Use verbose = getOption("verbose") as default.

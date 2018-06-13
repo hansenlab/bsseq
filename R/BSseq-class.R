@@ -172,7 +172,9 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
             stop("Cannot collapse when 'coef' or 'se.coef' are present.")
         }
         # NOTE: reduce() sorts the output
+        # TODO: Clarify above comment.
         unique_gr <- unique(gr)
+        # TODO: type = "equal"?
         ol <- findOverlaps(unique_gr, gr)
         gr <- unique(gr)
         idx <- as.list(ol)

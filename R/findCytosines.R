@@ -1,5 +1,5 @@
 # TODO: Need to update NAMESPACE
-# TODO: Search both forward and reverse strands
+# TODO: Search both forward and reverse strands in a single search.
 # TODO: Default value of seqlevels as missing or NULL? Check what other
 #       functions with this arg use.
 findCytosines <- function(BSgenome, context = c("CG", "CA", "CC", "CT"),
