@@ -12,7 +12,6 @@ BSmooth(BSseq,
         maxGap = 10^8,
         keep.se = FALSE,
         verbose = TRUE,
-        BPREDO = list(),
         BPPARAM = bpparam(),
         BACKEND = getRealizationBackend(),
         ...,
@@ -36,8 +35,6 @@ BSmooth(BSseq,
     algorithm be kept. This will make the return object roughly 30
     percent bigger and is currently not be used for anything in \pkg{bsseq}.}
   \item{verbose}{\strong{Deprecated}.
-    See section, 'Parallelization and progress monitoring' for further details.}
-  \item{BPREDO}{Typically not used.
     See section, 'Parallelization and progress monitoring' for further details.}
   \item{BPPARAM}{An optional \linkS4class{BiocParallelParam} instance
     determining the parallel back-end to be used during evaluation. Currently
@@ -113,9 +110,6 @@ BSmooth(BSseq,
       results be retained in-memory.
     \item Parallelization is now supported on Windows through the use of a
     \linkS4class{SnowParam} object as the value of \code{BPPARAM}.
-    \item Improved error handling makes it possible to gracefully resume
-    \code{BSmooth} jobs that encountered errors by re-doing only the necessary
-    tasks.
     \item Detailed and extensive job logging facilities.
   }
 
@@ -148,26 +142,6 @@ BSmooth(BSseq,
     \pkg{BiocParallel} also supports extensive and detailed logging facilities.
     Please consult the \pkg{BiocParallel} documentation to take full advantage
     these advanced features.
-  }
-
-  \subsection{Re-running failed tasks}{
-    By using \pkg{BiocParallel} for parallelization, \code{BSmooth()} may be
-    able to resume smoothing runs that failed due to hardware issues, for
-    example. To take advantage of this feature requires that
-    \code{stop.on.error = FALSE} was used to construct the
-    \linkS4class{BiocParallelParam} object passed to \code{BPPARAM}. When
-    \code{BSmooth()} encounters a potentially recoverable error, it will return
-    the intermediate results (including errors) and print instructions for how
-    the job may be resumed. This typically means re-running the exact same
-    command but with the addition of the the intermediate results passed via
-    the \code{BPREDO} argument.
-
-    Please note that not all errors can be recovered from in this way. We
-    recommend inspecting the returned object of intermediate results to try to
-    identify the source of the error (e.g., bad input data, failed node on a
-    cluster job, memory-usage error on a shared-memory job). It may be helpful
-    to use the advanced logging capabilities of \pkg{BiocParallel} when
-    re-running the job.
   }
 }
 

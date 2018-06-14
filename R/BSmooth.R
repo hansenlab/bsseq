@@ -112,23 +112,16 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
 # Exported functions -----------------------------------------------------------
 
 # TODO: BSmooth() should warn if BSseq object contains mix of strands.
-# TODO: If BSmooth() encounteres errors, return `BPREDO`` as `metadata(BSseq)`
-#       so as not to clobber the user's BSseq object; see
-#       https://support.bioconductor.org/p/109374/#109459.
 # TODO: Make 'mc.cores', 'mc.preschedule', and 'verbose' defunct one release
 #       cycle with them deprecated.
 # TODO: Consider having BSmooth() create a 'smoothed' assay in addition to or
 #       instead of the 'coef' and 'se.coef' assays.
-# TODO: To benefit from error recovery requires that bpStopOnError(BPPARAM) is
-#       TRUE but the default is FALSE. How to help the user? Probably don't
-#       want to override the user-specified value.
 BSmooth <- function(BSseq,
                     ns = 70,
                     h = 1000,
                     maxGap = 10^8,
                     keep.se = FALSE,
                     verbose = TRUE,
-                    BPREDO = list(),
                     BPPARAM = bpparam(),
                     BACKEND = getRealizationBackend(),
                     ...,
@@ -137,99 +130,80 @@ BSmooth <- function(BSseq,
                     mc.cores = 1) {
     # Argument checks-----------------------------------------------------------
 
-    # Check if this is a re-do.
-    # NOTE: Under the assumptions of a re-do (i.e. BSmooth() is being re-run
-    #       with the same arguments), we skip straight ahead to re-running
-    #       failed smoothing tasks with no further argument checks.
-    if (length(BPREDO)) {
-        if (!is.list(BPREDO) ||
-            identical(names(BPREDO), c("smooth", "coef_sink", "se.coef_sink",
-                                       "BACKEND"))) {
-            stop("'BPREDO' should be a list with elements 'smooth', ",
-                 "'coef_sink', 'se.coef_sink', and 'BACKEND'.")
-        }
-        is_redo <- TRUE
-        coef_sink <- BPREDO[["coef_sink"]]
-        se.coef_sink <- BPREDO[["se.coef_sink"]]
-        BACKEND <- BPREDO[["BACKEND"]]
-        BPREDO <- BPREDO[["smooth"]]
-    } else {
-        is_redo <- FALSE
-        # Check validity of 'BSseq' argument
-        if (!is(BSseq, "BSseq")) {
-            stop("'BSseq' must be a BSseq object.")
-        }
-        if (!isTRUE(all(width(BSseq) == 1L))) {
-            stop("All loci in 'BSseq' must have width == 1.")
-        }
-        if (is.unsorted(BSseq)) {
-            stop("'BSseq' must be sorted before smoothing. Use 'sort(BSseq)'.")
-        }
-        # Check for deprecated arguments and issue warning(s) if found.
-        if (!missing(parallelBy)) {
-            warning(
-                "'parallelBy' is deprecated and ignored.\n",
-                "See help(\"BSmooth\") for details.",
-                call. = FALSE,
-                immediate. = TRUE)
-        }
-        if (!missing(mc.preschedule)) {
-            warning(
-                "'mc.preschedule' is deprecated and ignored.\n",
-                "See help(\"BSmooth\") for details.",
-                call. = FALSE,
-                immediate. = TRUE)
-        }
-        if (!missing(mc.cores)) {
-            # TODO: What if user has provided a BPPARAM?
-            warning(
-                "'mc.cores' is deprecated.\n",
-                "Replaced with 'BPPARAM = MulticoreParam(workers = mc.cores)'",
-                ".\nSee help(\"BSmooth\").",
-                call. = FALSE,
-                immediate. = TRUE)
-            BPPARAM <- MulticoreParam(workers = mc.cores)
-        }
-        if (!missing(verbose)) {
-            warning(
-                "'verbose' is deprecated.\n",
-                "Replaced by setting 'bpprogressbar(BPPARAM) <- TRUE'.\n",
-                "See help(\"BSmooth\") for details.",
-                call. = FALSE,
-                immediate. = TRUE)
-            if (verbose) bpprogressbar(BPPARAM) <- TRUE
-        }
-        # Register 'BACKEND' and return to current value on exit
-        current_BACKEND <- getRealizationBackend()
-        on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
-        setRealizationBackend(BACKEND)
-        # Check compatability of 'BACKEND' with backend(s) of BSseq object.
-        BSseq_backends <- .getBSseqBackends(BSseq)
-        if (.areBackendsInMemory(BACKEND) &&
-            !.areBackendsInMemory(BSseq_backends)) {
-            stop("Using an in-memory backend for a disk-backed BSseq object ",
-                 "is not supported.\n",
+    # Check validity of 'BSseq' argument
+    if (!is(BSseq, "BSseq")) {
+        stop("'BSseq' must be a BSseq object.")
+    }
+    if (!isTRUE(all(width(BSseq) == 1L))) {
+        stop("All loci in 'BSseq' must have width == 1.")
+    }
+    if (is.unsorted(BSseq)) {
+        stop("'BSseq' must be sorted before smoothing. Use 'sort(BSseq)'.")
+    }
+    # Check for deprecated arguments and issue warning(s) if found.
+    if (!missing(parallelBy)) {
+        warning(
+            "'parallelBy' is deprecated and ignored.\n",
+            "See help(\"BSmooth\") for details.",
+            call. = FALSE,
+            immediate. = TRUE)
+    }
+    if (!missing(mc.preschedule)) {
+        warning(
+            "'mc.preschedule' is deprecated and ignored.\n",
+            "See help(\"BSmooth\") for details.",
+            call. = FALSE,
+            immediate. = TRUE)
+    }
+    if (!missing(mc.cores)) {
+        # TODO: What if user has provided a BPPARAM?
+        warning(
+            "'mc.cores' is deprecated.\n",
+            "Replaced with 'BPPARAM = MulticoreParam(workers = mc.cores)'",
+            ".\nSee help(\"BSmooth\").",
+            call. = FALSE,
+            immediate. = TRUE)
+        BPPARAM <- MulticoreParam(workers = mc.cores)
+    }
+    if (!missing(verbose)) {
+        warning(
+            "'verbose' is deprecated.\n",
+            "Replaced by setting 'bpprogressbar(BPPARAM) <- TRUE'.\n",
+            "See help(\"BSmooth\") for details.",
+            call. = FALSE,
+            immediate. = TRUE)
+        if (verbose) bpprogressbar(BPPARAM) <- TRUE
+    }
+    # Register 'BACKEND' and return to current value on exit
+    current_BACKEND <- getRealizationBackend()
+    on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
+    setRealizationBackend(BACKEND)
+    # Check compatability of 'BACKEND' with backend(s) of BSseq object.
+    BSseq_backends <- .getBSseqBackends(BSseq)
+    if (.areBackendsInMemory(BACKEND) &&
+        !.areBackendsInMemory(BSseq_backends)) {
+        stop("Using an in-memory backend for a disk-backed BSseq object ",
+             "is not supported.\n",
+             "See help(\"BSmooth\") for details.",
+             call. = FALSE)
+    }
+    # Check compatability of 'BPPARAM' with the realization backend.
+    if (!.areBackendsInMemory(BACKEND)) {
+        if (!.isSingleMachineBackend(BPPARAM)) {
+            stop("The parallelisation strategy must use a single machine ",
+                 "when using an on-disk realization backend.\n",
                  "See help(\"BSmooth\") for details.",
                  call. = FALSE)
         }
-        # Check compatability of 'BPPARAM' with the realization backend.
-        if (!.areBackendsInMemory(BACKEND)) {
-            if (!.isSingleMachineBackend(BPPARAM)) {
-                stop("The parallelisation strategy must use a single machine ",
-                     "when using an on-disk realization backend.\n",
-                     "See help(\"BSmooth\") for details.",
-                     call. = FALSE)
-            }
-        } else {
-            if (!is.null(BACKEND)) {
-                # NOTE: Currently do not support any in-memory realization
-                #       backends. If 'BACKEND' is NULL then an ordinary matrix
-                #       is returned rather than a matrix-backed DelayedMatrix.
-                stop("The '", BACKEND, "' realization backend is not ",
-                     "supported.\n",
-                     "See help(\"BSmooth\") for details.",
-                     call. = FALSE)
-            }
+    } else {
+        if (!is.null(BACKEND)) {
+            # NOTE: Currently do not support any in-memory realization
+            #       backends. If 'BACKEND' is NULL then an ordinary matrix
+            #       is returned rather than a matrix-backed DelayedMatrix.
+            stop("The '", BACKEND, "' realization backend is not ",
+                 "supported.\n",
+                 "See help(\"BSmooth\") for details.",
+                 call. = FALSE)
         }
     }
 
@@ -247,51 +221,45 @@ BSmooth <- function(BSseq,
     # Set up "parallel" ArrayGrid over pos
     pos_grid <- ArbitraryArrayGrid(list(row_tickmarks, 1L))
     # Construct RealizationSink objects (as required)
-    if (!is_redo) {
-        if (is.null(BACKEND)) {
-            coef_sink <- NULL
-            se.coef_sink <- NULL
-            sink_lock <- NULL
-        } else if (BACKEND == "HDF5Array") {
-            coef_sink <- HDF5RealizationSink(
+    if (BACKEND == "HDF5Array") {
+        coef_sink <- HDF5RealizationSink(
+            dim = dim(M),
+            # NOTE: Never allow dimnames.
+            dimnames = NULL,
+            type = "double",
+            name = "coef",
+            ...)
+        on.exit(close(coef_sink), add = TRUE)
+        sink_lock <- ipcid()
+        on.exit(ipcremove(sink_lock), add = TRUE)
+        if (keep.se) {
+            se.coef_sink <- HDF5RealizationSink(
                 dim = dim(M),
                 # NOTE: Never allow dimnames.
                 dimnames = NULL,
                 type = "double",
-                name = "coef",
+                name = "se.coef",
                 ...)
-            on.exit(close(coef_sink), add = TRUE)
-            sink_lock <- ipcid()
-            on.exit(ipcremove(sink_lock), add = TRUE)
-            if (keep.se) {
-                se.coef_sink <- HDF5RealizationSink(
-                    dim = dim(M),
-                    # NOTE: Never allow dimnames.
-                    dimnames = NULL,
-                    type = "double",
-                    name = "se.coef",
-                    ...)
-                on.exit(close(se.coef_sink), add = TRUE)
-            } else {
-                se.coef_sink <- NULL
-            }
+            on.exit(close(se.coef_sink), add = TRUE)
         } else {
-            # TODO: This branch should probably never be entered because we
-            #       (implicitly) only support in-memory or HDF5Array backends.
-            #       However, we retain it for now (e.g., fstArray backend would
-            #       use this until a dedicated branch was implemented).
-            coef_sink <- DelayedArray:::RealizationSink(dim(M), type = "double")
-            on.exit(close(coef_sink), add = TRUE)
-            sink_lock <- ipcid()
-            on.exit(ipcremove(sink_lock), add = TRUE)
-            if (keep.se) {
-                se.coef_sink <- DelayedArray:::RealizationSink(
-                    dim(M),
-                    type = "double")
-                on.exit(close(se.coef_sink), add = TRUE)
-            } else {
-                se.coef_sink <- NULL
-            }
+            se.coef_sink <- NULL
+        }
+    } else {
+        # TODO: This branch should probably never be entered because we
+        #       (implicitly) only support in-memory or HDF5Array backends.
+        #       However, we retain it for now (e.g., fstArray backend would
+        #       use this until a dedicated branch was implemented).
+        coef_sink <- DelayedArray:::RealizationSink(dim(M), type = "double")
+        on.exit(close(coef_sink), add = TRUE)
+        sink_lock <- ipcid()
+        on.exit(ipcremove(sink_lock), add = TRUE)
+        if (keep.se) {
+            se.coef_sink <- DelayedArray:::RealizationSink(
+                dim(M),
+                type = "double")
+            on.exit(close(se.coef_sink), add = TRUE)
+        } else {
+            se.coef_sink <- NULL
         }
     }
 
@@ -320,25 +288,11 @@ BSmooth <- function(BSseq,
         ns = ns,
         h = h,
         keep.se = keep.se,
-        BPREDO = BPREDO,
         BPPARAM = BPPARAM))
     if (!all(bpok(smooth))) {
-        # TODO: Feels like stop() rather than warning() should be used, but
-        #       stop() doesn't allow for the return of partial results;
-        #       see https://support.bioconductor.org/p/109374/
-        warning("BSmooth() encountered errors: ",
-                sum(!bpok(smooth)), " of ", length(smooth),
-                " smoothing tasks failed.\n",
-                "BSmooth() has returned partial results, including errors, ",
-                "for debugging purposes.\n",
-                "It may be possible to re-run just these failed smoothing ",
-                "tasks.\nSee help(\"BSmooth\")",
-                call. = FALSE)
-        # NOTE: Return intermediate results as well as all derived variables.
-        return(list(smooth = smooth,
-                    coef_sink = coef_sink,
-                    se.coef_sink = se.coef_sink,
-                    BACKEND = BACKEND))
+        stop("BSmooth() encountered errors: ",
+             sum(!bpok(smooth)), " of ", length(smooth),
+             " smoothing tasks failed.")
     }
     # Construct coef and se.coef from results of smooth().
     if (is.null(BACKEND)) {
@@ -384,6 +338,3 @@ BSmooth <- function(BSseq,
 #       For example, we could set custom messages within .BSmooth() using the
 #       futile.logger syntax; see the BiocParalell vignette 'Errors, Logs and
 #       Debugging in BiocParallel'.
-# TODO: Remove NOTEs that are really documentation issues to the docs
-# TODO: If the BSseq object is backed by a single HDF5 file then use that to
-#       write the 'coef' and 'se.coef' data.
