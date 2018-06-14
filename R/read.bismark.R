@@ -345,7 +345,6 @@
     return(list(M = M, Cov = Cov))
 }
 
-
 # Exported functions -----------------------------------------------------------
 
 # TODO: Support passing a colData so that metadata is automatically added to
