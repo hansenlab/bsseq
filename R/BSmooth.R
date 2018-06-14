@@ -221,7 +221,11 @@ BSmooth <- function(BSseq,
     # Set up "parallel" ArrayGrid over pos
     pos_grid <- ArbitraryArrayGrid(list(row_tickmarks, 1L))
     # Construct RealizationSink objects (as required)
-    if (BACKEND == "HDF5Array") {
+    if (is.null(BACKEND)) {
+        coef_sink <- NULL
+        se.coef_sink <- NULL
+        sink_lock <- NULL
+    } else if (BACKEND == "HDF5Array") {
         coef_sink <- HDF5RealizationSink(
             dim = dim(M),
             # NOTE: Never allow dimnames.
