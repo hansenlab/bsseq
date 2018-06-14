@@ -29,7 +29,7 @@
     guessed_file_types
 }
 
-# TODO: Choose between utils::read.delim(), readr::read_tsv(), and
+# TODO: (long term) Choose between utils::read.delim(), readr::read_tsv(), and
 #       data.table::fread() based on 'file'. If plain text, use fread(). If a
 #       compressed file, use readr::read_tsv() if available, otherwise
 #       utils::read_delim(). Longer term, combine data.table::fread() with
@@ -41,8 +41,8 @@
 #       utils::read.delim() when reading a gzipped file, albeit it with ~1.6-2x
 #       more total memory allocated. Therefore, there may be times users prefer
 #       to trade off faster speed for lower memory usage.
-# TODO: Formalise these benchmarks as a document in the bsseq package so that
-#       we can readily re-visit these as needed.
+# TODO: (long term) Formalise these benchmarks as a document in the bsseq
+#       package so that we can readily re-visit these as needed.
 .readBismarkAsDT <- function(file,
                              col_spec = c("all", "BSseq", "GRanges"),
                              check = FALSE,
@@ -348,7 +348,6 @@
 
 # Exported functions -----------------------------------------------------------
 
-# TODO: Support BPREDO?
 # TODO: Support passing a colData so that metadata is automatically added to
 #       samples?
 # TODO: Document that `...` are used to pass filepath, chunkdim, level, etc. to
