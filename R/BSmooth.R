@@ -226,11 +226,7 @@ BSmooth <- function(BSseq,
         se.coef_sink <- NULL
         sink_lock <- NULL
     } else if (BACKEND == "HDF5Array") {
-        if (!requireNamespace("HDF5Array", quietly = TRUE)) {
-            stop("HDF5Array package required for HDF5Array backend",
-                 call. = FALSE)
-        }
-        coef_sink <- HDF5Array::HDF5RealizationSink(
+        coef_sink <- HDF5RealizationSink(
             dim = dim(M),
             # NOTE: Never allow dimnames.
             dimnames = NULL,

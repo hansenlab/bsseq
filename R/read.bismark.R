@@ -241,13 +241,7 @@
         Cov_sink <- NULL
         sink_lock <- NULL
     } else if (BACKEND == "HDF5Array") {
-        if (!requireNamespace("HDF5Array", quietly = TRUE)) {
-            stop("HDF5Array package required for HDF5Array backend",
-                 call. = FALSE)
-        }
-        # TODO: HDF5Array is only in suggests, so need to qualify the use of
-        #       HDF5RealizationSink()
-        M_sink <- HDF5Array::HDF5RealizationSink(
+        M_sink <- HDF5RealizationSink(
             dim = c(ans_nrow, ans_ncol),
             # NOTE: Never allow dimnames.
             dimnames = NULL,
