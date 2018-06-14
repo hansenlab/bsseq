@@ -11,7 +11,8 @@ setMethod(
     "findCytosines",
     "BSgenome",
     function(x, context, seqlevels = seqlevels(x)) {
-        # NOTE: vmatchPattern,BSgenome-method returns a GRanges instance.
+        # NOTE: vmatchPattern,BSgenome-method returns a GRanges instance and
+        #       automatically checks both forward and reverse strands.
         gr <- vmatchPattern(
             pattern = context,
             subject = x,

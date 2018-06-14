@@ -200,6 +200,7 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
 
 # Internal functions -----------------------------------------------------------
 
+# TODO: Warn if x contains mix of + and * or - and * loci?
 .strandCollapse <- function(x) {
     stopifnot(is(x, "GenomicRanges"))
     if (all(strand(x) == "*")) return(x)

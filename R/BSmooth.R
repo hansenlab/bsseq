@@ -111,6 +111,7 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
 
 # Exported functions -----------------------------------------------------------
 
+# TODO: BSmooth() should warn if BSseq object contains mix of strands.
 # TODO: If BSmooth() encounteres errors, return `BPREDO`` as `metadata(BSseq)`
 #       so as not to clobber the user's BSseq object; see
 #       https://support.bioconductor.org/p/109374/#109459.

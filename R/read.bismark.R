@@ -29,25 +29,20 @@
     guessed_file_types
 }
 
-# TODO: (longterm, see "Alternatively ..." for a better idea)
-#       .readBismarkAsDT2(): exact same as .readBismarkAsDT() but
-#       uses utils::read.delim() instead of readr::read_tsv(). In brief
-#       benchmarking, readr::read_csv() is ~1.3-1.6x faster than
+# TODO: Choose between utils::read.delim(), readr::read_tsv(), and
+#       data.table::fread() based on 'file'. If plain text, use fread(). If a
+#       compressed file, use readr::read_tsv() if available, otherwise
+#       utils::read_delim(). Longer term, combine data.table::fread() with
+#       shell commands (where available) to pass compressed files. Will need to
+#       be careful of the interaction between BPPARAM and fread()'s nThread.
+#       Once implemented, move readr to Suggests. Finally, allow user to
+#       specify which function to use.
+# NOTE: In brief  benchmarking, readr::read_csv() is ~1.3-1.6x faster than
 #       utils::read.delim() when reading a gzipped file, albeit it with ~1.6-2x
 #       more total memory allocated. Therefore, there may be times users prefer
-#       to trade off faster speed for lower memory usage. When written, move
-#       readr to Suggests. Alternatively, re-write .readBismarkAsDT() using
-#       data.table::fread() for uncompressed files and utils::read.delim() for
-#       compressed files. This removes the dependency on readr, albeit it with
-#       slightly slower reading of compressed files. Could even then use
-#       data.table::fread() coupled with shell commands (where available) to
-#       pass compressed files. Ultimately, we want to use data.table beyond
-#       data.table::fread() whereas readr is only used for file input.
-# NOTE: This returns the file as a data.table. However, to do this it uses
-#       readr::read_tsv() + data.table::setDT() instead of data.table::fread()!
-#       Although the latter is faster, this uses the former because Bismark
-#       files are commonly compressed and readr::read_tsv() supports reading
-#       directly from compressed files whereas data.table::fread() does not.
+#       to trade off faster speed for lower memory usage.
+# TODO: Formalise these benchmarks as a document in the bsseq package so that
+#       we can readily re-visit these as needed.
 .readBismarkAsDT <- function(file,
                              col_spec = c("all", "BSseq", "GRanges"),
                              check = FALSE,
@@ -482,7 +477,7 @@ read.bismark <- function(files,
         }
     } else {
         ptime1 <- proc.time()
-        if (verbose) message("[read.bismark] Using 'loci' as valid loci")
+        if (verbose) message("[read.bismark] Using 'loci' as candidate loci")
         if (strandCollapse) {
             if (verbose) {
                 message("[read.bismark] Collapsing strand of 'loci' ...")
