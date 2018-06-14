@@ -13,6 +13,8 @@ test_that("read.bismark() works for 'coverage' file", {
 })
 
 test_that("read.bismark() works if sampleNames has names", {
+    infile <- system.file("extdata", "test_data.fastq_bismark.bismark.cov.gz",
+                          package = "bsseq")
     # Regression test
     # Should not fail if sampleNames have names()
     # TODO: Check why this test is necessary by stepping through read.bismark()
