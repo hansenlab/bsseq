@@ -136,7 +136,7 @@
 \section{Realization backends}{
   The \code{read.bismark()} function creates a \linkS4class{BSseq} object with two assays, \code{M} and \code{Cov}.
   The choice of \emph{realization backend} controls whether these assays are stored in-memory as an ordinary \link[base]{matrix} or on-disk as a \linkS4class{HDF5Array}, for example.
-  The choice of realization backend is controlled by the \code{BACKEND} argument, which defaults to the current value of \code{DelayedArray::\link[DelayedArray]{getRealizationBackend()}}.
+  The choice of realization backend is controlled by the \code{BACKEND} argument, which defaults to the current value of \code{DelayedArray::\link[DelayedArray]{getRealizationBackend}()}.
 
   \code{read.bismark()} supports the following realization backends:
 

@@ -70,7 +70,7 @@ BSmooth(BSseq,
 
   The choice of realization backend is controlled by the \code{BACKEND}
   argument, which defaults to the current value of
-  \code{DelayedArray::\link[DelayedArray]{getRealizationBackend()}}.
+  \code{DelayedArray::\link[DelayedArray]{getRealizationBackend}()}.
 
   \code{BSmooth} supports the following realization backends:
 

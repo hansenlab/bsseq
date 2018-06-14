@@ -231,11 +231,12 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
             # strand since no longer valid.
             dt[strand == "-", start := start - 1L][, strand := NULL]
             # Aggregate counts at loci with the same 'seqnames' and 'start'.
-            dt <- dt[, .(M = sum(M), U = sum(U)), by = c("seqnames", "start")]
+            dt <- dt[,
+                     list(M = sum(M), U = sum(U)), by = c("seqnames", "start")]
         }
         # Identify loci with non-zero coverage then drop 'M' and 'U' as no
         # longer required.
-        dt <- dt[(M + U) > 0][, c("M", "U") := .(NULL, NULL)]
+        dt <- dt[(M + U) > 0][, c("M", "U") := list(NULL, NULL)]
     } else {
         dt <- .readBismarkAsDT(
             file = file,

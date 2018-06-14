@@ -42,7 +42,7 @@ setMethod(
                 dim = c(nrow(x), length(idx)),
                 dimnames = list(rownames(x), names(idx)),
                 type = "double")
-            x_grid <- minfi:::colGrid(x)
+            x_grid <- colGrid(x)
             sink_grid <- RegularArrayGrid(
                 refdim = dim(sink),
                 spacings = c(nrow(sink), ncol(sink) / length(x_grid)))
@@ -53,7 +53,7 @@ setMethod(
                 dimnames = list(names(idx), colnames(x)),
                 type = "double")
             on.exit(close(sink))
-            x_grid <- minfi:::rowGrid(x)
+            x_grid <- rowGrid(x)
             sink_grid <- RegularArrayGrid(
                 refdim = dim(sink),
                 spacings = c(nrow(sink) / length(x_grid), ncol(sink)))
@@ -62,7 +62,7 @@ setMethod(
         }
 
         # Loop over blocks of 'x' and write to 'sink'.
-        minfi:::blockApplyWithRealization(
+        blockApplyWithRealization(
             x = x,
             FUN = .collapseMatrixLike,
             idx = idx,

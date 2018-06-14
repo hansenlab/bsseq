@@ -33,7 +33,8 @@ Imports:
     BiocParallel,
     readr,
     BSgenome,
-    Biostrings
+    Biostrings,
+    utils
 Suggests:
     testthat,
     bsseqData,

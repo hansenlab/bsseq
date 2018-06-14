@@ -82,9 +82,8 @@ BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
   #
 
   library(HDF5Array)
-  # See ?HDF5Array::writeHDF5Array for details
-  hdf5_M <- writeHDF5Array(M)
-  hdf5_Cov <- writeHDF5Array(Cov)
+  hdf5_M <- realize(M, "HDF5Array")
+  hdf5_Cov <- realize(Cov, "HDF5Array")
   hdf5_BS1 <- BSseq(chr = c("chr1", "chr2", "chr1"),
                     pos = c(1, 2, 3),
                     M = hdf5_M,

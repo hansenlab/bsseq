@@ -184,7 +184,7 @@
         # strand since no longer valid.
         dt[strand == "-", start := start - 1L][, strand := NULL]
         # Aggregate counts at loci with the same 'seqnames' and 'start'.
-        dt <- dt[, .(M = sum(M), U = sum(U)), by = c("seqnames", "start")]
+        dt <- dt[, list(M = sum(M), U = sum(U)), by = c("seqnames", "start")]
     }
 
     # Construct FWGRanges ------------------------------------------------------
@@ -214,7 +214,7 @@
     M <- matrix(rep(0L, length(loci)), ncol = 1)
     Cov <- matrix(rep(0L, length(loci)), ncol = 1)
     M[subjectHits(ol)] <- dt[queryHits(ol), ][["M"]]
-    Cov[subjectHits(ol)] <- dt[queryHits(ol), .(Cov = (M + U))][["Cov"]]
+    Cov[subjectHits(ol)] <- dt[queryHits(ol), list(Cov = (M + U))][["Cov"]]
 
     # Return 'M' and 'Cov' or write them to the RealizationSink objects --------
 
@@ -241,9 +241,13 @@
         Cov_sink <- NULL
         sink_lock <- NULL
     } else if (BACKEND == "HDF5Array") {
+        if (!requireNamespace("HDF5Array", quietly = TRUE)) {
+            stop("HDF5Array package required for HDF5Array backend",
+                 call. = FALSE)
+        }
         # TODO: HDF5Array is only in suggests, so need to qualify the use of
         #       HDF5RealizationSink()
-        M_sink <- HDF5RealizationSink(
+        M_sink <- HDF5Array::HDF5RealizationSink(
             dim = c(ans_nrow, ans_ncol),
             # NOTE: Never allow dimnames.
             dimnames = NULL,
@@ -255,7 +259,7 @@
             # level = NULL,
             ...)
         on.exit(close(M_sink), add = TRUE)
-        Cov_sink <- HDF5RealizationSink(
+        Cov_sink <- HDF5Array::HDF5RealizationSink(
             dim = c(ans_nrow, ans_ncol),
             # NOTE: Never allow dimnames.
             dimnames = NULL,
@@ -294,7 +298,7 @@
     #       bar. Only SnowParam (and MulticoreParam by inheritance) have a
     #       bptasks<-() method.
     # TODO: Check that setting number of tasks doesn't affect things (e.g.,
-    #       the cost of transfering loci_dt to the workers may be substantial).
+    #       the cost of transfering loci to the workers may be substantial).
     if (is(BPPARAM, "SnowParam") && bpprogressbar(BPPARAM)) {
         bptasks(BPPARAM) <- length(grid)
     }
@@ -445,8 +449,7 @@ read.bismark <- function(files,
             #       backends. If the realization backend is NULL then an
             #       ordinary matrix is returned rather than a matrix-backed
             #       DelayedMatrix.
-            stop("The '", realization_backend, "' realization backend is ",
-                 "not supported.\n",
+            stop("The '", BACKEND, "' realization backend is not supported.\n",
                  "See help(\"BSmooth\") for details.",
                  call. = FALSE)
         }

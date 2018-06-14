@@ -8,7 +8,8 @@
 }
 \usage{
 getCoverage(BSseq, regions = NULL, type = c("Cov", "M"),
-  what = c("perBase", "perRegionAverage", "perRegionTotal"))
+  what = c("perBase", "perRegionAverage", "perRegionTotal"),
+  withDimnames = TRUE)
 }
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
@@ -17,6 +18,10 @@ getCoverage(BSseq, regions = NULL, type = c("Cov", "M"),
   \item{type}{This returns either coverage or the total
     evidence for methylation at the loci.}
   \item{what}{The type of return object, see details.}
+  \item{withDimnames}{A \code{logical(1)}, indicating whether dimnames should
+    be applied to extracted coverage elements. Setting
+    \code{withDimnames = FALSE} increases the speed and memory efficiency with
+    which coverage is extracted.}
 }
 \value{
   \strong{NOTE:} The return type of \code{getCoverage} varies depending on its

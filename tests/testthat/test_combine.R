@@ -1,114 +1,5 @@
 context("combine()")
 
-# TODO: .subassignRowsDelayedMatrix() is no longer needed in bsseq; test can be
-#       removed.
-# test_that(".subassignRowsDelayedMatrix()", {
-#     nrow <- 1000L
-#     ncol <- 10L
-#     x <- realize(matrix(seq_len(nrow * ncol), ncol = ncol), "HDF5Array")
-#     x_i <- seq(1L, 2L * nrow, 2L)
-#     y <- realize(matrix(seq(-1L, -nrow * ncol, -1L), ncol = 10), "HDF5Array")
-#     y_i <- seq(2L, nrow, 2L)
-#
-#     z1 <- bsseq:::.subassignRowsDelayedMatrix(x = x,
-#                                               i = x_i,
-#                                               nrow = 2L * nrow,
-#                                               fill = NA_integer_,
-#                                               BACKEND = NULL)
-#     z2 <- bsseq:::.subassignRowsDelayedMatrix(x = x,
-#                                               i = x_i,
-#                                               nrow = 2L * nrow,
-#                                               fill = NA_integer_,
-#                                               BACKEND = "HDF5Array",
-#                                               by_row = FALSE)
-#     z3 <- bsseq:::.subassignRowsDelayedMatrix(x = x,
-#                                               i = x_i,
-#                                               nrow = 2L * nrow,
-#                                               fill = NA_integer_,
-#                                               BACKEND = "HDF5Array",
-#                                               by_row = TRUE)
-#     expect_identical(as.array(z1), as.array(z2))
-#     expect_identical(as.array(z1), as.array(z3))
-# })
-
-# TODO: .combineListOfDelayedMatrixObjects() is no longer needed in bsseq; test
-#        can be removed.
-# test_that(".combineListOfDelayedMatrixObjects()", {
-#     nrow <- 10
-#     ncol <- 4
-#     x <- matrix(seq_len(nrow),
-#                 ncol = ncol / 2,
-#                 dimnames = list(NULL, letters[1:2]))
-#     y <- matrix(100L + seq_len(nrow),
-#                 ncol = ncol / 2,
-#                 dimnames = list(NULL, letters[3:4]))
-#     x_i <- seq(1, nrow, ncol / 2)
-#     y_i <- seq(2, nrow, ncol / 2)
-#     fill <- NA_integer_
-#
-#     # The expected output
-#     z <- matrix(fill,
-#                 nrow = nrow,
-#                 ncol = ncol,
-#                 dimnames = list(NULL, letters[seq_len(ncol)]))
-#     # NOTE: as.array(x) is a no-op if x is a matrix and realises a
-#     #       DelayedMtrix in memory
-#     z[x_i, seq(1, ncol(x))] <- x
-#     z[y_i, seq(ncol(x) + 1, ncol(x) + ncol(y))] <- y
-#
-#     # # Test with in-memory DelayedMatrix objects
-#     X <- bsseq:::.DelayedMatrix(x)
-#     Y <- bsseq:::.DelayedMatrix(y)
-#
-#     Z <- bsseq:::.combineListOfDelayedMatrixObjects(
-#         X = list(X, Y),
-#         I = list(x_i, y_i),
-#         nrow = nrow,
-#         ncol = ncol,
-#         dimnames = list(NULL, c(colnames(X), colnames(Y))),
-#         fill = fill,
-#         BACKEND = NULL)
-#     expect_identical(z, as.array(Z))
-#     expect_true(!bsseq:::.isHDF5ArrayBacked(Z))
-#
-#
-#     # Test with HDF5Array-backed DelayedMatrix objects
-#     hdf5_X <- realize(X, BACKEND = "HDF5Array")
-#     hdf5_Y <- realize(Y, BACKEND = "HDF5Array")
-#
-#     hdf5_Z <- bsseq:::.combineListOfDelayedMatrixObjects(
-#         X = list(hdf5_X, hdf5_Y),
-#         I = list(x_i, y_i),
-#         nrow = nrow,
-#         ncol = ncol,
-#         dimnames = list(NULL, c(colnames(hdf5_X), colnames(hdf5_Y))),
-#         fill = fill,
-#         BACKEND = "HDF5Array")
-#     expect_identical(z, as.array(hdf5_Z))
-#     expect_true(bsseq:::.isHDF5ArrayBacked(hdf5_Z))
-# })
-
-checkBSseqAssaysIdentical <- function(x, y) {
-    stopifnot(is(x, "BSseq") && is(y, "BSseq"))
-    assay_names <- c("M", "Cov", "coef", "se.coef")
-    check_identical <- vapply(assay_names, function(an) {
-        if (!is.null(getBSseq(x, an))) {
-            identical(as.array(getBSseq(x, an)), as.array(getBSseq(y, an)))
-        } else {
-            identical(getBSseq(x, an), getBSseq(y, an))
-        }
-    }, logical(1L))
-    checkTrue(all(check_identical))
-}
-
-checkBSseqIdentical <- function(x, y) {
-    checkTrue(identical(rowRanges(x), rowRanges(y)) &&
-                  identical(getBSseq(x, "trans"), getBSseq(y, "trans")) &&
-                  identical(getBSseq(x, "parameters"),
-                            getBSseq(y, "parameters")) &&
-                  checkBSseqAssaysIdentical(x, y))
-}
-
 test_that("combine()", {
     bsseq_fit <- BSmooth(bsseq_test)
     BSSEQ_TEST <- realize(bsseq_test, "HDF5Array")
@@ -168,6 +59,7 @@ test_that("combineList()", {
     Z <- combineList(BSSEQ_FIT[, 1], BSSEQ_FIT[, 2])
     expect_equivalent_SE(Z, BSSEQ_FIT)
 })
+
 test_that(
     "Test bug fix reported in https://github.com/hansenlab/bsseq/pull/54/", {
         M <- matrix(0:8, 3, 3)

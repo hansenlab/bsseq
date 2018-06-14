@@ -8,7 +8,8 @@
 }
 \usage{
 getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
-  what = c("perBase", "perRegion"), confint = FALSE, alpha = 0.95)
+  what = c("perBase", "perRegion"), confint = FALSE, alpha = 0.95,
+  withDimnames = TRUE)
 }
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
@@ -20,6 +21,10 @@ getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
     methylation estimates (see below).  This is only supported if
     \code{what} is equal to \code{perBase}.}
   \item{alpha}{alpha value for the confidence interval.}
+  \item{withDimnames}{A \code{logical(1)}, indicating whether dimnames should
+    be applied to extracted coverage elements. Setting
+    \code{withDimnames = FALSE} increases the speed and memory efficiency with
+    which coverage is extracted.}
 }
 \note{
   A \code{BSseq} object needs to be smoothed by the function

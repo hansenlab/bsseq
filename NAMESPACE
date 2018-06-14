@@ -7,11 +7,11 @@ importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
            "combine", "density", "intersect", "lapply", "ncol",
            "nrow", "order", "paste", "pmax", "pmin", "rbind",
            "Reduce", "rep.int", "rownames", "sapply", "setdiff",
-           "strand", "strand<-", "union", "unique", "updateObject")
+           "strand", "strand<-", "union", "unique", "updateObject", "unstrand")
 importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
            "qnorm", "qqplot", "qunif", "cov2cor",
-           "plogis")
+           "plogis", "setNames")
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
 import(parallel)
@@ -27,15 +27,15 @@ importMethodsFrom(Biobase, "annotatedDataFrameFrom",
                   "pData", "pData<-",
                   "sampleNames", "sampleNames<-")
 importFrom(Biobase, "validMsg")
-importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo", "seqinfo<-",
-                  "seqnames", "seqnames<-", "seqlevels", "seqlevels<-")
+importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo",
+                  "seqinfo<-", "seqnames", "seqnames<-", "seqlevels",
+                  "seqlevels<-", "sortSeqlevels")
+importFrom(GenomeInfoDb, "Seqinfo")
 import(S4Vectors)
 importFrom(gtools, "combinations")
-# importFrom(data.table, "setnames", "setDT", "data.table", ":=", "setkey")
-# TODO: More careful use of imports to avoid clashes (e.g., S4Vectors::shift()
-#       and data.table::shift()).
-import(data.table)
-importFrom(R.utils, "isGzipped", "gunzip")
+# NOTE: data.table has some NAMESPACE clashes with functions in Bioconductor,
+#       e.g., shift(). If new ones are discovered, add them to this list.
+import(data.table, except = c(shift, first, second))
 import(limma)
 importFrom(permute, "shuffleSet", "how")
 import(DelayedArray)
@@ -43,11 +43,11 @@ import(BiocParallel)
 importFrom(readr, "cols", "cols_only", "col_character", "col_integer",
            "col_skip", "col_double", "col_factor", "read_tsv", "tokenizer_tsv")
 importFrom(Biostrings, "DNAString", "vmatchPattern", "reverseComplement")
+importFrom(utils, "read.delim")
 
 ##
 ## Exporting
 ##
-
 
 exportClasses("hasGRanges",
               "BSseq",
