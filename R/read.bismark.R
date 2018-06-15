@@ -48,11 +48,16 @@
                              check = FALSE,
                              verbose = FALSE,
                              ...) {
+    # Quieten R CMD check about 'no visible binding for global variable' -------
+    M <- U <- NULL
+
+    # Construct the column spec ------------------------------------------------
+
     col_spec <- match.arg(col_spec)
     file_type <- .guessBismarkFileType(file)
     # TODO: Test for 'bismark_methylation_extractor' and 'bedGraph' formats,
     #       and error out (they're not supported).
-    stopifnot(S4Vectors:::isTRUEorFALSE(check))
+    stopifnot(isTRUEorFALSE(check))
     if (file_type == "cov") {
         col_names <- c("seqnames", "start", "end", "beta", "M", "U")
         if (col_spec == "BSseq") {
@@ -112,6 +117,9 @@
                 trinucleotide_context = col_character())
         }
     }
+
+    # Read the file ------------------------------------------------------------
+
     if (verbose) {
         message("[.readBismarkAsDT] Reading file '", file, "'")
     }
@@ -124,6 +132,9 @@
         quoted_na = FALSE,
         progress = verbose,
         ...)
+
+    # Construct the result -----------------------------------------------------
+
     x <- setDT(x)
     if (check && all(c("M", "U") %in% colnames(x))) {
         if (verbose) {
@@ -166,6 +177,10 @@
 .constructCountsFromSingleFile <- function(b, files, strandCollapse, loci,
                                            grid, M_sink, Cov_sink, sink_lock,
                                            verbose, BPPARAM) {
+
+    # Quieten R CMD check about 'no visible binding for global variable' -------
+    M <- U <- NULL
+
     # Read b-th file to construct data.table of valid loci and their counts ----
 
     file <- files[b]

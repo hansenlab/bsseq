@@ -46,6 +46,7 @@ importFrom(readr, "cols", "cols_only", "col_character", "col_integer",
            "col_skip", "col_double", "col_factor", "read_tsv", "tokenizer_tsv")
 importFrom(Biostrings, "DNAString", "vmatchPattern", "reverseComplement")
 importFrom(utils, "read.delim")
+importFrom(BSgenome, "vmatchPattern")
 
 ##
 ## Exporting

@@ -218,6 +218,9 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
 .readBismarkAsFWGRanges <- function(file, rmZeroCov = FALSE,
                                     strandCollapse = FALSE, sort = TRUE,
                                     verbose = FALSE) {
+    # Quieten R CMD check about 'no visible binding for global variable' -------
+    M <- U <- NULL
+
     # Read file to construct data.table of valid loci --------------------------
     if (rmZeroCov) {
         dt <- .readBismarkAsDT(

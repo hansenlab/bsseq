@@ -54,6 +54,31 @@
     }
 }
 
+# Missing methods --------------------------------------------------------------
+
+# NOTE: Copied from minfi
+# TODO: Perhaps move this to DelayedMatrixStats?
+# TODO: DelayedArray::type() for all RealizationSink subclasses
+setMethod("type", "HDF5RealizationSink", function(x) {
+    x@type
+})
+# NOTE: Copied from minfi
+# TODO: Perhaps move this to DelayedMatrixStats?
+setMethod("type", "arrayRealizationSink", function(x) {
+    DelayedArray::type(x@result_envir$result)
+})
+# NOTE: Copied from minfi
+# TODO: Perhaps move this to DelayedMatrixStats?
+setMethod("type", "RleRealizationSink", function(x) {
+    x@type
+})
+# NOTE: Copied from minfi
+# TODO: Perhaps move this to DelayedMatrixStats?
+# TODO: dimnames() for all RealizationSink subclasses
+setMethod("dimnames", "arrayRealizationSink", function(x) {
+    dimnames(x@result_envir$result)
+})
+
 # Helper functions for setting up ArrayGrid instances --------------------------
 
 # NOTE: Copy of minfi:::colGrid()
