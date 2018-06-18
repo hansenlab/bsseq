@@ -338,6 +338,8 @@ BSmooth <- function(BSseq,
 
 # TODOs ------------------------------------------------------------------------
 
+# TODO: The @trans slot isn't getting correctly set (it's using stats::plogis
+#       instead of DelayedArray::plogis).
 # TODO: Use the logging facilities of BiocParallel. This is a longterm goal.
 #       For example, we could set custom messages within .BSmooth() using the
 #       futile.logger syntax; see the BiocParalell vignette 'Errors, Logs and
