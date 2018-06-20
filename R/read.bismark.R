@@ -577,7 +577,7 @@ read.bismark <- function(files,
 # TODO: (long term) Current implementation requires that user can load at least
 #       one sample's worth of data into memory per worker. Could instead read
 #       chunks of data, write to sink, load next chunk, etc.
-# TODO: Document that if 'gr' is NULL and any 'files' (especially the first
+# TODO: Document that if 'loci' is NULL and any 'files' (especially the first
 #       file) are .cov files, then any loci present in the .cov files will have
 #       their strand set to *. If you are mixing and matching .cov and
 #       .cytosineReport files and don't want this behaviour (i.e. you want to

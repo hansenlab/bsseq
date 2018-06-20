@@ -301,6 +301,10 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
                                                BPPARAM) {
     subverbose <- max(as.integer(verbose) - 1L, 0L)
 
+    # TODO: Instead of using the 'largest' file, use the largest
+    #       'cytosine report' file, which will have all loci in the
+    #       reference genome; provided all samples were aligned to the same
+    #       reference genome, this means it contains all loci.
     # TODO: Initialise using the 'largest' file (i.e. largest number of lines)?
     #       Would like to do this without reading the data into memory.
     #       Some benchmarks can be found at
