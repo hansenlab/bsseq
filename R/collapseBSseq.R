@@ -13,16 +13,42 @@ setGeneric(
 
 # Internal methods -------------------------------------------------------------
 
+# TODO: Re-write in C/C++ to avoid allocating `ans` multiple times
 setMethod(".collapseMatrixLike", "matrix", function(x, idx, MARGIN) {
     if (MARGIN == 1L) {
-        # TODO: Need colnames?
-        return(do.call(cbind, lapply(idx, function(j) rowSums2(x, cols = j))))
+        ans <- matrix(
+            # NOTE: rowSums2() always returns numeric
+            data = NA_real_,
+            nrow = nrow(x),
+            ncol = length(idx),
+            dimnames = list(rownames(x), NULL))
+        l <- lengths(idx)
+        stopifnot(min(l) > 0)
+        l1 <- which(l == 1)
+        ans[, l1] <- x[, unlist(idx[l1])]
+        lmore <- which(l != 1)
+        ans[, lmore] <- do.call(cbind, lapply(idx[lmore], function(j) {
+            rowSums2(x, cols = j)
+        }))
     } else if (MARGIN == 2L) {
-        # TODO: Need rownames?
-        do.call(rbind, lapply(idx, function(i) colSums2(x, rows = i)))
+        ans <- matrix(
+            # NOTE: colSums2() always returns numeric
+            data = NA_real_,
+            nrow = length(idx),
+            ncol = ncol(x),
+            dimnames = list(NULL, colnames(x)))
+        l <- lengths(idx)
+        stopifnot(min(l) > 0)
+        l1 <- which(l == 1)
+        ans[l1, ] <- x[unlist(idx[l1]), ]
+        lmore <- which(l != 1)
+        ans[lmore, ] <- do.call(rbind, lapply(idx[lmore], function(i) {
+            colSums2(x, rows = i)
+        }))
     } else {
         stop("'MARGIN' must be 1 or 2")
     }
+    ans
 })
 
 setMethod(

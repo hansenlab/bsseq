@@ -69,10 +69,12 @@ setValidity2("BSseq", function(object) {
 
 # Exported functions -----------------------------------------------------------
 
+# TODO: Document that if duplicate loci are detected then the output `M` and
+#       `Cov` will be numeric even if input `M` and `Cov` were integer.
 # TODO: BSseq() is arguably a bad constructor. It doesn't return a valid BSseq
 #       object when called without any arguments. It also does some pretty
-#       complicated parsing of the inputs. Still, I think we're stuck with it
-#       because it's been around for a long time.
+#       complicated parsing of the inputs. But we're stuck with it because it's
+#       been around for a long time.
 BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
                   trans = NULL, parameters = NULL, pData = NULL,
                   gr = NULL, pos = NULL, chr = NULL, sampleNames = NULL,
@@ -171,25 +173,13 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
         if (!is.null(coef) || !is.null(se.coef)) {
             stop("Cannot collapse when 'coef' or 'se.coef' are present.")
         }
-        # NOTE: reduce() sorts the output
-        # TODO: Clarify above comment.
         unique_gr <- unique(gr)
-        # TODO: type = "equal"?
-        ol <- findOverlaps(unique_gr, gr)
-        gr <- unique(gr)
+        ol <- findOverlaps(unique_gr, gr, type = "equal")
+        gr <- unique_gr
+        # TODO: Can we avoid making `idx`?
         idx <- as.list(ol)
         M <- .collapseMatrixLike(M, idx, MARGIN = 2L)
         Cov <- .collapseMatrixLike(Cov, idx, MARGIN = 2L)
-    }
-
-    # Sort loci
-    if (is.unsorted(gr)) {
-        o <- order(gr)
-        gr <- gr[o]
-        M <- M[o, , drop = FALSE]
-        Cov <- Cov[o, , drop = FALSE]
-        coef <- coef[o, , drop = FALSE]
-        se.coef <- se.coef[o, , drop = FALSE]
     }
 
     # Construct BSseq object

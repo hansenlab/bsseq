@@ -47,7 +47,7 @@ BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
 
   In case one or more methylation loci appears multiple times, the
   \code{M} and \code{Cov} matrices are summed over rows linked to the
-  same methylation loci.  See the example below.
+  same methylation loci. See the example below.
 
   Users should never have to specify \code{coef}, \code{se.coef},
   \code{trans}, and \code{parameters}, this is for internal use (they

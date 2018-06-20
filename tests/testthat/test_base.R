@@ -29,14 +29,18 @@ test_that("BSseq", {
 
     BStest2 <- BSseq(pos = 3:1, chr = rep("chr1", 3), M = M[3:1, ],
                      Cov = M[3:1, ] + 2)
-    expect_equal(BStest, BStest2)
+    # NOTE: BSseq() does not reorder inputs
+    expect_true(!isTRUE(all.equal(BStest, BStest2)))
+    expect_equal(BStest, sort(BStest2))
     M2 <- rbind(M[3:1, ], c(1, 1, 1))
     Cov2 <- rbind(M[3:1, ] + 2, c(1, 1, 1))
     M2[3, ] <- M2[3, ] - 1
     Cov2[3, ] <- Cov2[3, ] - 1
     BStest3 <- suppressWarnings(
         BSseq(pos = c(3:1,1), chr = rep("chr1", 4), M = M2, Cov = Cov2))
-    expect_equal(BStest, BStest3)
+    # NOTE: BSseq() does not reorder inputs
+    expect_true(!isTRUE(all.equal(BStest, BStest3)))
+    expect_equal(BStest, sort(BStest3))
 })
 
 test_that("BSseq with HDF5Backend", {
