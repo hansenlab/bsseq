@@ -19,7 +19,7 @@ importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
 importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
            "qnorm", "qqplot", "qunif", "cov2cor",
-           "plogis", "setNames")
+           "setNames")
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
 import(parallel)
