@@ -18,7 +18,7 @@ importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
            "strand", "strand<-", "union", "unique", "updateObject", "unstrand")
 importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
-           "qnorm", "qqplot", "qunif", "cov2cor",
+           "qqplot", "qunif", "cov2cor",
            "setNames")
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
