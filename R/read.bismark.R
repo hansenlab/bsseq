@@ -238,8 +238,8 @@
     }
     # Write to M_sink and Cov_sink while respecting the IPC lock.
     ipclock(sink_lock)
-    write_block_to_sink(M, M_sink, grid[[b]])
-    write_block_to_sink(Cov, Cov_sink, grid[[b]])
+    write_block(x = M_sink, viewport = grid[[b]], block = M)
+    write_block(x = Cov_sink, viewport = grid[[b]], block = Cov)
     ipcunlock(sink_lock)
     NULL
 }
