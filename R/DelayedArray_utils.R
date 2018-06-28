@@ -133,10 +133,7 @@ blockApplyWithRealization <- function(x, FUN, ..., sink = NULL, x_grid = NULL,
         }
         x_viewport <- x_grid[[b]]
         sink_viewport <- sink_grid[[b]]
-        block <- DelayedArray:::extract_block(x, x_viewport)
-        if (!is.array(block)) {
-            block <- DelayedArray:::.as_array_or_matrix(block)
-        }
+        block <- read_block(x, x_viewport)
         attr(block, "from_grid") <- x_grid
         attr(block, "block_id") <- b
         block_ans <- FUN(block, ...)

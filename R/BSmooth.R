@@ -51,9 +51,9 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
     bb <- (b - 1L) %% nrow(pos_grid) + 1L
     # NOTE: unname() is necessary because M and Cov may carry colnames
     sdata <- data.frame(
-        pos = DelayedArray:::extract_block(pos, pos_grid[[bb]]),
-        M = unname(DelayedArray:::extract_block(M, grid[[b]])),
-        Cov = unname(DelayedArray:::extract_block(Cov, grid[[b]])))
+        pos = read_block(pos, pos_grid[[bb]]),
+        M = unname(read_block(M, grid[[b]])),
+        Cov = unname(read_block(Cov, grid[[b]])))
     # Ensure 0 < M < Cov to avoid boundary issues (only relevant at loci with
     # non-zero coverage, so doesn't matter what M is for these loci).
     sdata[["M"]] <- pmin(pmax(sdata[["M"]], 0.01), pmax(sdata[["Cov"]] - 0.01))
