@@ -122,6 +122,8 @@ combineList <- function(x, ..., BACKEND = NULL) {
     stopifnot(isTRUE(all(x_has_same_parameters)))
     # Check if all inputs have the same set of loci
     x_rowRanges <- lapply(x, rowRanges)
+    # TODO: Check if all loci are identical()/all.equal(). This is must faster
+    #       that doing all these reduce()-ing intersect()-ing
     ans_rowRanges <- Reduce(
         f = function(x, y) {
             reduce(c(x, y), drop.empty.ranges = TRUE, min.gapwidth = 0L)
@@ -215,5 +217,6 @@ combineList <- function(x, ..., BACKEND = NULL) {
         assays = ans_assays,
         rowRanges = ans_rowRanges,
         colData = ans_colData)
+    # TODO: Avoid validity check.
     .BSseq(se, parameters = ans_parameters, trans = ans_trans)
 }

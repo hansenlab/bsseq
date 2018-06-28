@@ -360,6 +360,9 @@
 
 # Exported functions -----------------------------------------------------------
 
+# TODO: If you have N cores available, are you better off using
+#       bpworkers() = N in the BPPARAM or nThread = N and use
+#       data.table::fread()? Or something in between?
 # TODO: Support passing a colData so that metadata is automatically added to
 #       samples?
 # TODO: Document that `...` are used to pass filepath, chunkdim, level, etc. to
@@ -567,8 +570,9 @@ read.bismark <- function(files,
 # TODO: Add function like minfi::read.metharray.sheet()?
 # TODO: Should BACKEND really be an argument of read.bismark(); see related
 #       issue on minfi repo https://github.com/hansenlab/minfi/issues/140
-# TODO: May receive warning "In read_tokens_(data, tokenizer, col_specs, col_names,  ... : length of NULL cannot be changed". This is fixed in devel version of
-#       readr (https://github.com/tidyverse/readr/issues/833)
+# TODO: May receive warning "In read_tokens_(data, tokenizer, col_specs,
+#       col_names,  ... : length of NULL cannot be changed". This is fixed in
+#       devel version of readr (https://github.com/tidyverse/readr/issues/833).
 # TODO: Think about naming scheme for functions. Try to have the function that
 #       is bpapply()-ed have a similar name to its parent.
 # TODO: Document internal functions for my own sanity. Also, some may be useful
