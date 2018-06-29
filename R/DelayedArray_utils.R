@@ -79,30 +79,6 @@ setMethod("dimnames", "arrayRealizationSink", function(x) {
     dimnames(x@result_envir$result)
 })
 
-# Helper functions for setting up ArrayGrid instances --------------------------
-
-# NOTE: Copy of minfi:::colGrid()
-# TODO: Perhaps move this to DelayedMatrixStats?
-colGrid <- function(x) {
-    block_maxlen <- max(nrow(x),
-                        DelayedArray:::get_default_block_maxlength(type(x)))
-    spacings <- DelayedArray:::get_spacings_for_linear_capped_length_blocks(
-        refdim = dim(x),
-        block_maxlen = block_maxlen)
-    RegularArrayGrid(dim(x), spacings)
-}
-
-# NOTE: Copy of minfi:::rowGrid()
-# TODO: Perhaps move this to DelayedMatrixStats?
-rowGrid <- function(x) {
-    block_maxlen <- max(ncol(x),
-                        DelayedArray:::get_default_block_maxlength(type(x)))
-    spacings <- DelayedArray:::get_spacings_for_hypercube_capped_length_blocks(
-        refdim = dim(x),
-        block_maxlen = block_maxlen)
-    RegularArrayGrid(dim(x), spacings)
-}
-
 # Advanced block processing routines -------------------------------------------
 
 # NOTE: Copy of minfi:::blockApplyWithRealization()

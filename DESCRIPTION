@@ -25,7 +25,7 @@ Imports:
     data.table,
     S4Vectors,
     R.utils (>= 2.0.0),
-    DelayedMatrixStats (>= 1.3.1),
+    DelayedMatrixStats (>= 1.3.4),
     permute,
     limma,
     DelayedArray (>= 0.7.15),
