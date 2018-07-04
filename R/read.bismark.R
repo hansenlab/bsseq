@@ -99,10 +99,8 @@
         message(
             "[.readBismarkAsDT] Gunzipping file '", file, "' to tempfile().")
 
-        file <- gunzip(
-            filename = file,
-            destname = tempfile(),
-            remove = FALSE)
+        file <- gunzip(filename = file, destname = tempfile(), remove = FALSE)
+        on.exit(unlink(file), add = TRUE)
     }
     # sysname <- Sys.info()[["sysname"]]
     # if (sysname == "Linux") {
