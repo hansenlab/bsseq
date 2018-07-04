@@ -46,7 +46,7 @@ importFrom(Biostrings, "DNAString", "vmatchPattern", "reverseComplement")
 importFrom(utils, "read.delim")
 importFrom(BSgenome, "vmatchPattern")
 importFrom(tools, "file_path_as_absolute")
-importFrom(R.utils, "isGzipped")
+importFrom(R.utils, "isGzipped", "gunzip")
 
 ##
 ## Exporting

@@ -94,65 +94,72 @@
     }
     ptime1 <- proc.time()
     # TODO: Make copy if isGzipped() to avoid dependency on R.utils?
+    # TODO: Use isCompressedFile() and decompressFile().
     if (isGzipped(file)) {
-        sysname <- Sys.info()[["sysname"]]
-        if (sysname == "Linux") {
-            input <- sprintf("zcat %s", shQuote(file))
-        } else if (sysname == "Darwin") {
-            # macOS/OS X needs a different command; see
-            # https://github.com/Rdatatable/data.table/issues/717#issuecomment-140028670
-            input <- sprintf("zcat < %s", shQuote(file))
-        } else {
-            # TODO: Support other OSs (e.g, Windows, sunOS)
-            warning(
-                "Unable to find 'zcat' for use with 'data.table::fread()'.\n",
-                "Falling back to 'utils::read.table()'.")
-            is_zcat_available <- FALSE
-        }
-        # TODO: Gracefully handle situation where user incorrectly sets
-        #       `is_zcat_available = TRUE` and it consequently fails.
-        if (is_zcat_available) {
-            x <- fread(
-                input = input,
-                sep = "\t",
-                header = FALSE,
-                verbose = subverbose,
-                drop = drop,
-                colClasses = colClasses,
-                col.names = col.names,
-                # TODO: Check remainder of these arguments are optimal.
-                # TODO: Add `key` argument? Check other arguments available in
-                #       fread().
-                quote = "",
-                strip.white = FALSE,
-                showProgress = as.logical(verbose),
-                nThread = nThread)
-        } else {
-            x <- read.table(
-                file = file,
-                header = FALSE,
-                sep = "\t",
-                quote = "",
-                col.names = col.names,
-                colClasses = colClasses,
-                strip.white = FALSE)
-            setDT(x)
-        }
-    } else {
-        x <- fread(
-            file = file,
-            sep = "\t",
-            header = FALSE,
-            verbose = subverbose,
-            drop = drop,
-            colClasses = colClasses,
-            col.names = col.names,
-            # TODO: Check remainder of these arguments are optimal.
-            quote = "",
-            strip.white = FALSE,
-            showProgress = as.logical(verbose),
-            nThread = nThread)
+        message(
+            "[.readBismarkAsDT] Gunzipping file '", file, "' to tempfile().")
+
+        file <- gunzip(
+            filename = file,
+            destname = tempfile(),
+            remove = FALSE)
     }
+    # sysname <- Sys.info()[["sysname"]]
+    # if (sysname == "Linux") {
+    #     input <- sprintf("zcat %s", shQuote(file))
+    # } else if (sysname == "Darwin") {
+    #     # macOS/OS X needs a different command; see
+    #     # https://github.com/Rdatatable/data.table/issues/717#issuecomment-140028670
+    #     input <- sprintf("zcat < %s", shQuote(file))
+    # } else {
+    #     # TODO: Support other OSs (e.g, Windows, sunOS)
+    #     warning(
+    #         "Unable to find 'zcat' for use with 'data.table::fread()'.\n",
+    #         "Falling back to 'utils::read.table()'.")
+    #     is_zcat_available <- FALSE
+    # }
+    # TODO: Gracefully handle situation where user incorrectly sets
+    #       `is_zcat_available = TRUE` and it consequently fails.
+    # if (is_zcat_available) {
+    #     x <- fread(
+    #         input = input,
+    #         sep = "\t",
+    #         header = FALSE,
+    #         verbose = subverbose,
+    #         drop = drop,
+    #         colClasses = colClasses,
+    #         col.names = col.names,
+    #         # TODO: Check remainder of these arguments are optimal.
+    #         # TODO: Add `key` argument? Check other arguments available in
+    #         #       fread().
+    #         quote = "",
+    #         strip.white = FALSE,
+    #         showProgress = as.logical(verbose),
+    #         nThread = nThread)
+    # } else {
+    #     x <- read.table(
+    #         file = file,
+    #         header = FALSE,
+    #         sep = "\t",
+    #         quote = "",
+    #         col.names = col.names,
+    #         colClasses = colClasses,
+    #         strip.white = FALSE)
+    #     setDT(x)
+    # }
+    x <- fread(
+        file = file,
+        sep = "\t",
+        header = FALSE,
+        verbose = subverbose,
+        drop = drop,
+        colClasses = colClasses,
+        col.names = col.names,
+        # TODO: Check remainder of these arguments are optimal.
+        quote = "",
+        strip.white = FALSE,
+        showProgress = as.logical(verbose),
+        nThread = nThread)
 
     # Construct the result -----------------------------------------------------
 
