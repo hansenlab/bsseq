@@ -31,7 +31,6 @@ Imports:
     DelayedArray (>= 0.7.15),
     Rcpp,
     BiocParallel,
-    readr,
     BSgenome,
     Biostrings,
     utils,

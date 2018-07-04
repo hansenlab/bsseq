@@ -4,14 +4,10 @@
 #       and more accurate heuristic to avoid 'passing' bad files.
 # TODO: Test for 'bismark_methylation_extractor' and 'bedGraph' formats
 #       (https://github.com/FelixKrueger/Bismark/tree/master/Docs#output-1)
+#       and error out (they're not supported by .readBismaskAsDT()).
 .guessBismarkFileType <- function(files, n_max = 10L) {
     guessed_file_types <- setNames(vector("character", length(files)), files)
     for (file in files) {
-        # NOTE: Not using readr::count_fields() because it is very slow on
-        #       large, compressed files. This is because it reads the entire
-        #       file into memory as a raw vector regardless of the value of
-        #       `n_max` (see https://github.com/tidyverse/readr/issues/610).
-        #       But good old utils::read.delim() doesn't have this limitation!
         x <- read.delim(
             file = file,
             header = FALSE,
@@ -29,92 +25,65 @@
     guessed_file_types
 }
 
-# TODO: (long term) Choose between utils::read.delim(), readr::read_tsv(), and
-#       data.table::fread() based on 'file'. If plain text, use fread(). If a
-#       compressed file, use readr::read_tsv() if available, otherwise
-#       utils::read_delim(). Longer term, combine data.table::fread() with
-#       shell commands (where available) to pass compressed files. Will need to
-#       be careful of the interaction between BPPARAM and fread()'s nThread.
-#       Once implemented, move readr to Suggests. Finally, allow user to
-#       specify which function to use.
 # NOTE: In brief  benchmarking, readr::read_csv() is ~1.3-1.6x faster than
 #       utils::read.delim() when reading a gzipped file, albeit it with ~1.6-2x
 #       more total memory allocated. Therefore, there may be times users prefer
 #       to trade off faster speed for lower memory usage.
-# TODO: (long term) Formalise these benchmarks as a document in the bsseq
+# TODO: (long term) Formalise benchmarks of utils::read.table(),
+#       data.table::fread(), and readr::read_tsv() as a document in the bsseq
 #       package so that we can readily re-visit these as needed.
+# TODO: Add `showProgress` instead of using `verbose` twice?
 .readBismarkAsDT <- function(file,
                              col_spec = c("all", "BSseq", "GRanges"),
                              check = FALSE,
+                             is_zcat_available = TRUE,
+                             nThread = 1L,
                              verbose = FALSE,
                              ...) {
-    # Quieten R CMD check about 'no visible binding for global variable' -------
-    M <- U <- NULL
+    # Check arguments ----------------------------------------------------------
+
+    file <- file_path_as_absolute(file)
+    col_spec <- match.arg(col_spec)
+    file_type <- .guessBismarkFileType(file)
+    stopifnot(isTRUEorFALSE(check))
+    stopifnot(isTRUEorFALSE(is_zcat_available))
+    subverbose <- as.logical(max(verbose - 1L, 0L))
 
     # Construct the column spec ------------------------------------------------
 
-    col_spec <- match.arg(col_spec)
-    file_type <- .guessBismarkFileType(file)
-    # TODO: Test for 'bismark_methylation_extractor' and 'bedGraph' formats,
-    #       and error out (they're not supported).
-    stopifnot(isTRUEorFALSE(check))
     if (file_type == "cov") {
-        col_names <- c("seqnames", "start", "end", "beta", "M", "U")
         if (col_spec == "BSseq") {
-            cols <- cols_only(
-                seqnames = col_factor(levels = NULL),
-                start = col_integer(),
-                end = col_skip(),
-                beta = col_skip(),
-                M = col_integer(),
-                U = col_integer())
+            colClasses <- c("factor", "integer", "NULL", "NULL", "integer",
+                            "integer")
+            drop <- c(3L, 4L)
+            col.names <- c("seqnames", "start", "M", "U")
         } else if (col_spec == "GRanges") {
-            cols <- cols(
-                seqnames = col_factor(levels = NULL),
-                start = col_integer(),
-                end = col_skip(),
-                beta = col_skip(),
-                M = col_skip(),
-                U = col_skip())
+            colClasses <- c("factor", "integer", "NULL", "NULL", "NULL", "NULL")
+            drop <- c(3L, 4L, 5L, 6L)
+            col.names <- c("seqnames", "start")
         } else if (col_spec == "all") {
-            cols <- cols(
-                seqnames = col_factor(levels = NULL),
-                start = col_integer(),
-                end = col_integer(),
-                beta = col_double(),
-                M = col_integer(),
-                U = col_integer())
+            colClasses <- c("factor", "integer", "integer", "numeric",
+                            "integer", "integer")
+            drop <- integer(0L)
+            col.names <- c("seqnames", "start", "end", "beta", "M", "U")
         }
     } else if (file_type == "cytosineReport") {
-        col_names = c("seqnames", "start", "strand", "M", "U",
-                      "dinucleotide_context", "trinucleotide_context")
         if (col_spec == "BSseq") {
-            cols <- cols_only(
-                seqnames = col_factor(levels = NULL),
-                start = col_integer(),
-                strand = col_factor(levels(strand())),
-                M = col_integer(),
-                U = col_integer(),
-                dinucleotide_context = col_skip(),
-                trinucleotide_context = col_skip())
+            colClasses <- c("factor", "integer", "factor", "integer",
+                            "integer", "NULL", "NULL")
+            drop <- c(6L, 7L)
+            col.names <- c("seqnames", "start", "strand", "M", "U")
         } else if (col_spec == "GRanges") {
-            cols <- cols_only(
-                seqnames = col_factor(levels = NULL),
-                start = col_integer(),
-                strand = col_factor(levels(strand())),
-                M = col_skip(),
-                U = col_skip(),
-                dinucleotide_context = col_skip(),
-                trinucleotide_context = col_skip())
+            colClasses <- c("factor", "integer", "factor", "NULL", "NULL",
+                            "NULL", "NULL")
+            drop <- c(4L, 5L, 6L, 7L)
+            col.names <- c("seqnames", "start", "strand")
         } else if (col_spec == "all") {
-            cols <- cols_only(
-                seqnames = col_factor(levels = NULL),
-                start = col_integer(),
-                strand = col_factor(levels(strand())),
-                M = col_integer(),
-                U = col_integer(),
-                dinucleotide_context = col_character(),
-                trinucleotide_context = col_character())
+            colClasses <- c("factor", "integer", "factor", "integer",
+                            "integer", "factor", "factor")
+            drop <- integer(0L)
+            col.names <- c("seqnames", "start", "strand", "M", "U",
+                           "dinucleotide_context", "trinucleotide_context")
         }
     }
 
@@ -124,37 +93,78 @@
         message("[.readBismarkAsDT] Reading file '", file, "'")
     }
     ptime1 <- proc.time()
-    x <- read_tsv(
-        file = file,
-        col_names = col_names,
-        col_types = cols,
-        na = character(),
-        quoted_na = FALSE,
-        progress = verbose,
-        ...)
+    # TODO: Make copy if isGzipped() to avoid dependency on R.utils?
+    if (isGzipped(file)) {
+        sysname <- Sys.info()[["sysname"]]
+        if (sysname == "Linux") {
+            input <- sprintf("zcat %s", shQuote(file))
+        } else if (sysname == "Darwin") {
+            # macOS/OS X needs a different command; see
+            # https://github.com/Rdatatable/data.table/issues/717#issuecomment-140028670
+            input <- sprintf("zcat < %s", shQuote(file))
+        } else {
+            # TODO: Support other OSs (e.g, Windows, sunOS)
+            warning(
+                "Unable to find 'zcat' for use with 'data.table::fread()'.\n",
+                "Falling back to 'utils::read.table()'.")
+            is_zcat_available <- FALSE
+        }
+        # TODO: Gracefully handle situation where user incorrectly sets
+        #       `is_zcat_available = TRUE` and it consequently fails.
+        if (is_zcat_available) {
+            x <- fread(
+                input = input,
+                sep = "\t",
+                header = FALSE,
+                verbose = subverbose,
+                drop = drop,
+                colClasses = colClasses,
+                col.names = col.names,
+                # TODO: Check remainder of these arguments are optimal.
+                # TODO: Add `key` argument? Check other arguments available in
+                #       fread().
+                quote = "",
+                strip.white = FALSE,
+                showProgress = as.logical(verbose),
+                nThread = nThread)
+        } else {
+            x <- read.table(
+                file = file,
+                header = FALSE,
+                sep = "\t",
+                quote = "",
+                col.names = col.names,
+                colClasses = colClasses,
+                strip.white = FALSE)
+            setDT(x)
+        }
+    } else {
+        x <- fread(
+            file = file,
+            sep = "\t",
+            header = FALSE,
+            verbose = subverbose,
+            drop = drop,
+            colClasses = colClasses,
+            col.names = col.names,
+            # TODO: Check remainder of these arguments are optimal.
+            quote = "",
+            strip.white = FALSE,
+            showProgress = as.logical(verbose),
+            nThread = nThread)
+    }
 
     # Construct the result -----------------------------------------------------
 
-    x <- setDT(x)
+    if (!is.null(x[["strand"]])) {
+        x[, strand := strand(strand)]
+    }
+    # NOTE: Quieten R CMD check about 'no visible binding for global variable'.
+    M <- U <- NULL
     if (check && all(c("M", "U") %in% colnames(x))) {
         if (verbose) {
             message("[.readBismarkAsDT] Checking validity of counts in file.")
         }
-        # NOTE: .checkMandCov() only accepts matrix input
-        # M <- as.matrix(x[["M"]])
-        # Cov <- as.matrix(x[["M"]] + x[["U"]])
-        # msg <- .checkMandCov(M, Cov)
-        # if (!is.null(msg)) {
-        #     stop(msg)
-        # } else {
-        #     if (verbose) {
-        #         message("[.readBismarkAsDT] Counts in file are valid!")
-        #     }
-        # }
-        # TODO: Write .checkMandU()? Should be written to avoid copying, use a
-        #       low amount of memory, stop as soon as an error is detected,
-        #       and be check the exact same stuff as .checkMandCov().
-        # TODO: Benchmark the below implementation of .checkMandU().
         valid <- x[, isTRUE(all(M >= 0L & U >= 0L))]
         if (!valid) {
             stop("[.readBismarkAsDT] Invalid counts detected!\n",
@@ -173,10 +183,10 @@
     x
 }
 
-
 .constructCountsFromSingleFile <- function(b, files, strandCollapse, loci,
                                            grid, M_sink, Cov_sink, sink_lock,
-                                           verbose, BPPARAM) {
+                                           verbose, BPPARAM,
+                                           is_zcat_available, nThread) {
 
     # Quieten R CMD check about 'no visible binding for global variable' -------
     M <- U <- NULL
@@ -192,6 +202,8 @@
         file = file,
         col_spec = "BSseq",
         check = TRUE,
+        is_zcat_available = is_zcat_available,
+        nThread = nThread,
         verbose = verbose)
     # NOTE: Can only collapse by strand if the data are stranded!
     if (strandCollapse && !is.null(dt[["strand"]])) {
@@ -245,7 +257,7 @@
 }
 
 .constructCounts <- function(files, loci, strandCollapse, verbose, BPPARAM,
-                             BACKEND, ...) {
+                             BACKEND, is_zcat_available, nThread, ...) {
     # Set up ArrayGrid so that each block contains data for a single sample.
     ans_nrow <- length(loci)
     ans_ncol <- length(files)
@@ -322,7 +334,9 @@
         Cov_sink = Cov_sink,
         sink_lock = sink_lock,
         verbose = verbose,
-        BPPARAM = BPPARAM))
+        BPPARAM = BPPARAM,
+        is_zcat_available = is_zcat_available,
+        nThread = nThread))
     if (!all(bpok(counts))) {
         # TODO: This isn't yet properly impelemented
         # TODO: Feels like stop() rather than warning() should be used, but
@@ -384,6 +398,8 @@ read.bismark <- function(files,
                          verbose = TRUE,
                          BPPARAM = bpparam(),
                          BACKEND = getRealizationBackend(),
+                         is_zcat_available = TRUE,
+                         nThread = 1L,
                          ...,
                          fileType = c("cov", "oldBedGraph", "cytosineReport"),
                          mc.cores = 1) {
@@ -482,7 +498,9 @@ read.bismark <- function(files,
             rmZeroCov = rmZeroCov,
             strandCollapse = strandCollapse,
             verbose = subverbose,
-            BPPARAM = BPPARAM)
+            BPPARAM = BPPARAM,
+            is_zcat_available = is_zcat_available,
+            nThread = nThread)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if (verbose) {
@@ -515,7 +533,9 @@ read.bismark <- function(files,
                 rmZeroCov = rmZeroCov,
                 strandCollapse = strandCollapse,
                 verbose = subverbose,
-                BPPARAM = BPPARAM)
+                BPPARAM = BPPARAM,
+                is_zcat_available = is_zcat_available,
+                nThread = nThread)
             # Retain those elements of 'loci' with non-zero coverage.
             loci <- subsetByOverlaps(loci, loci_from_files, type = "equal")
             ptime2 <- proc.time()
@@ -539,6 +559,8 @@ read.bismark <- function(files,
         verbose = subverbose,
         BPPARAM = BPPARAM,
         BACKEND = BACKEND,
+        is_zcat_available = is_zcat_available,
+        nThread = nThread,
         ...)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
@@ -570,9 +592,6 @@ read.bismark <- function(files,
 # TODO: Add function like minfi::read.metharray.sheet()?
 # TODO: Should BACKEND really be an argument of read.bismark(); see related
 #       issue on minfi repo https://github.com/hansenlab/minfi/issues/140
-# TODO: May receive warning "In read_tokens_(data, tokenizer, col_specs,
-#       col_names,  ... : length of NULL cannot be changed". This is fixed in
-#       devel version of readr (https://github.com/tidyverse/readr/issues/833).
 # TODO: Think about naming scheme for functions. Try to have the function that
 #       is bpapply()-ed have a similar name to its parent.
 # TODO: Document internal functions for my own sanity. Also, some may be useful
@@ -588,3 +607,4 @@ read.bismark <- function(files,
 #       retain strand) then you'll need to construct your own 'gr' and pass
 #       this to the function. Add unit tests for this behaviour.
 # TODO: Use verbose = getOption("verbose") as default.
+# TODO: Tidy up argument order of functions and default values.

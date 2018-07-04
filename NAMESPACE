@@ -42,11 +42,11 @@ importFrom(gtools, "combinations")
 #       e.g., shift(). If new ones are discovered, add them to this list.
 import(data.table, except = c(shift, first, second))
 importFrom(permute, "shuffleSet", "how")
-importFrom(readr, "cols", "cols_only", "col_character", "col_integer",
-           "col_skip", "col_double", "col_factor", "read_tsv", "tokenizer_tsv")
 importFrom(Biostrings, "DNAString", "vmatchPattern", "reverseComplement")
 importFrom(utils, "read.delim")
 importFrom(BSgenome, "vmatchPattern")
+importFrom(tools, "file_path_as_absolute")
+importFrom(R.utils, "isGzipped")
 
 ##
 ## Exporting
