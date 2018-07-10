@@ -25,7 +25,7 @@
     guessed_file_types
 }
 
-# NOTE: In brief  benchmarking, readr::read_csv() is ~1.3-1.6x faster than
+# NOTE: In brief benchmarking, readr::read_csv() is ~1.3-1.6x faster than
 #       utils::read.delim() when reading a gzipped file, albeit it with ~1.6-2x
 #       more total memory allocated. Therefore, there may be times users prefer
 #       to trade off faster speed for lower memory usage.
@@ -383,7 +383,7 @@
 #       bpworkers() = N in the BPPARAM or nThread = N and use
 #       data.table::fread()? Or something in between?
 # TODO: Support passing a colData so that metadata is automatically added to
-#       samples?
+#       samples? Yes, do this.
 # TODO: Document that `...` are used to pass filepath, chunkdim, level, etc. to
 #       HDF5RealizationSink().
 # TODO: (long term) Formalise `...` by something analogous to the
@@ -403,32 +403,10 @@ read.bismark <- function(files,
                          verbose = TRUE,
                          BPPARAM = bpparam(),
                          BACKEND = getRealizationBackend(),
-                         is_zcat_available = TRUE,
                          nThread = 1L,
-                         ...,
-                         fileType = c("cov", "oldBedGraph", "cytosineReport"),
-                         mc.cores = 1) {
+                         ...) {
     # Argument checks ----------------------------------------------------------
 
-    # Check for deprecated arguments and issue warning(s) if found.
-    if (!missing(fileType)) {
-        warning(
-            "'filetype' is deprecated.\n",
-            "Replaced with automatic detection of file types.\n",
-            "See help(\"read.bismark\") for details.",
-            call. = FALSE,
-            immediate. = TRUE)
-    }
-    if (!missing(mc.cores)) {
-        # TODO: What if user has provided a BPPARAM?
-        warning(
-            "'mc.cores' is deprecated.\n",
-            "Replaced with 'BPPARAM = MulticoreParam(workers = mc.cores)'",
-            ".\nSee help(\"BSmooth\").",
-            call. = FALSE,
-            immediate. = TRUE)
-        BPPARAM <- MulticoreParam(workers = mc.cores)
-    }
     # Check 'files' is valid.
     # TODO: Allow duplicate files? Useful in testing/debugging but generally a
     #       bad idea.

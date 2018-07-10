@@ -115,8 +115,6 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
 # Exported functions -----------------------------------------------------------
 
 # TODO: BSmooth() should warn if BSseq object contains mix of strands.
-# TODO: Make 'mc.cores', 'mc.preschedule', and 'verbose' defunct one release
-#       cycle with them deprecated.
 # TODO: Consider having BSmooth() create a 'smoothed' assay in addition to or
 #       instead of the 'coef' and 'se.coef' assays.
 BSmooth <- function(BSseq,
@@ -127,10 +125,7 @@ BSmooth <- function(BSseq,
                     verbose = TRUE,
                     BPPARAM = bpparam(),
                     BACKEND = getRealizationBackend(),
-                    ...,
-                    parallelBy = c("sample", "chromosome"),
-                    mc.preschedule = FALSE,
-                    mc.cores = 1) {
+                    ...) {
     # Argument checks-----------------------------------------------------------
 
     # Check validity of 'BSseq' argument
@@ -142,40 +137,6 @@ BSmooth <- function(BSseq,
     }
     if (is.unsorted(BSseq)) {
         stop("'BSseq' must be sorted before smoothing. Use 'sort(BSseq)'.")
-    }
-    # Check for deprecated arguments and issue warning(s) if found.
-    if (!missing(parallelBy)) {
-        warning(
-            "'parallelBy' is deprecated and ignored.\n",
-            "See help(\"BSmooth\") for details.",
-            call. = FALSE,
-            immediate. = TRUE)
-    }
-    if (!missing(mc.preschedule)) {
-        warning(
-            "'mc.preschedule' is deprecated and ignored.\n",
-            "See help(\"BSmooth\") for details.",
-            call. = FALSE,
-            immediate. = TRUE)
-    }
-    if (!missing(mc.cores)) {
-        # TODO: What if user has provided a BPPARAM?
-        warning(
-            "'mc.cores' is deprecated.\n",
-            "Replaced with 'BPPARAM = MulticoreParam(workers = mc.cores)'",
-            ".\nSee help(\"BSmooth\").",
-            call. = FALSE,
-            immediate. = TRUE)
-        BPPARAM <- MulticoreParam(workers = mc.cores)
-    }
-    if (!missing(verbose)) {
-        warning(
-            "'verbose' is deprecated.\n",
-            "Replaced by setting 'bpprogressbar(BPPARAM) <- TRUE'.\n",
-            "See help(\"BSmooth\") for details.",
-            call. = FALSE,
-            immediate. = TRUE)
-        if (verbose) bpprogressbar(BPPARAM) <- TRUE
     }
     # Register 'BACKEND' and return to current value on exit
     current_BACKEND <- getRealizationBackend()
