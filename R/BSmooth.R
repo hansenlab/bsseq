@@ -122,10 +122,11 @@ BSmooth <- function(BSseq,
                     h = 1000,
                     maxGap = 10^8,
                     keep.se = FALSE,
-                    verbose = TRUE,
                     BPPARAM = bpparam(),
-                    BACKEND = getRealizationBackend(),
-                    ...) {
+                    chunkdim = NULL,
+                    level = NULL,
+                    verbose = getOption("verbose")) {
+
     # Argument checks-----------------------------------------------------------
 
     # Check validity of 'BSseq' argument
@@ -138,20 +139,9 @@ BSmooth <- function(BSseq,
     if (is.unsorted(BSseq)) {
         stop("'BSseq' must be sorted before smoothing. Use 'sort(BSseq)'.")
     }
-    # Register 'BACKEND' and return to current value on exit
-    current_BACKEND <- getRealizationBackend()
-    on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
-    setRealizationBackend(BACKEND)
-    # Check compatability of 'BACKEND' with backend(s) of BSseq object.
-    BSseq_backends <- .getBSseqBackends(BSseq)
-    if (.areBackendsInMemory(BACKEND) &&
-        !.areBackendsInMemory(BSseq_backends)) {
-        stop("Using an in-memory backend for a disk-backed BSseq object ",
-             "is not supported.\n",
-             "See help(\"BSmooth\") for details.",
-             call. = FALSE)
-    }
-    # Check compatability of 'BPPARAM' with the realization backend.
+    stopifnot(isTRUEorFALSE(keep.se))
+    # Set appropriate BACKEND and check compatability with BPPARAM.
+    BACKEND <- .getBSseqBackends(BSseq)
     if (!.areBackendsInMemory(BACKEND)) {
         if (!.isSingleMachineBackend(BPPARAM)) {
             stop("The parallelisation strategy must use a single machine ",
@@ -170,6 +160,30 @@ BSmooth <- function(BSseq,
                  call. = FALSE)
         }
     }
+    # If using HDF5Array, check if BSseq object is updateable.
+    if (identical(BACKEND, "HDF5Array")) {
+        is_BSseq_updateable <- .isHDF5BackedBSseqUpdatable(BSseq)
+        if (is_BSseq_updateable) {
+            h5_path <- path(assay(BSseq, withDimnames = FALSE))
+            if (any(c("coef", "se.coef") %in% rhdf5::h5ls(h5_path)[, "name"])) {
+                # TODO: Better error message; what should be done in this case?
+                stop(wmsg("The HDF5 file '", h5_path, "' already contains a ",
+                          "dataset named 'coef' or 'se.coef'."))
+            }
+        } else {
+            h5_path <- NULL
+            warning(
+                wmsg("'BSseq' was not created with either read.bismark() or ",
+                     "HDF5Array::saveHDF5SummarizedExperiment(). BSmooth() is ",
+                     "using automatically created HDF5 file(s) (see ",
+                     "?HDF5Array::setHDF5DumpFile) to store smoothing result. ",
+                     "You will need to run ",
+                     "HDF5Array::saveHDF5SummarizedExperiment() on the ",
+                     "returned object if you wish to save the returned ",
+                     "object."))
+        }
+    }
+    stopifnot(isTRUEorFALSE(verbose))
 
     # Smoothing ----------------------------------------------------------------
 
@@ -192,22 +206,24 @@ BSmooth <- function(BSseq,
     } else if (BACKEND == "HDF5Array") {
         coef_sink <- HDF5RealizationSink(
             dim = dim(M),
-            # NOTE: Never allow dimnames.
             dimnames = NULL,
             type = "double",
+            filepath = h5_path,
             name = "coef",
-            ...)
+            chunkdim = chunkdim,
+            level = level)
         on.exit(close(coef_sink), add = TRUE)
         sink_lock <- ipcid()
         on.exit(ipcremove(sink_lock), add = TRUE)
         if (keep.se) {
-            se.coef_sink <- HDF5Array::HDF5RealizationSink(
+            se.coef_sink <- HDF5RealizationSink(
                 dim = dim(M),
-                # NOTE: Never allow dimnames.
                 dimnames = NULL,
                 type = "double",
+                filepath = h5_path,
                 name = "se.coef",
-                ...)
+                chunkdim = chunkdim,
+                level = level)
             on.exit(close(se.coef_sink), add = TRUE)
         } else {
             se.coef_sink <- NULL
@@ -283,11 +299,16 @@ BSmooth <- function(BSseq,
         }
     }
 
-    # Construct BSseq object ---------------------------------------------------
+    # Construct BSseq object, saving it if it is HDF5-backed -------------------
 
-    assays <- c(assays(BSseq, withDimnames = FALSE), SimpleList(coef = coef))
-    if (keep.se) assays <- c(assays, SimpleList(se.coef = se.coef))
-    BiocGenerics:::replaceSlots(
+    # NOTE: Using BiocGenerics:::replaceSlots(..., check = FALSE) to avoid
+    #       triggering the validity method.
+    assays <- c(assays(BSseq, withDimnames = FALSE)[c("M", "Cov")],
+                SimpleList(coef = coef))
+    if (keep.se) {
+        assays <- c(assays, SimpleList(se.coef = se.coef))
+    }
+    BSseq <- BiocGenerics:::replaceSlots(
         object = BSseq,
         assays = Assays(assays),
         trans = plogis,
@@ -298,6 +319,15 @@ BSmooth <- function(BSseq,
             h = h,
             maxGap = maxGap),
         check = FALSE)
+    if (identical(BACKEND, "HDF5Array") && is_BSseq_updateable) {
+        # NOTE: Save BSseq object; mimicing
+        #       HDF5Array::saveHDF5SummarizedExperiment().
+        dir <- dirname(h5_path)
+        x <- BSseq
+        x@assays <- HDF5Array:::.shorten_h5_paths(x@assays)
+        saveRDS(x, file = file.path(dir, "se.rds"))
+    }
+    BSseq
 }
 
 # TODOs ------------------------------------------------------------------------

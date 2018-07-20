@@ -10,68 +10,32 @@ test_that("Errors on bad input", {
         "All loci in 'BSseq' must have width == 1")
 })
 
-test_that("Issues warning for deprecated arguments", {
-    expect_warning(
-        BSmooth(bsseq_test, parallelBy = "sample", BPPARAM = SerialParam()),
-        "'parallelBy' is deprecated")
-    expect_warning(
-        BSmooth(bsseq_test, mc.preschedule = FALSE, BPPARAM = SerialParam()),
-        "'mc.preschedule' is deprecated")
-    expect_warning(
-        BSmooth(bsseq_test, mc.cores = 1, BPPARAM = SerialParam()),
-        "'mc.cores' is deprecated")
-    expect_warning(
-        BSmooth(bsseq_test, verbose = FALSE, BPPARAM = SerialParam()),
-        "'verbose' is deprecated")
+test_that("BSmooth properly inherits 'dir'", {
+    infile <- system.file("extdata", "test_data.fastq_bismark.bismark.cov.gz",
+                          package = "bsseq")
+    bsseq <- read.bismark(files = infile, BACKEND = "HDF5Array")
+    bsseq <- BSmooth(bsseq)
+    expect_is(bsseq, "BSseq")
+    expect_true(hasBeenSmoothed(bsseq))
+    expect_error(
+        BSmooth(bsseq),
+        "already contains a dataset named 'coef' or 'se.coef'")
 })
 
-test_that(
-    "Checks compatability of realization backend with backend(s) of BSseq object", {
-        setRealizationBackend(NULL)
-        expect_error(
-            BSmooth(realize(bsseq_test, "HDF5Array"),
-                    "Using an in-memory backend for a disk-backed BSseq object is not supported")
-        )
-        bsseq_test2 <- bsseq_test
-        assay(bsseq_test2, withDimnames = FALSE) <- realize(
-            assay(bsseq_test2, withDimnames = FALSE),
-            "HDF5Array")
-        expect_error(
-            BSmooth(realize(bsseq_test2, "HDF5Array"),
-                    "Using an in-memory backend for a disk-backed BSseq object is not supported")
-        )
-
-        setRealizationBackend("RleArray")
-        expect_error(
-            BSmooth(realize(bsseq_test, "HDF5Array"),
-                    "Using an in-memory backend for a disk-backed BSseq object is not supported")
-        )
-        setRealizationBackend("HDF5Array")
-        expect_silent(
-            BSmooth(realize(bsseq_test, "HDF5Array"), BPPARAM = SerialParam()))
-    })
-
 test_that("Checks compatability of 'BPPARAM' with the realization backend", {
-        setRealizationBackend("HDF5Array")
         expect_error(
-            BSmooth(bsseq_test, BPPARAM = SnowParam(c("node1", "node2"))),
+            BSmooth(
+                BSseq = realize(bsseq_test, "HDF5Array"),
+                BPPARAM = SnowParam(c("node1", "node2"))),
             "The parallelisation strategy must use a single machine when using an on-disk realization backend")
     }
 )
 
-test_that(
-    "Expected realization backends work when using SerialParam parallelisation backend", {
-        setRealizationBackend(NULL)
-        bsseq_NULL <- BSmooth(bsseq_test, BPPARAM = SerialParam())
-
-        setRealizationBackend("HDF5Array")
-        bsseq_HDF5Array <- BSmooth(bsseq_test, BPPARAM = SerialParam())
-        expect_equivalent_SE(bsseq_NULL, bsseq_HDF5Array)
-
-        setRealizationBackend("RleArray")
-        expect_error(
-            BSmooth(bsseq_test, BPPARAM = SerialParam()),
-            "The 'RleArray' realization backend is not supported")
+test_that("Backends work when using SerialParam parallelisation backend", {
+    bsseq_NULL <- BSmooth(
+        BSseq = realize(bsseq_test, NULL), BPPARAM = SerialParam())
+    bsseq_HDF5Array <- BSmooth(bsseq_test, BPPARAM = SerialParam())
+    expect_equivalent_SE(bsseq_NULL, bsseq_HDF5Array)
 })
 
 test_that(
@@ -117,7 +81,7 @@ test_that(
 
 test_that(
     "Expected parallelisation backends work with on-disk realization backend", {
-        setRealizationBackend("HDF5Array")
+        bsseq_test <- realize(bsseq_test, "HDF5Array")
 
         bsseq_serial_param <- BSmooth(bsseq_test, BPPARAM = SerialParam())
         bsseq_multicore_param <- BSmooth(
@@ -167,7 +131,6 @@ test_that(
 )
 
 test_that("keep.se works", {
-    setRealizationBackend(NULL)
     expect_is(
         assay(BSmooth(bsseq_test, keep.se = TRUE, BPPARAM = SerialParam()),
               "se.coef"),
@@ -176,10 +139,14 @@ test_that("keep.se works", {
         assay(BSmooth(bsseq_test, keep.se = FALSE, BPPARAM = SerialParam()),
               "'se.coef' not in names"))
 
-    setRealizationBackend("HDF5Array")
     expect_is(
-        assay(BSmooth(bsseq_test, keep.se = TRUE, BPPARAM = SerialParam()),
-              "se.coef", withDimnames = FALSE),
+        assay(
+            BSmooth(
+                BSseq = realize(bsseq_test, "HDF5Array"),
+                keep.se = TRUE,
+                BPPARAM = SerialParam()),
+              "se.coef",
+            withDimnames = FALSE),
         "HDF5Matrix")
     expect_error(
         assay(BSmooth(bsseq_test, keep.se = FALSE, BPPARAM = SerialParam()),

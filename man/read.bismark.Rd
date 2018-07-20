@@ -8,24 +8,25 @@
   Parsing output from the Bismark alignment suite.
 }
 \usage{read.bismark(files,
-             sampleNames = basename(files),
              loci = NULL,
+             colData = NULL,
              rmZeroCov = FALSE,
              strandCollapse = TRUE,
-             verbose = TRUE,
              BPPARAM = bpparam(),
-             BACKEND = getRealizationBackend(),
-             ...,
-             fileType = c("cov", "oldBedGraph", "cytosineReport"),
-             mc.cores = 1)
+             BACKEND = getRealizationBackend()
+             dir = tempdir(),
+             replace = FALSE,
+             chunkdim = NULL,
+             level = NULL,
+             verbose = TRUE)
 }
 \arguments{
   \item{files}{The path to the files created by running Bismark's methylation
     extractor, one sample per file.
-    Files ending in \code{.gz}, \code{.bz2}, \code{.xz}, or \code{.zip} will be automatically uncompressed.
+    Files ending in \code{.gz} or \code{.bz2} will be automatically
+    decompressed to \code{\link{tempfile}()}.
     We strongly recommend you use the 'genome wide cytosine report' output files.
     See section 'File formats' for further details.}
-  \item{sampleNames}{A character vector of sample names, based on the order of \code{files}.}
   \item{loci}{\code{NULL} (default) or a \linkS4class{GenomicRanges} instance
     containing methylation loci (all with width equal to 1).
     If \code{loci = NULL}, then \code{read.bismark()} will perform a first pass over the Bismark file to identify candidate loci.
@@ -33,6 +34,10 @@
     In either case, the candidate loci will be filtered if
     \code{rmZeroCov = TRUE} and collapsed if \code{strandCollapse = TRUE} to form the final set of methylation loci that form the \code{\link[SummarizedExperiment]{rowRanges}} of the returned \linkS4class{BSseq} object.
     See section 'Efficient use of \code{read.bismark()}' for further details.}
+  \item{colData}{An optional \linkS4class{DataFrame} describing the samples.
+    Row names, if present, become the column names of the \linkS4class{BSseq}
+    object. If \code{NULL}, then a \linkS4class{DataFrame} will be created with
+    \code{files} used as the row names.}
   \item{rmZeroCov}{A \code{logical(1)} indicating whether methylation loci that
     have zero coverage in all samples be removed.
     For several reasons, the default \code{rmZeroCov = FALSE} is recommended even in cases where you ultimately want to remove such loci.
@@ -41,9 +46,7 @@
     methylation loci (i.e. CpGs) should be collapsed across strands.
     This is only applicable for stranded methylation loci, e.g., loci extracted
     from 'genome wide cytosine reports' (see section 'File formats' for further details).}
-  \item{verbose}{A \code{logical(1)} indicating whether progress messages
-    should be printed (default \code{TRUE}).}
-\item{BPPARAM}{An optional \linkS4class{BiocParallelParam} instance
+  \item{BPPARAM}{An optional \linkS4class{BiocParallelParam} instance
     determining the parallel back-end to be used during evaluation.
     Currently supported are \linkS4class{SerialParam} (Unix, Mac, Windows),
     \linkS4class{MulticoreParam} (Unix and Mac), \linkS4class{SnowParam}
@@ -56,13 +59,25 @@
     When the backend is set to \code{NULL}, the \code{M} and \code{Cov} assays
     are realized in memory as ordinary matrices, otherwise these are realized with the given \code{BACKEND}.
     See section 'Realization backends' for further details.}
-  \item{...}{Additional arguments passed to the \linkS4class{RealizationSink}
-    constructor.
-    See section 'Realization backends' for further details.}
-  \item{fileType}{\strong{Deprecated}.
-    The format of each file is now automatically detected using the internal function \code{bsseq:::.guessBismarkFileType()}.}
-  \item{mc.cores}{\strong{Deprecated}.
-    See section 'Parallelization and progress monitoring' for further details.}
+  \item{dir}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
+    The path (as a single string) to the directory where to save the HDF5-based
+    \linkS4class{BSseq} object. The directory will be created so should not
+    already exist, unless \code{replace} is set to \code{TRUE}.}
+  \item{replace}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
+    If directory \code{dir} already exists, should it be replaced
+    with a new one? The content of the existing directory will be lost!}
+  \item{chunkdim}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
+    The dimensions of the chunks to use for writing the data to
+    disk. By default, \code{\link[HDF5Array]{getHDF5DumpChunkDim}()} using the
+    dimensions of the returned \linkS4class{BSseq} object will be used. See
+    \code{?\link[HDF5Array]{getHDF5DumpChunkDim}} for more information.}
+  \item{level}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
+    The compression level to use for writing the data to disk. By
+    default, \code{\link[HDF5Array]{getHDF5DumpCompressionLevel}()} will be
+    used. See \code{?\link[HDF5Array]{getHDF5DumpCompressionLevel}} for more
+    information.}
+  \item{verbose}{A \code{logical(1)} indicating whether progress messages
+    should be printed (default \code{TRUE}).}
 }
 
 \section{Efficient use of \code{read.bismark()}}{
@@ -159,7 +174,7 @@
   Please see the examples at the bottom of the page.
 }
 
-\section{Parallelization and progress monitoring}{
+\section{Parallelization, progress monitoring, and logging}{
   \code{read.bismark()} now uses the \pkg{BiocParallel} package to implement
   parallelization. This brings some notable improvements:
 
@@ -170,10 +185,6 @@
       results be retained in-memory.
     \item Parallelization is now supported on Windows through the use of a
     \linkS4class{SnowParam} object as the value of \code{BPPARAM}.
-    % TODO: Uncomment when/if implemented.
-    %\item Improved error handling makes it possible to gracefully resume
-    %\code{read.bismark()} jobs that encountered errors by re-doing only the necessary
-    %tasks.
     \item Detailed and extensive job logging facilities.
   }
 
@@ -185,24 +196,14 @@
   single-machine \linkS4class{SnowParam}. Please consult the \pkg{BiocParallel}
   documentation to take full advantage of the more advanced features.
 
-  \subsection{Deprecated arguments}{
-    \code{mc.cores} is deprecated and will be removed in subsequent releases of \pkg{bsseq}.
-    This argument was necessary when \code{read.bismark()} used the \pkg{parallel} package to implement parallelization, but this functionality is superseded by the aforementioned use of \pkg{BiocParallel}.
-    We recommend that users who previously relied on these arguments switch to \code{BPPARAM = MulticoreParam(workers = mc.cores, progressbar = TRUE)}.
-  }
+  A useful feature of \pkg{BiocParallel} are progress bars to monitor the
+  status of long-running jobs, such as \code{BSmooth()}. Progress bars are
+  controlled via the \code{progressbar} argument in the
+  \linkS4class{BiocParallelParam} constructor.
 
-  \subsection{Progress monitoring}{
-    A useful feature of \pkg{BiocParallel} are progress bars to monitor the
-    status of long-running jobs, such as \code{BSmooth()}. Progress bars are
-    controlled via the \code{progressbar} argument in the
-    \linkS4class{BiocParallelParam} constructor. Progress bars replace the
-    use of the deprecated \code{verbose} argument to print out information on
-    the status of \code{BSmooth()}.
-
-    \pkg{BiocParallel} also supports extensive and detailed logging facilities.
-    Please consult the \pkg{BiocParallel} documentation to take full advantage
-    these advanced features.
-  }
+  \pkg{BiocParallel} also supports extensive and detailed logging facilities.
+  Please consult the \pkg{BiocParallel} documentation to take full advantage
+  these advanced features.
 }
 
 \value{
@@ -220,9 +221,9 @@
   # Run read.bismark() on a single sample to construct a matrix-backed BSseq
   # object.
   infile <- system.file("extdata/test_data.fastq_bismark.bismark.cov.gz",
-                        package = 'bsseq')
+                        package = "bsseq")
   bsseq <- read.bismark(files = infile,
-                        sampleNames = "test_data",
+                        colData = DataFrame(row.names = "test_data"),
                         rmZeroCov = FALSE,
                         strandCollapse = FALSE,
                         verbose = TRUE)
@@ -232,18 +233,18 @@
 
   \dontrun{
   # Run read.bismark() on a single sample to construct a HDF5Array-backed BSseq
-  # object (with data written to the file 'read.bismark_example.h5')
+  # object (with data written to 'test_dir')
+  test_dir <- tempfile("BSseq")
   bsseq <- read.bismark(files = infile,
-                        sampleNames = "test_data",
+                        colData = DataFrame(row.names = "test_data"),
                         rmZeroCov = FALSE,
                         strandCollapse = FALSE,
-                        verbose = TRUE,
                         BACKEND = "HDF5Array",
-                        filepath = "read.bismark_example.h5")
+                        dir = test_dir,
+                        verbose = TRUE)
   # This is a HDF5Array-backed BSseq object.
   sapply(assays(bsseq, withDimnames = FALSE), class)
-  # The 'M' and 'Cov' assays are in the HDF5 file 'read.bismark_example.h5' (in
-  # the current working directory).
+  # The 'M' and 'Cov' assays are in the HDF5 file 'assays.h5' (in 'test_dir').
   sapply(assays(bsseq, withDimnames = FALSE), path)
   }
 }
