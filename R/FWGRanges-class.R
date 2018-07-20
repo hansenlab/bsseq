@@ -217,9 +217,14 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
 #       the smallest returned object (albeit at the small cost of a sort).
 .readBismarkAsFWGRanges <- function(file, rmZeroCov = FALSE,
                                     strandCollapse = FALSE, sort = TRUE,
-                                    is_zcat_available = TRUE, nThread = 1L,
                                     verbose = FALSE) {
-    # Quieten R CMD check about 'no visible binding for global variable' -------
+    # Argument checks ----------------------------------------------------------
+
+    stopifnot(isTRUEorFALSE(rmZeroCov))
+    stopifnot(isTRUEorFALSE(strandCollapse))
+    stopifnot(isTRUEorFALSE(sort))
+
+    # Quieten R CMD check about 'no visible binding for global variable'
     M <- U <- NULL
 
     # Read file to construct data.table of valid loci --------------------------
@@ -228,8 +233,6 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
             file = file,
             col_spec = "BSseq",
             check = TRUE,
-            is_zcat_available = is_zcat_available,
-            nThread = nThread,
             verbose = verbose)
         if (strandCollapse && !is.null(dt[["strand"]]) &&
             !dt[, all(strand == "*")]) {
@@ -248,8 +251,6 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
             file = file,
             col_spec = "GRanges",
             check = FALSE,
-            is_zcat_available = is_zcat_available,
-            nThread = nThread,
             verbose = verbose)
         if (strandCollapse && !is.null(dt[["strand"]]) &&
             !dt[, all(strand == "*")]) {
@@ -303,9 +304,7 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
                                                rmZeroCov,
                                                strandCollapse,
                                                verbose,
-                                               BPPARAM,
-                                               is_zcat_available,
-                                               nThread) {
+                                               BPPARAM) {
     subverbose <- max(as.integer(verbose) - 1L, 0L)
 
     # TODO: Instead of using the 'largest' file, use the largest
@@ -338,8 +337,6 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
         file = files[[1L]],
         rmZeroCov = rmZeroCov,
         strandCollapse = strandCollapse,
-        is_zcat_available = is_zcat_available,
-        nThread = nThread,
         verbose = subverbose)
     # Identify loci not found in first file.
     # TODO: Pre-process loci as a GNCList?
@@ -356,18 +353,12 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
     }
     list_of_loci_from_other_files_not_in_first_file <- bplapply(
         files[-1L], function(file, loci_from_first_file) {
-            # TODO: This message won't appear in main process, so probably remove.
-            if (verbose) {
-                message("[.contructFWGRangesFromBismarkFiles] Extracting loci ",
-                        "from '", file, "'")
-            }
             # Read this file.
             loci_from_this_file <- .readBismarkAsFWGRanges(
                 file = file,
                 rmZeroCov = rmZeroCov,
                 strandCollapse = strandCollapse,
-                verbose = subverbose,
-                is_zcat_available = is_zcat_available)
+                verbose = subverbose)
             subsetByOverlaps(
                 x = loci_from_this_file,
                 ranges = loci_from_first_file,

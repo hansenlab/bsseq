@@ -17,6 +17,7 @@ orderBSseq <- function(BSseq, seqOrder = NULL) {
 #       regions is non-NULL; discuss with Kasper
 # TODO: Add parallel support
 # TODO: Document withDimnames
+# TODO: Should is be an explicit withDimnames arg or simply passed via `...`?
 getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
                     what = c("perBase", "perRegion"), confint = FALSE,
                     alpha = 0.95, withDimnames = TRUE) {
@@ -108,6 +109,7 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
 # TODO: Whether or not colnames are added to returned value depends on whether
 #       regions is non-NULL; discuss with Kasper
 # TODO: Document withDimnames
+# TODO: Should is be an explicit withDimnames arg or simply passed via `...`?
 getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
                         what = c("perBase", "perRegionAverage",
                                  "perRegionTotal"),

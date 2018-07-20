@@ -189,11 +189,7 @@ collapseBSseq(BStest, columns = c("A1" = "A", "A2" = "A", "A3" = "B"))
 # An example using a HDF5-backed BSseq object
 #
 library(HDF5Array)
-# See ?HDF5Array::writeHDF5Array for details
-hdf5_M <- writeHDF5Array(M)
-# NOTE: HDF5Array::writeHDF5Array() doesn't preserve dimnames, so have to add
-#       these manually
-dimnames(hdf5_M) <- dimnames(M)
+hdf5_M <- realize(M, "HDF5Array")
 hdf5_BStest <- BSseq(pos = 1:3,
                      chr = c("chr1", "chr2", "chr1"),
                      M = hdf5_M,

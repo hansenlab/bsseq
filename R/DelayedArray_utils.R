@@ -126,3 +126,34 @@ blockApplyWithRealization <- function(x, FUN, ..., sink = NULL, x_grid = NULL,
     BPPARAM = BPPARAM)
 }
 
+# TODO: Needed?
+.getSEDir <- function(x) {
+    paths <- lapply(assays(x, withDimnames = FALSE), function(a) {
+        try(path(a), silent = TRUE)
+    })
+    if (any(vapply(paths, is, logical(1L), "try-error"))) {
+        stop("Cannot extract 'dir'.")
+    }
+    unique_paths <- unique(unlist(paths, use.names = FALSE))
+    if (length(unique_paths) > 1) {
+        stop("Assay data spread across multiple HDF5 files.")
+    }
+    dirs <- dirname(unlist(paths, use.names = FALSE))
+    unique(dirs)
+}
+
+# Should return TRUE for BSseq object created with read.bismark() or saved with
+# HDF5Array::saveHDF5SummarizedExperiment().
+# TODO: Check dirname(paths[[1L]]) also contains 'se.rds'? It looks like dir
+#       can contain other files besides these; check.
+.isHDF5BackedBSseqUpdatable <- function(x) {
+    stopifnot(is(x, "BSseq"))
+    if (!identical(.getBSseqBackends(x), "HDF5Array")) {
+        return(FALSE)
+    }
+    paths <- vapply(assays(x, withDimnames = FALSE), path, character(1L))
+    if (all(paths == paths[[1L]]) && all(basename(paths) == "assays.h5")) {
+        return(TRUE)
+    }
+    FALSE
+}

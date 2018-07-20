@@ -144,6 +144,7 @@ collapseBSseq <- function(BSseq, columns) {
     #       pass down to constructors).
     se <- SummarizedExperiment(
         assays = SimpleList(M = M, Cov = Cov),
-        rowRanges = rowRanges(BSseq))
+        rowRanges = rowRanges(BSseq),
+        colData = DataFrame(row.names = unique(columns)))
     .BSseq(se)
 }
