@@ -5,21 +5,7 @@ test_that("read.bismark() works for 'coverage' file", {
     infile <- system.file("extdata", "test_data.fastq_bismark.bismark.cov.gz",
                           package = "bsseq")
     bsseq <- read.bismark(files = infile,
-                          sampleNames = "test_data",
-                          rmZeroCov = FALSE,
-                          strandCollapse = FALSE,
-                          verbose = FALSE)
-    expect_is(bsseq, "BSseq")
-})
-
-test_that("read.bismark() works if sampleNames has names", {
-    infile <- system.file("extdata", "test_data.fastq_bismark.bismark.cov.gz",
-                          package = "bsseq")
-    # Regression test
-    # Should not fail if sampleNames have names()
-    # TODO: Check why this test is necessary by stepping through read.bismark()
-    bsseq <- read.bismark(files = infile,
-                          sampleNames = c(test = "test_data"),
+                          colData = DataFrame(row.names = "test_data"),
                           rmZeroCov = FALSE,
                           strandCollapse = FALSE,
                           verbose = FALSE)
@@ -31,7 +17,6 @@ test_that("read.bismark() works for 'genome wide cytosine report' file", {
     infile <- system.file("extdata", "test_data.cytosineReport.gz",
                           package = "bsseq")
     bsseq <- read.bismark(files = infile,
-                          sampleNames = "test_data",
                           rmZeroCov = FALSE,
                           strandCollapse = FALSE,
                           verbose = FALSE)
@@ -42,7 +27,6 @@ test_that("read.bismark() works for 'genome wide cytosine report' file", {
 
     # Check that strandCollapse = TRUE works
     bsseq <- read.bismark(files = infile,
-                          sampleNames = "test_data",
                           rmZeroCov = FALSE,
                           strandCollapse = TRUE,
                           verbose = FALSE)

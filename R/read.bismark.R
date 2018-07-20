@@ -6,8 +6,7 @@
 #       (https://github.com/FelixKrueger/Bismark/tree/master/Docs#output-1)
 #       and error out (they're not supported by .readBismaskAsDT()).
 .guessBismarkFileType <- function(files, n_max = 10L) {
-    guessed_file_types <- setNames(vector("character", length(files)), files)
-    for (file in files) {
+    vapply(files, function(file) {
         x <- read.delim(
             file = file,
             header = FALSE,
@@ -15,14 +14,14 @@
             stringsAsFactors = FALSE)
         n_fields <- ncol(x)
         if (isTRUE(all(n_fields == 6L))) {
-            guessed_file_types[file] <- "cov"
-        } else if (isTRUE(all(n_fields == 7L))) {
-            guessed_file_types[file] <- "cytosineReport"
-        } else {
-            stop("Could not guess Bismark file type for '", file, "'")
+            return("cov")
         }
-    }
-    guessed_file_types
+        if (isTRUE(all(n_fields == 7L))) {
+            return("cytosineReport")
+        }
+        # Couldn't guess the file type.
+        NA_character_
+    }, character(1L))
 }
 
 # NOTE: In brief benchmarking, readr::read_csv() is ~1.3-1.6x faster than
@@ -32,26 +31,28 @@
 # TODO: (long term) Formalise benchmarks of utils::read.table(),
 #       data.table::fread(), and readr::read_tsv() as a document in the bsseq
 #       package so that we can readily re-visit these as needed.
-# TODO: Add `showProgress` instead of using `verbose` twice?
 .readBismarkAsDT <- function(file,
                              col_spec = c("all", "BSseq", "GRanges"),
                              check = FALSE,
-                             is_zcat_available = TRUE,
+                             showProgress = FALSE,
                              nThread = 1L,
-                             verbose = FALSE,
-                             ...) {
-    # Check arguments ----------------------------------------------------------
+                             verbose = FALSE) {
+    # Argument checks ----------------------------------------------------------
 
     file <- file_path_as_absolute(file)
-    col_spec <- match.arg(col_spec)
     file_type <- .guessBismarkFileType(file)
+    col_spec <- match.arg(col_spec)
     stopifnot(isTRUEorFALSE(check))
-    stopifnot(isTRUEorFALSE(is_zcat_available))
-    subverbose <- as.logical(max(verbose - 1L, 0L))
+    stopifnot(isTRUEorFALSE(showProgress))
+    # NOTE: 'verbose' controls the verbosity of .readBismarkAsDT() and
+    #       'fread_verbose' is derived from that to control the verbosity of
+    #       data.table::fread().
+    fread_verbose <- as.logical(max(verbose - 1L, 0L))
 
     # Construct the column spec ------------------------------------------------
 
     if (file_type == "cov") {
+        header <- FALSE
         if (col_spec == "BSseq") {
             colClasses <- c("factor", "integer", "NULL", "NULL", "integer",
                             "integer")
@@ -68,6 +69,7 @@
             col.names <- c("seqnames", "start", "end", "beta", "M", "U")
         }
     } else if (file_type == "cytosineReport") {
+        header <- FALSE
         if (col_spec == "BSseq") {
             colClasses <- c("factor", "integer", "factor", "integer",
                             "integer", "NULL", "NULL")
@@ -90,73 +92,42 @@
     # Read the file ------------------------------------------------------------
 
     if (verbose) {
-        message("[.readBismarkAsDT] Reading file '", file, "'")
+        message("[.readBismarkAsDT] Parsing '", file, "'")
     }
     ptime1 <- proc.time()
-    # TODO: Make copy if isGzipped() to avoid dependency on R.utils?
-    # TODO: Use isCompressedFile() and decompressFile().
     if (isGzipped(file)) {
-        message(
-            "[.readBismarkAsDT] Gunzipping file '", file, "' to tempfile().")
+        if (verbose) {
+            message("[.readBismarkAsDT] Decompressing to tempfile() ...")
+        }
+        file <- gunzip(
+            filename = file,
+            destname = tempfile(),
+            remove = FALSE)
+        on.exit(unlink(file), add = TRUE)
+    } else if (isBzipped(file)) {
+        if (verbose) {
+            message("[.readBismarkAsDT] Decompressing to tempfile() ...")
 
-        file <- gunzip(filename = file, destname = tempfile(), remove = FALSE)
+        }
+        file <- bunzip2(
+            filename = file,
+            destname = tempfile(),
+            remove = FALSE)
         on.exit(unlink(file), add = TRUE)
     }
-    # sysname <- Sys.info()[["sysname"]]
-    # if (sysname == "Linux") {
-    #     input <- sprintf("zcat %s", shQuote(file))
-    # } else if (sysname == "Darwin") {
-    #     # macOS/OS X needs a different command; see
-    #     # https://github.com/Rdatatable/data.table/issues/717#issuecomment-140028670
-    #     input <- sprintf("zcat < %s", shQuote(file))
-    # } else {
-    #     # TODO: Support other OSs (e.g, Windows, sunOS)
-    #     warning(
-    #         "Unable to find 'zcat' for use with 'data.table::fread()'.\n",
-    #         "Falling back to 'utils::read.table()'.")
-    #     is_zcat_available <- FALSE
-    # }
-    # TODO: Gracefully handle situation where user incorrectly sets
-    #       `is_zcat_available = TRUE` and it consequently fails.
-    # if (is_zcat_available) {
-    #     x <- fread(
-    #         input = input,
-    #         sep = "\t",
-    #         header = FALSE,
-    #         verbose = subverbose,
-    #         drop = drop,
-    #         colClasses = colClasses,
-    #         col.names = col.names,
-    #         # TODO: Check remainder of these arguments are optimal.
-    #         # TODO: Add `key` argument? Check other arguments available in
-    #         #       fread().
-    #         quote = "",
-    #         strip.white = FALSE,
-    #         showProgress = as.logical(verbose),
-    #         nThread = nThread)
-    # } else {
-    #     x <- read.table(
-    #         file = file,
-    #         header = FALSE,
-    #         sep = "\t",
-    #         quote = "",
-    #         col.names = col.names,
-    #         colClasses = colClasses,
-    #         strip.white = FALSE)
-    #     setDT(x)
-    # }
+    if (verbose) {
+        message("[.readBismarkAsDT] Reading file ...")
+    }
     x <- fread(
         file = file,
         sep = "\t",
-        header = FALSE,
-        verbose = subverbose,
+        header = header,
+        verbose = fread_verbose,
         drop = drop,
         colClasses = colClasses,
         col.names = col.names,
-        # TODO: Check remainder of these arguments are optimal.
         quote = "",
-        strip.white = FALSE,
-        showProgress = as.logical(verbose),
+        showProgress = showProgress,
         nThread = nThread)
 
     # Construct the result -----------------------------------------------------
@@ -172,8 +143,8 @@
         }
         valid <- x[, isTRUE(all(M >= 0L & U >= 0L))]
         if (!valid) {
-            stop("[.readBismarkAsDT] Invalid counts detected!\n",
-                 "M and U columns should be non-negative integers.")
+            stop("[.readBismarkAsDT] Invalid counts detected.\n",
+                 "'M' and 'U' columns should be non-negative integers.")
         } else {
             if (verbose) {
                 message("[.readBismarkAsDT] All counts in file are valid.")
@@ -183,17 +154,19 @@
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if (verbose) {
-        cat(sprintf("done in %.1f secs\n", stime))
+        message("Done in ", round(stime, 1), " secs")
     }
     x
 }
 
-.constructCountsFromSingleFile <- function(b, files, strandCollapse, loci,
+.constructCountsFromSingleFile <- function(b, files, loci, strandCollapse,
                                            grid, M_sink, Cov_sink, sink_lock,
-                                           verbose, BPPARAM,
-                                           is_zcat_available, nThread) {
+                                           verbose) {
 
-    # Quieten R CMD check about 'no visible binding for global variable' -------
+    # Argument checks ----------------------------------------------------------
+
+    subverbose <- max(as.integer(verbose) - 1L, 0L)
+    # NOTE: Quieten R CMD check about 'no visible binding for global variable'.
     M <- U <- NULL
 
     # Read b-th file to construct data.table of valid loci and their counts ----
@@ -207,9 +180,7 @@
         file = file,
         col_spec = "BSseq",
         check = TRUE,
-        is_zcat_available = is_zcat_available,
-        nThread = nThread,
-        verbose = verbose)
+        verbose = subverbose)
     # NOTE: Can only collapse by strand if the data are stranded!
     if (strandCollapse && !is.null(dt[["strand"]])) {
         # Shift loci on negative strand by 1 to the left and then remove
@@ -254,48 +225,56 @@
         return(list(M = M, Cov = Cov))
     }
     # Write to M_sink and Cov_sink while respecting the IPC lock.
+    viewport <- grid[[b]]
     ipclock(sink_lock)
-    write_block(x = M_sink, viewport = grid[[b]], block = M)
-    write_block(x = Cov_sink, viewport = grid[[b]], block = Cov)
+    write_block(x = M_sink, viewport = viewport, block = M)
+    write_block(x = Cov_sink, viewport = viewport, block = Cov)
     ipcunlock(sink_lock)
     NULL
 }
 
-.constructCounts <- function(files, loci, strandCollapse, verbose, BPPARAM,
-                             BACKEND, is_zcat_available, nThread, ...) {
-    # Set up ArrayGrid so that each block contains data for a single sample.
+.constructCounts <- function(files, loci, strandCollapse, BPPARAM,
+                             BACKEND, dir, chunkdim, level, verbose = FALSE) {
+
+    # Argument checks ----------------------------------------------------------
+
+    subverbose <- max(as.integer(verbose) - 1L, 0L)
+
+    # Construct ArrayGrid ------------------------------------------------------
+
+    # NOTE: Each block contains data for a single sample.
     ans_nrow <- length(loci)
     ans_ncol <- length(files)
-    grid <- RegularArrayGrid(c(ans_nrow, ans_ncol), c(ans_nrow, 1L))
-    # Construct RealizationSink objects.
+    ans_dim <- c(ans_nrow, ans_ncol)
+    grid <- RegularArrayGrid(
+        refdim = ans_dim,
+        spacings = c(ans_nrow, 1L))
+
+    # Construct RealizationSink objects ----------------------------------------
+
     if (is.null(BACKEND)) {
         M_sink <- NULL
         Cov_sink <- NULL
         sink_lock <- NULL
     } else if (BACKEND == "HDF5Array") {
+        h5_path <- file.path(dir, "assays.h5")
         M_sink <- HDF5RealizationSink(
-            dim = c(ans_nrow, ans_ncol),
-            # NOTE: Never allow dimnames.
+            dim = ans_dim,
             dimnames = NULL,
             type = "integer",
+            filepath = h5_path,
             name = "M",
-            # TODO: Can chunkdim be specified if data are written to
-            #       column-by-column?
-            # chunkdim = NULL,
-            # level = NULL,
-            ...)
+            chunkdim = chunkdim,
+            level = level)
         on.exit(close(M_sink), add = TRUE)
         Cov_sink <- HDF5Array::HDF5RealizationSink(
-            dim = c(ans_nrow, ans_ncol),
-            # NOTE: Never allow dimnames.
+            dim = ans_dim,
             dimnames = NULL,
             type = "integer",
+            filepath = h5_path,
             name = "Cov",
-            # TODO: Can chunkdim be specified if data are written to
-            #       column-by-column?
-            # chunkdim = NULL,
-            # level = NULL,
-            ...)
+            chunkdim = chunkdim,
+            level = level)
         on.exit(close(Cov_sink), add = TRUE)
         sink_lock <- ipcid()
         on.exit(ipcremove(sink_lock), add = TRUE)
@@ -305,16 +284,19 @@
         #       However, we retain it for now (e.g., fstArray backend would use
         #       this until a dedicated branch was implemented).
         M_sink <- DelayedArray:::RealizationSink(
-            dim = c(ans_nrow, ans_ncol),
+            dim = ans_dim,
             type = "integer")
         on.exit(close(M_sink), add = TRUE)
         Cov_sink <- DelayedArray:::RealizationSink(
-            dim = c(ans_nrow, ans_ncol),
+            dim = ans_dim,
             type = "integer")
         on.exit(close(Cov_sink), add = TRUE)
         sink_lock <- ipcid()
         on.exit(ipcremove(sink_lock), add = TRUE)
     }
+
+    # Apply .constructCountsFromSingleFile() to each file ----------------------
+
     # Set number of tasks to ensure the progress bar gives frequent updates.
     # NOTE: The progress bar increments once per task
     #       (https://github.com/Bioconductor/BiocParallel/issues/54).
@@ -323,8 +305,6 @@
     #       performance in this instance, and so we opt for a useful progress
     #       bar. Only SnowParam (and MulticoreParam by inheritance) have a
     #       bptasks<-() method.
-    # TODO: Check that setting number of tasks doesn't affect things (e.g.,
-    #       the cost of transfering loci to the workers may be substantial).
     if (is(BPPARAM, "SnowParam") && bpprogressbar(BPPARAM)) {
         bptasks(BPPARAM) <- length(grid)
     }
@@ -332,42 +312,27 @@
         X = seq_along(grid),
         FUN = .constructCountsFromSingleFile,
         files = files,
-        strandCollapse = strandCollapse,
         loci = loci,
+        strandCollapse = strandCollapse,
         grid = grid,
         M_sink = M_sink,
         Cov_sink = Cov_sink,
         sink_lock = sink_lock,
-        verbose = verbose,
-        BPPARAM = BPPARAM,
-        is_zcat_available = is_zcat_available,
-        nThread = nThread))
+        verbose = subverbose,
+        BPPARAM = BPPARAM))
     if (!all(bpok(counts))) {
-        # TODO: This isn't yet properly impelemented
-        # TODO: Feels like stop() rather than warning() should be used, but
-        #       stop() doesn't allow for the return of partial results;
-        #       see https://support.bioconductor.org/p/109374/
-        warning("read.bismark() encountered errors: ",
-                sum(!bpok(counts)), " of ", length(counts),
-                " files failed.\n",
-                "read.bismark() has returned partial results, including ",
-                "errors, for debugging purposes.\n",
-                "It may be possible to re-run just these failed files.\n",
-                "See help(\"read.bismark\")",
-                call. = FALSE)
-        # NOTE: Return intermediate results as well as all derived variables.
-        return(list(counts = counts,
-                    M_sink = M_sink,
-                    Cov_sink = Cov_sink,
-                    BACKEND = BACKEND))
+        stop(".constructCounts() encountered errors for these files:\n  ",
+             paste(files[!bpok], collapse = "\n  "))
     }
-    # Construct M and Cov from results of
+
+    # Construct 'M' and 'Cov' --------------------------------------------------
+
     if (is.null(BACKEND)) {
         # Returning matrix objects.
         M <- do.call(c, lapply(counts, "[[", "M"))
-        attr(M, "dim") <- c(ans_nrow, ans_ncol)
+        attr(M, "dim") <- ans_dim
         Cov <- do.call(c, lapply(counts, "[[", "Cov"))
-        attr(Cov, "dim") <- c(ans_nrow, ans_ncol)
+        attr(Cov, "dim") <- ans_dim
     } else {
         # Returning DelayedMatrix objects.
         M <- as(M_sink, "DelayedArray")
@@ -382,55 +347,39 @@
 # TODO: If you have N cores available, are you better off using
 #       bpworkers() = N in the BPPARAM or nThread = N and use
 #       data.table::fread()? Or something in between?
-# TODO: Support passing a colData so that metadata is automatically added to
-#       samples? Yes, do this.
-# TODO: Document that `...` are used to pass filepath, chunkdim, level, etc. to
-#       HDF5RealizationSink().
-# TODO: (long term) Formalise `...` by something analogous to the
-#       BiocParallelParam class (RealizationSinkParam) i.e. something that
-#       encapsulates the various arguments available when constructing a
-#       RealizationSink.
-# TODO: sampleNames = basename(files) isn't guaranteed to be unique.
+# TODO: Allow user to determine `nThread`?
 # TODO: Document that you can't use strandCollapse with files that lack strand
 #       (e.g., .cov files).
 # TODO: (long term) Report a run-time warning/message if strandCollapse = TRUE
 #       is used in conjunction with files without strand information.
 read.bismark <- function(files,
-                         sampleNames = basename(files),
                          loci = NULL,
+                         colData = NULL,
                          rmZeroCov = FALSE,
                          strandCollapse = TRUE,
-                         verbose = TRUE,
                          BPPARAM = bpparam(),
                          BACKEND = getRealizationBackend(),
-                         nThread = 1L,
-                         ...) {
+                         dir = tempfile("BSseq"),
+                         replace = FALSE,
+                         chunkdim = NULL,
+                         level = NULL,
+                         verbose = getOption("verbose")) {
     # Argument checks ----------------------------------------------------------
 
     # Check 'files' is valid.
-    # TODO: Allow duplicate files? Useful in testing/debugging but generally a
-    #       bad idea.
-    if (anyDuplicated(files)) stop("'files' cannot have duplicate entires")
+    if (anyDuplicated(files)) {
+        stop("'files' cannot have duplicate entries.")
+    }
     file_exists <- file.exists(files)
     if (!isTRUE(all(file_exists))) {
-        stop("These files cannot be found:\n",
-             "  ", paste(files[!file_exists], collapse = "\n  "))
+        stop("These files cannot be found:\n  ",
+             paste(files[!file_exists], collapse = "\n  "))
     }
-    # Check 'sampleNames' is valid.
-    # TODO: Check if this is still required
-    # NOTE: SummarizedExperiment validator makes calls to identical() that will
-    #       fail due to how sampleNames are propagated sometimes with and
-    #       without names. To make life simpler, we simply strip the names.
-    sampleNames <- unname(sampleNames)
-    if (length(sampleNames) != length(files)) {
-        stop("'sampleNames' must have the same length as 'files'.")
+    guessed_file_types <- .guessBismarkFileType(files)
+    if (anyNA(guessed_file_types)) {
+        stop("Could not guess Bismark file type for these files:\n  ",
+             "  ", paste(files[!is.na(guessed_file_types)], collapse = "\n  "))
     }
-    if (anyDuplicated(sampleNames)) {
-        stop("'sampleNames' cannot have duplicate entires")
-    }
-    # Check 'rmZeroCov' and 'strandCollapse' are valid.
-    stopifnot(isTRUEorFALSE(rmZeroCov))
-    stopifnot(isTRUEorFALSE(strandCollapse))
     # Check 'loci' is valid.
     if (!is.null(loci)) {
         if (!is(loci, "GenomicRanges")) {
@@ -440,9 +389,18 @@ read.bismark <- function(files,
             stop("All elements of 'loci' must have width equal to 1.")
         }
     }
-    # Set verbosity used by internal functions
-    subverbose <- as.logical(max(verbose - 1L, 0L))
-    # Register 'BACKEND' and return to current value on exit
+    # Check 'colData' is valid.
+    if (is.null(colData)) {
+        colData <- DataFrame(row.names = files)
+    }
+    if (nrow(colData) != length(files)) {
+        stop("Supplied 'colData' must have nrow(colData) == length(files).")
+    }
+    # Check 'rmZeroCov' and 'strandCollapse' are valid.
+    stopifnot(isTRUEorFALSE(rmZeroCov))
+    stopifnot(isTRUEorFALSE(strandCollapse))
+    # Register 'BACKEND' and return to current value on exit.
+    # TODO: Is this strictly necessary?
     current_BACKEND <- getRealizationBackend()
     on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
     setRealizationBackend(BACKEND)
@@ -460,38 +418,55 @@ read.bismark <- function(files,
             #       backends. If the realization backend is NULL then an
             #       ordinary matrix is returned rather than a matrix-backed
             #       DelayedMatrix.
-            stop("The '", BACKEND, "' realization backend is not supported.\n",
-                 "See help(\"BSmooth\") for details.",
+            stop("The '", BACKEND, "' realization backend is not supported.",
+                 "\n  See help(\"BSmooth\") for details.",
                  call. = FALSE)
         }
     }
+    # If using HDF5Array as BACKEND, check remaining options are sensible.
+    if (!is.null(BACKEND) && BACKEND == "HDF5Array") {
+        # NOTE: Most of this copied from
+        #       HDF5Array::saveHDF5SummarizedExperiment().
+        if (!isSingleString(dir)) {
+            stop(wmsg("'dir' must be a single string specifying the path to ",
+                      "the directory where to save the BSseq object (the ",
+                      "directory will be created)."))
+        }
+        if (!isTRUEorFALSE(replace)) {
+            stop("'replace' must be TRUE or FALSE")
+        }
+        HDF5Array:::.create_dir(dir = dir, replace = replace)
+    }
+    # Set verbosity used by internal functions.
+    subverbose <- as.logical(max(verbose - 1L, 0L))
 
     # Construct FWGRanges with all valid loci ----------------------------------
 
-    # NOTE: "Valid loci" are those that remain after collapsing by strand (if
+    # NOTE: "Valid" loci are those that remain after collapsing by strand (if
     #       strandCollapse == TRUE) and then removing loci with zero coverage
     #       in all samples (if rmZeroCov == TRUE).
     if (is.null(loci)) {
         ptime1 <- proc.time()
         if (verbose) {
-            message("[read.bismark] Parsing files to construct valid loci ...")
+            message(
+                "[read.bismark] Parsing files and constructing valid loci ...")
         }
         loci <- .contructFWGRangesFromBismarkFiles(
             files = files,
             rmZeroCov = rmZeroCov,
             strandCollapse = strandCollapse,
             verbose = subverbose,
-            BPPARAM = BPPARAM,
-            is_zcat_available = is_zcat_available,
-            nThread = nThread)
+            BPPARAM = BPPARAM)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
         if (verbose) {
-            cat(sprintf("done in %.1f secs\n", stime))
+            message("Done in ", round(stime, 1), " secs")
         }
     } else {
         ptime1 <- proc.time()
-        if (verbose) message("[read.bismark] Using 'loci' as candidate loci")
+        if (verbose) {
+            message("[read.bismark] Using 'loci' as candidate loci.")
+        }
         if (strandCollapse) {
             if (verbose) {
                 message("[read.bismark] Collapsing strand of 'loci' ...")
@@ -501,7 +476,7 @@ read.bismark <- function(files,
             ptime2 <- proc.time()
             stime <- (ptime2 - ptime1)[3]
             if (verbose) {
-                cat(sprintf("done in %.1f secs\n", stime))
+                message("Done in ", round(stime, 1), " secs")
             }
         }
         if (rmZeroCov) {
@@ -516,15 +491,13 @@ read.bismark <- function(files,
                 rmZeroCov = rmZeroCov,
                 strandCollapse = strandCollapse,
                 verbose = subverbose,
-                BPPARAM = BPPARAM,
-                is_zcat_available = is_zcat_available,
-                nThread = nThread)
+                BPPARAM = BPPARAM)
             # Retain those elements of 'loci' with non-zero coverage.
             loci <- subsetByOverlaps(loci, loci_from_files, type = "equal")
             ptime2 <- proc.time()
             stime <- (ptime2 - ptime1)[3]
             if (verbose) {
-                cat(sprintf("done in %.1f secs\n", stime))
+                message("Done in ", round(stime, 1), " secs")
             }
         }
     }
@@ -532,51 +505,53 @@ read.bismark <- function(files,
     # Construct 'M' and 'Cov' matrices -----------------------------------------
     ptime1 <- proc.time()
     if (verbose) {
-        message("[read.bismark] Parsing files to construct 'M' and 'Cov' ",
+        message("[read.bismark] Parsing files and constructing 'M' and 'Cov' ",
                 "matrices ...")
     }
     counts <- .constructCounts(
         files = files,
         loci = loci,
         strandCollapse = strandCollapse,
-        verbose = subverbose,
         BPPARAM = BPPARAM,
         BACKEND = BACKEND,
-        is_zcat_available = is_zcat_available,
-        nThread = nThread,
-        ...)
+        dir = dir,
+        chunkdim = chunkdim,
+        level = level,
+        verbose = subverbose)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if (verbose) {
-        cat(sprintf("done in %.1f secs\n", stime))
+        message("Done in ", round(stime, 1), " secs")
     }
 
-    # Construct BSseq object ---------------------------------------------------
+    # Construct BSseq object, saving it if it is HDF5-backed -------------------
 
     if (verbose) {
-        cat(sprintf("[read.bismark] Constructing BSseq object ... "))
+        message("[read.bismark] Constructing BSseq object ... ")
     }
     se <- SummarizedExperiment(
         assays = counts,
         # NOTE: For now, have to use GRanges instance as rowRanges but
         #       ultimately would like to use a FWGRanges instance.
         rowRanges = as(loci, "GRanges"),
-        colData = DataFrame(row.names = sampleNames))
+        colData = colData)
     # TODO: Is there a way to use the internal constructor with `check = FALSE`?
     #       Don't need to check M and Cov because this has already happened
     #       when files were parsed.
     # .BSseq(se, trans = function(x) NULL, parameters = list())
-    new2("BSseq", se, check = FALSE)
+    bsseq <- new2("BSseq", se, check = FALSE)
+    if (!is.null(BACKEND) && BACKEND == "HDF5Array") {
+        # NOTE: Save BSseq object; mimicing
+        #       HDF5Array::saveHDF5SummarizedExperiment().
+        x <- bsseq
+        x@assays <- HDF5Array:::.shorten_h5_paths(x@assays)
+        saveRDS(x, file = file.path(dir, "se.rds"))
+    }
+    bsseq
 }
 
 # TODOs ------------------------------------------------------------------------
 
-# TODO: Consolidate use of message()/cat()/etc.
-# TODO: Add function like minfi::read.metharray.sheet()?
-# TODO: Should BACKEND really be an argument of read.bismark(); see related
-#       issue on minfi repo https://github.com/hansenlab/minfi/issues/140
-# TODO: Think about naming scheme for functions. Try to have the function that
-#       is bpapply()-ed have a similar name to its parent.
 # TODO: Document internal functions for my own sanity. Also, some may be useful
 #       to users of bsseq (although I still won't export these for the time
 #       being).
@@ -589,5 +564,3 @@ read.bismark <- function(files,
 #       .cytosineReport files and don't want this behaviour (i.e. you want to
 #       retain strand) then you'll need to construct your own 'gr' and pass
 #       this to the function. Add unit tests for this behaviour.
-# TODO: Use verbose = getOption("verbose") as default.
-# TODO: Tidy up argument order of functions and default values.
