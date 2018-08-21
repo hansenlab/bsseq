@@ -267,7 +267,7 @@
             chunkdim = chunkdim,
             level = level)
         on.exit(close(M_sink), add = TRUE)
-        Cov_sink <- HDF5Array::HDF5RealizationSink(
+        Cov_sink <- HDF5RealizationSink(
             dim = ans_dim,
             dimnames = NULL,
             type = "integer",
@@ -352,6 +352,7 @@
 #       (e.g., .cov files).
 # TODO: (long term) Report a run-time warning/message if strandCollapse = TRUE
 #       is used in conjunction with files without strand information.
+# TODO: Try a bpiterate()-based approach to getting the set of loci from files.
 read.bismark <- function(files,
                          loci = NULL,
                          colData = NULL,
@@ -409,7 +410,7 @@ read.bismark <- function(files,
         if (!.isSingleMachineBackend(BPPARAM)) {
             stop("The parallelisation strategy must use a single machine ",
                  "when using an on-disk realization backend.\n",
-                 "See help(\"BSmooth\") for details.",
+                 "See help(\"read.bismark\") for details.",
                  call. = FALSE)
         }
     } else {
@@ -419,12 +420,12 @@ read.bismark <- function(files,
             #       ordinary matrix is returned rather than a matrix-backed
             #       DelayedMatrix.
             stop("The '", BACKEND, "' realization backend is not supported.",
-                 "\n  See help(\"BSmooth\") for details.",
+                 "\n  See help(\"read.bismark\") for details.",
                  call. = FALSE)
         }
     }
     # If using HDF5Array as BACKEND, check remaining options are sensible.
-    if (!is.null(BACKEND) && BACKEND == "HDF5Array") {
+    if (identical(BACKEND, "HDF5Array")) {
         # NOTE: Most of this copied from
         #       HDF5Array::saveHDF5SummarizedExperiment().
         if (!isSingleString(dir)) {
@@ -463,7 +464,6 @@ read.bismark <- function(files,
             message("Done in ", round(stime, 1), " secs")
         }
     } else {
-        ptime1 <- proc.time()
         if (verbose) {
             message("[read.bismark] Using 'loci' as candidate loci.")
         }
