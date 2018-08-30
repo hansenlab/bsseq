@@ -2,9 +2,10 @@
 This is the developer version of Bioconductor package [bsseq](http://bioconductor.org/packages/devel/bioc/html/bsseq.html).  Install in R as:
 
 ```r
-source('http://bioconductor.org/biocLite.R')
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
 useDevel(TRUE)
-biocLite('bsseq')
+BiocManager::install('bsseq')
 ```
 
 ## Software status
