@@ -1,150 +1,125 @@
-# Internal generics ------------------------------------------------------------
+# Internal functions -----------------------------------------------------------
 
-# 'idx': A list of columns (MARGIN = 1) or rows (MARGIN = 2) to collapse over.
-# E.g., `idx = list(1:3, 4:5)` with `MARGIN = 1` means collapse columns 1-3
-# into a single columna dn columns 4-5 into a single column.
-# MARGIN = 1: collapse along columns using rowSums2
-# MARGIN = 2: collapse along rows using colSums2
-# `...` are additional arguments passed to methods.
-setGeneric(
-    ".collapseMatrixLike",
-    function(x, idx, MARGIN, ...) standardGeneric,
-    signature = "x")
-
-# Internal methods -------------------------------------------------------------
-
-# TODO: Re-write in C/C++ to avoid allocating `ans` multiple times
-setMethod(".collapseMatrixLike", "matrix", function(x, idx, MARGIN) {
-    if (MARGIN == 1L) {
-        ans <- matrix(
-            # NOTE: rowSums2() always returns numeric
-            data = NA_real_,
-            nrow = nrow(x),
-            ncol = length(idx),
-            dimnames = list(rownames(x), NULL))
-        l <- lengths(idx)
-        stopifnot(min(l) > 0)
-        l1 <- which(l == 1)
-        ans[, l1] <- x[, unlist(idx[l1])]
-        lmore <- which(l != 1)
-        ans[, lmore] <- do.call(cbind, lapply(idx[lmore], function(j) {
-            rowSums2(x, cols = j)
-        }))
-    } else if (MARGIN == 2L) {
-        ans <- matrix(
-            # NOTE: colSums2() always returns numeric
-            data = NA_real_,
-            nrow = length(idx),
-            ncol = ncol(x),
-            dimnames = list(NULL, colnames(x)))
-        l <- lengths(idx)
-        stopifnot(min(l) > 0)
-        l1 <- which(l == 1)
-        ans[l1, ] <- x[unlist(idx[l1]), ]
-        lmore <- which(l != 1)
-        ans[lmore, ] <- do.call(rbind, lapply(idx[lmore], function(i) {
-            colSums2(x, rows = i)
-        }))
-    } else {
-        stop("'MARGIN' must be 1 or 2")
+.collapseColData <- function(x, group, reorder = TRUE) {
+    if (length(group) != NROW(x)) {
+        stop("incorrect length for 'group'")
     }
-    ans
-})
-
-setMethod(
-    ".collapseMatrixLike",
-    "DelayedMatrix",
-    function(x, idx, MARGIN, BPREDO = list(), BPPARAM = SerialParam()) {
-        # Set up intermediate RealizationSink objects of appropriate
-        # dimensions and type
-        # NOTE: `type = "double"` because .collapseMatrixLike,matrix-method
-        #       uses colSums2()/rowSums2(), which returns a numeric vector.
-        # NOTE: This is ultimately coerced to the output DelayedMatrix
-        #       object
-        # Set up ArrayGrid instances over `x` as well as "parallel"
-        # ArrayGrid instances over `sink`.
-        if (MARGIN == 1L) {
-            sink <- DelayedArray:::RealizationSink(
-                dim = c(nrow(x), length(idx)),
-                dimnames = list(rownames(x), names(idx)),
-                type = "double")
-            x_grid <- colGrid(x)
-            sink_grid <- RegularArrayGrid(
-                refdim = dim(sink),
-                spacings = c(nrow(sink), ncol(sink) / length(x_grid)))
-        } else if (MARGIN == 2L) {
-            # TODO: Check sink has correct dim and dimnames
-            sink <- DelayedArray:::RealizationSink(
-                dim = c(length(idx), ncol(x)),
-                dimnames = list(names(idx), colnames(x)),
-                type = "double")
-            on.exit(close(sink))
-            x_grid <- rowGrid(x)
-            sink_grid <- RegularArrayGrid(
-                refdim = dim(sink),
-                spacings = c(nrow(sink) / length(x_grid), ncol(sink)))
-        } else {
-            stop("'MARGIN' must be 1 or 2")
-        }
-
-        # Loop over blocks of 'x' and write to 'sink'.
-        blockApplyWithRealization(
-            x = x,
-            FUN = .collapseMatrixLike,
-            idx = idx,
-            MARGIN = MARGIN,
-            sink = sink,
-            x_grid = x_grid,
-            sink_grid = sink_grid,
-            BPREDO = BPREDO,
-            BPPARAM = BPPARAM)
-
-        # Return as DelayedMatrix object
-        as(sink, "DelayedArray")
+    if (anyNA(group)) {
+        warning("missing values for 'group'")
     }
-)
+    ugroup <- unique(group)
+    if (reorder) {
+        ugroup <- sort(ugroup, na.last = TRUE, method = "quick")
+    }
+    idx <- split(seq_along(group), group)[ugroup]
+    if (ncol(x)) {
+        ans <- endoapply(x, function(xx) {
+            sapply(X = idx, function(i) unique(xx[i]))
+        })
+        rownames(ans) <- names(idx)
+        return(ans)
+    }
+    DataFrame(row.names = names(idx))
+}
 
 # Exported functions -----------------------------------------------------------
 
-collapseBSseq <- function(BSseq, columns) {
+# TODO: Remove `replace`? It'd be a bad idea to use replace = TRUE if `dir` is
+#       the same as the current dir for the BSseq object.
+# NOTE: This is similar to edgeR::sumTechReps().
+# TODO: Make optional the collapsing of colData?
+# TODO: Document (and warn) that coef and se.coef aren't collapsed?
+collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
+                          dir = tempfile("BSseq"), replace = FALSE,
+                          chunkdim = NULL, level = NULL,
+                          type = c("double", "integer")) {
+
+    # Argument checks ----------------------------------------------------------
+
+    if (!anyDuplicated(group)) {
+        return(BSseq)
+    }
     if (hasBeenSmoothed(BSseq)) {
         warning("Collapsing a smoothed BSseq object. You will need to ",
                 "re-smooth using 'BSmooth()' on the returned object.")
     }
-
-    # Construct index between current samples and collapsed samples
-    stopifnot(is.character(columns))
-    if (is.null(names(columns)) && length(columns) != ncol(BSseq)) {
-        stop("if `columns' does not have names, it needs to be of the same ",
-             "length as `BSseq` has columns (samples)")
+    if (length(group) != NCOL(BSseq)) {
+        stop("incorrect length for 'group'")
     }
-    if (!is.null(names(columns)) &&
-        !all(names(columns) %in% sampleNames(BSseq))) {
-        stop("if `columns` has names, they need to be sampleNames(BSseq)")
+    if (anyNA(group)) {
+        warning("missing values for 'group'")
     }
-    if (is.null(names(columns))) {
-        columns.idx <- seq_len(ncol(BSseq))
+    # Set appropriate BACKEND and check compatability with BPPARAM.
+    BACKEND <- .getBSseqBackends(BSseq)
+    if (!.areBackendsInMemory(BACKEND)) {
+        if (!.isSingleMachineBackend(BPPARAM)) {
+            stop("The parallelisation strategy must use a single machine ",
+                 "when using an on-disk realization backend.\n",
+                 "See help(\"BSmooth\") for details.",
+                 call. = FALSE)
+        }
     } else {
-        columns.idx <- match(names(columns), sampleNames(BSseq))
+        if (!is.null(BACKEND)) {
+            # NOTE: Currently do not support any in-memory realization
+            #       backends. If 'BACKEND' is NULL then an ordinary matrix
+            #       is returned rather than a matrix-backed DelayedMatrix.
+            stop("The '", BACKEND, "' realization backend is not ",
+                 "supported.\n",
+                 "See help(\"BSmooth\") for details.",
+                 call. = FALSE)
+        }
     }
-    idx <- split(columns.idx, columns)
+    # TODO: Additional argument checks (e.g., `replace`,
+    #       HDF5Array:::.create_dir)
 
-    # Collapse 'M' and 'Cov' matrices
-    M <- .collapseMatrixLike(
-        x = assay(BSseq, "M", withDimnames = FALSE),
-        idx = idx,
-        MARGIN = 1L)
-    Cov <- .collapseMatrixLike(
-        x = assay(BSseq, "Cov", withDimnames = FALSE),
-        idx = idx,
-        MARGIN = 1L)
+    # Collapse 'M' and 'Cov' matrices ------------------------------------------
 
-    # Construct BSseq object
-    # TODO: Check sampleNames are preserved (could extract from names(idx) and
-    #       pass down to constructors).
+    h5_path <- file.path(dir, "assays.h5")
+    M <- colsum(
+        x = getCoverage(BSseq, type = "M", withDimnames = FALSE),
+        group = group,
+        reorder = FALSE,
+        BPPARAM = BPPARAM,
+        filepath = h5_path,
+        name = "M",
+        chunkdim = chunkdim,
+        level = level,
+        type = type)
+    Cov <- colsum(
+        x = getCoverage(BSseq, type = "Cov", withDimnames = FALSE),
+        group = group,
+        reorder = FALSE,
+        BPPARAM = BPPARAM,
+        filepath = h5_path,
+        name = "Cov",
+        chunkdim = chunkdim,
+        level = level,
+        type = type)
+
+    # Collapse 'colData' -------------------------------------------------------
+
+    colData <- .collapseColData(
+        x = colData(BSseq),
+        group = group,
+        reorder = FALSE)
+
+    # Construct BSseq object, saving it if it is HDF5-backed -------------------
+
     se <- SummarizedExperiment(
-        assays = SimpleList(M = M, Cov = Cov),
+        assays = SimpleList(M = unname(M), Cov = unname(Cov)),
         rowRanges = rowRanges(BSseq),
-        colData = DataFrame(row.names = unique(columns)))
-    .BSseq(se)
+        colData = colData)
+    # TODO: Is there a way to use the internal constructor with `check = FALSE`?
+    #       Don't need to check M and Cov because this has already happened
+    #       when files were parsed.
+    # .BSseq(se, trans = function(x) NULL, parameters = list())
+    bsseq <- new2("BSseq", se, check = FALSE)
+    if (identical(BACKEND, "HDF5Array")) {
+        # NOTE: Save BSseq object; mimicing
+        #       HDF5Array::saveHDF5SummarizedExperiment().
+        x <- bsseq
+        x@assays <- HDF5Array:::.shorten_h5_paths(x@assays)
+        saveRDS(x, file = file.path(dir, "se.rds"))
+    }
+    bsseq
 }
