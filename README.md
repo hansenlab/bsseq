@@ -4,7 +4,6 @@ This is the developer version of Bioconductor package [bsseq](http://bioconducto
 ```r
 if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager")
-useDevel(TRUE)
 BiocManager::install('bsseq')
 ```
 
