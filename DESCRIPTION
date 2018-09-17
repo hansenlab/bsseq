@@ -43,7 +43,9 @@ Suggests:
     rmarkdown,
     knitr,
     Matrix,
-    doParallel
+    doParallel,
+    rtracklayer,
+    BSgenome.Hsapiens.UCSC.hg38
 Collate:
     utils.R
     hasGRanges.R
