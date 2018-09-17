@@ -1,6 +1,23 @@
 \name{bsseqnews}
 \title{bsseq news}
 \encoding{UTF-8}
+\section{Version 1.17.x}{
+  \itemize{
+    \item{\code{BSseq()} will no longer reorder inputs. Previously, the
+    returned \emph{BSseq} object was ordered by ordering the loci, although
+    this behaviour was not documented. \code{BSseq()} may still filter out loci
+    if \code{rmZeroCov = FALSE} or collapse loci if
+    \code{strandCollapse = FALSE} or duplicate loci are detected, but the
+    relative order of loci in the output will match that of the input.
+    }
+    \item{Fix bug with \code{maxGap} argument of \code{BSmooth()}. The bug
+    meant that the 'maximum gap between two methylation loci' was incorrectly
+    set to \code{2 * maxGap + 1} instead of \code{maxGap}. This likely did not
+    affect results for users who left the default value of \code{maxGap = 10^8}
+    but may have affected results for small values of \code{maxGap}.
+    }
+  }
+}
 
 \section{Version 1.13.x}{
   \itemize{

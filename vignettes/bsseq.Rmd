@@ -164,7 +164,7 @@ getCoverage(BStmp2)
 `collapseBSseq` performs the often useful task of adding several columns of a `BSseq` object.  This is often used in the beginning of an analysis where each column may correspond to a lane and several such columns represents the data for a single biological sample.
 
 ```{r data-collapse}
-collapseBSseq(BStmp, columns = c("A", "A", "B"))
+collapseBSseq(BStmp, group = c("A", "A", "B"))
 ``` 
 
 ## Obtaining coverage (methylation)

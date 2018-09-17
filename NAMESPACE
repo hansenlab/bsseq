@@ -3,47 +3,54 @@
 ##
 
 import(methods)
+import(S4Vectors)
+import(IRanges)
+import(GenomicRanges)
+import(SummarizedExperiment)
+import(DelayedArray)
+import(HDF5Array)
+import(BiocParallel)
+import(limma)
 importFrom(BiocGenerics, "anyDuplicated", "cbind", "colnames",
            "combine", "density", "intersect", "lapply", "ncol",
            "nrow", "order", "paste", "pmax", "pmin", "rbind",
            "Reduce", "rep.int", "rownames", "sapply", "setdiff",
-           "strand", "strand<-", "union", "unique", "updateObject")
+           "strand", "strand<-", "union", "unique", "updateObject", "unstrand")
 importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "predict", "preplot", "qchisq",
-           "qnorm", "qqplot", "qunif", "cov2cor",
-           "plogis")
+           "qqplot", "qunif", "cov2cor",
+           "setNames")
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
            "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
 import(parallel)
 importFrom(locfit, "locfit", "lp")
 importFrom(DelayedMatrixStats, "rowSds", "rowVars", "colMeans2", "colSums2",
-           "rowSums2", "rowMeans2")
-import(IRanges)
-import(GenomicRanges)
-import(SummarizedExperiment)
+           "rowSums2", "rowMeans2", "rowAlls", "rowsum", "colsum")
+
 importFrom(scales, "alpha")
 importClassesFrom(Biobase, "AnnotatedDataFrame")
 importMethodsFrom(Biobase, "annotatedDataFrameFrom",
                   "pData", "pData<-",
                   "sampleNames", "sampleNames<-")
 importFrom(Biobase, "validMsg")
-importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo", "seqinfo<-",
-                  "seqnames", "seqnames<-", "seqlevels", "seqlevels<-")
-import(S4Vectors)
+importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo",
+                  "seqinfo<-", "seqnames", "seqnames<-", "seqlevels",
+                  "seqlevels<-", "sortSeqlevels")
+importFrom(GenomeInfoDb, "Seqinfo")
 importFrom(gtools, "combinations")
-importFrom(data.table, "fread", "setnames")
-importFrom(R.utils, "isGzipped", "gunzip")
-import(limma)
+# NOTE: data.table has some NAMESPACE clashes with functions in Bioconductor,
+#       e.g., shift(). If new ones are discovered, add them to this list.
+import(data.table, except = c(shift, first, second))
 importFrom(permute, "shuffleSet", "how")
-importClassesFrom(DelayedArray, "DelayedArray", "DelayedMatrix")
-importFrom(DelayedArray, "DelayedArray", "plogis", "pmin2", "pmax2", "rowMaxs",
-           "rowMins")
-importClassesFrom(HDF5Array, "HDF5Array")
+importFrom(Biostrings, "DNAString", "vmatchPattern", "reverseComplement")
+importFrom(utils, "read.delim")
+importFrom(BSgenome, "vmatchPattern")
+importFrom(tools, "file_path_as_absolute")
+importFrom(R.utils, "isGzipped", "isBzipped", "gunzip", "bunzip2")
 
 ##
 ## Exporting
 ##
-
 
 exportClasses("hasGRanges",
               "BSseq",
@@ -74,7 +81,8 @@ export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
        "read.umtab", "read.umtab2", "read.bsmooth", "read.bismark",
        "poissonGoodnessOfFit", "binomialGoodnessOfFit",
        "data.frame2GRanges", "BSseqTstat",
-       "BSseqStat")
+       "BSseqStat",
+       "findLoci")
 
 S3method("print", "chisqGoodnessOfFit")
 S3method("plot", "chisqGoodnessOfFit")
@@ -86,3 +94,5 @@ S3method("plot", "BSseqTstat")
 
 exportMethods("assays", "assayNames")
 
+# C++ code registration
+useDynLib(bsseq, .registration = TRUE, .fixes = "cxx_")

@@ -47,7 +47,10 @@ If you use this package, please cite our BSmooth paper [@Hansen:2012].
 The first step of the analysis is to smooth the data
 
 ```{r smooth,eval=FALSE}
-BS.cancer.ex.fit <- BSmooth(BS.cancer.ex, mc.cores = 1, verbose = TRUE)
+BS.cancer.ex.fit <- BSmooth(
+    BSseq = BS.cancer.ex, 
+    BPPARAM = MulticoreParam(workers = 1), 
+    verbose = TRUE)
 ``` 
 This particular piece of code is not being run when the vignette is being created.  It takes roughly 2 minutes per sample.  If you have 6 cores available, use `mc.cores = 6` and the total run time will be roughly 2 minutes.  Note that setting `mc.cores` to a value greater than 1 is not support on MS Windows due to a limitation of the operating system.
 

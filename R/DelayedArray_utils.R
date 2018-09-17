@@ -44,48 +44,116 @@
     is(x@seed, "matrix")
 }
 
-# NOTE: Equivalent to rowSums2(x[, j, drop = FALSE]) but does it using a
-#       delayed operation and always returns a nrow(x) x 1 DelayedMatrix
-.delayed_rowSums2 <- function(x, j) {
-    Reduce(`+`, lapply(j, function(jj) x[, jj, drop = FALSE]))
-}
-
-# NOTE: Equivalent to colSums2(x[i, , drop = FALSE]) but does it using a
-#       delayed operation and always returns a 1 x ncol(x) DelayedMatrix
-.delayed_colSums2 <- function(x, i) {
-    Reduce(`+`, lapply(i, function(ii) x[ii, , drop = FALSE]))
-}
-
-# MARGIN = 1: collapse using rowSums
-# MARGIN = 2: collapse using colSums
-.collapseDelayedMatrix <- function(x, sp, MARGIN, BACKEND = NULL) {
-    stopifnot(is(x, "DelayedMatrix"))
-    if (MARGIN == 1) {
-        if (is.null(BACKEND)) {
-            collapsed_x <- do.call(cbind, lapply(sp, function(j) {
-                rowSums2(x[, j, drop = FALSE])
-            }))
-        } else {
-            collapsed_x <- do.call(cbind, lapply(sp, function(j) {
-                .delayed_rowSums2(x, j)
-            }))
-            # NOTE: Need to manually add colnames when using this method
-            colnames(collapsed_x) <- names(sp)
-        }
-    } else if (MARGIN == 2) {
-        if (is.null(BACKEND)) {
-            collapsed_x <- do.call(rbind, lapply(sp, function(i) {
-                colSums2(x[i, , drop = FALSE])
-            }))
-        } else {
-            collapsed_x <- do.call(rbind, lapply(sp, function(i) {
-                .delayed_colSums2(x, i)
-            }))
-            # NOTE: Need to manually add rownames when using this method
-            rownames(collapsed_x) <- names(sp)
-        }
+.zero_type <- function(type) {
+    if (identical(type, "integer")) {
+        fill <- 0L
+    } else if (identical(type, "double")) {
+        fill <- 0
     } else {
-        stop("'MARGIN' must be 1 or 2")
+        stop("'type' = ", type, " is not supported")
     }
-    realize(collapsed_x, BACKEND = BACKEND)
+}
+
+# Missing methods --------------------------------------------------------------
+
+# NOTE: Copied from minfi
+# TODO: Perhaps move this to DelayedMatrixStats?
+# TODO: DelayedArray::type() for all RealizationSink subclasses
+setMethod("type", "HDF5RealizationSink", function(x) {
+    x@type
+})
+# NOTE: Copied from minfi
+# TODO: Perhaps move this to DelayedMatrixStats?
+setMethod("type", "arrayRealizationSink", function(x) {
+    DelayedArray::type(x@result_envir$result)
+})
+# NOTE: Copied from minfi
+# TODO: Perhaps move this to DelayedMatrixStats?
+setMethod("type", "RleRealizationSink", function(x) {
+    x@type
+})
+# NOTE: Copied from minfi
+# TODO: Perhaps move this to DelayedMatrixStats?
+# TODO: dimnames() for all RealizationSink subclasses
+setMethod("dimnames", "arrayRealizationSink", function(x) {
+    dimnames(x@result_envir$result)
+})
+
+# Advanced block processing routines -------------------------------------------
+
+# NOTE: Copy of minfi:::blockApplyWithRealization()
+# TODO: Perhaps move this to DelayedMatrixStats?
+# NOTE: DelayedArray::blockApply() with the option to write the blocks to
+#       'sink'. Useful, for example, to apply a function across column-blocks
+#       of a DelayedMatrix, write these results to disk, and then wrap
+#       these in a DelayedMatrix.
+# TODO: See https://github.com/Bioconductor/DelayedArray/issues/10
+blockApplyWithRealization <- function(x, FUN, ..., sink = NULL, x_grid = NULL,
+                                      sink_grid = NULL, BPREDO = list(),
+                                      BPPARAM = bpparam()) {
+    FUN <- match.fun(FUN)
+
+    # Check conformable dots_grids and sinks_grids
+    x_grid <- DelayedArray:::.normarg_grid(x_grid, x)
+    sink_grid <- DelayedArray:::.normarg_grid(sink_grid, sink)
+    if (!identical(dim(x_grid), dim(sink_grid))) {
+        stop("non-conformable 'x_grid' and 'sink_grid'")
+    }
+
+    # Loop over blocks of `x` and write to `sink`
+    nblock <- length(x_grid)
+    bplapply(seq_len(nblock), function(b) {
+        if (DelayedArray:::get_verbose_block_processing()) {
+            message("Processing block ", b, "/", nblock, " ... ",
+                    appendLF = FALSE)
+        }
+        x_viewport <- x_grid[[b]]
+        sink_viewport <- sink_grid[[b]]
+        block <- read_block(x, x_viewport)
+        attr(block, "from_grid") <- x_grid
+        attr(block, "block_id") <- b
+        block_ans <- FUN(block, ...)
+        # NOTE: This is the only part different from DelayedArray::blockApply()
+        if (!is.null(sink)) {
+            write_block(x = sink, viewport = sink_viewport, block = block_ans)
+            block_ans <- NULL
+        }
+        if (DelayedArray:::get_verbose_block_processing()) {
+            message("OK")
+        }
+    },
+    BPREDO = BPREDO,
+    BPPARAM = BPPARAM)
+}
+
+# TODO: Needed?
+.getSEDir <- function(x) {
+    paths <- lapply(assays(x, withDimnames = FALSE), function(a) {
+        try(path(a), silent = TRUE)
+    })
+    if (any(vapply(paths, is, logical(1L), "try-error"))) {
+        stop("Cannot extract 'dir'.")
+    }
+    unique_paths <- unique(unlist(paths, use.names = FALSE))
+    if (length(unique_paths) > 1) {
+        stop("Assay data spread across multiple HDF5 files.")
+    }
+    dirs <- dirname(unlist(paths, use.names = FALSE))
+    unique(dirs)
+}
+
+# Should return TRUE for BSseq object created with read.bismark() or saved with
+# HDF5Array::saveHDF5SummarizedExperiment().
+# TODO: Check dirname(paths[[1L]]) also contains 'se.rds'? It looks like dir
+#       can contain other files besides these; check.
+.isHDF5BackedBSseqUpdatable <- function(x) {
+    stopifnot(is(x, "BSseq"))
+    if (!identical(.getBSseqBackends(x), "HDF5Array")) {
+        return(FALSE)
+    }
+    paths <- vapply(assays(x, withDimnames = FALSE), path, character(1L))
+    if (all(paths == paths[[1L]]) && all(basename(paths) == "assays.h5")) {
+        return(TRUE)
+    }
+    FALSE
 }

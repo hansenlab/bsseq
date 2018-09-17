@@ -141,14 +141,15 @@ slots for representing smoothed data. This class is an extension of
     \item{\code{strandCollapse(BSseq, shift = TRUE)}}{
 
       This function operates on a \code{BSseq} objects which has
-      stranded loci (ie. loci where the strand is one of \sQuote{+} pr
-      \sQuote{-}).  It will collapse the methylation and coverage
-      information across the two strands, into one position.  The
-      argument \code{shift} indicates whether the positions for the loci
-      on the reverse strand should be shifted one (ie. the positions for
-      these loci are the positions of the \sQuote{G} in the
-      \sQuote{CpG}; this is the case for Bismark output for example.}
+      stranded loci (i.e. loci where the strand is one of \sQuote{+} or
+      \sQuote{-}). It will collapse the methylation and coverage
+      information across the two strands, unstranding the loci in the process
+      and potentially re-ordering them.
 
+      The argument \code{shift} indicates whether the positions for the loci
+      on the reverse strand should be shifted one (i.e. the positions for
+      these loci are the positions of the \sQuote{G} in the
+      \sQuote{CpG}; this is the case for Bismark output for example).}
   }
 }
 \section{Coercion}{
@@ -183,22 +184,17 @@ M <- matrix(1:9, 3,3)
 colnames(M) <- c("A1", "A2", "A3")
 BStest <- BSseq(pos = 1:3, chr = c("chr1", "chr2", "chr1"), M = M, Cov = M + 2)
 chrSelectBSseq(BStest, seqnames = "chr1", order = TRUE)
-collapseBSseq(BStest, columns = c("A1" = "A", "A2" = "A", "A3" = "B"))
+collapseBSseq(BStest, group = c("A", "A", "B"))
 
 #-------------------------------------------------------------------------------
 # An example using a HDF5-backed BSseq object
 #
-library(HDF5Array)
-# See ?HDF5Array::writeHDF5Array for details
-hdf5_M <- writeHDF5Array(M)
-# NOTE: HDF5Array::writeHDF5Array() doesn't preserve dimnames, so have to add
-#       these manually
-dimnames(hdf5_M) <- dimnames(M)
-hdf5_BStest <- BSseq(pos = 1:3,
-                     chr = c("chr1", "chr2", "chr1"),
-                     M = hdf5_M,
-                     Cov = hdf5_M + 2)
+hdf5_BStest <- realize(BStest, "HDF5Array")
 chrSelectBSseq(hdf5_BStest, seqnames = "chr1", order = TRUE)
-collapseBSseq(hdf5_BStest, columns = c("A1" = "A", "A2" = "A", "A3" = "B"))
+collapseBSseq(
+    BSseq = hdf5_BStest,
+    group = c("A", "A", "B"),
+    BACKEND = "HDF5Array",
+    type = "integer")
 }
 \keyword{classes}
