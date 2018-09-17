@@ -2,19 +2,27 @@ context("BSmooth")
 
 test_that("Errors on bad input", {
     expect_error(
-        BSmooth(as(bsseq_test, "SummarizedExperiment")),
-        "'BSseq' must be a BSseq object")
-    expect_error(BSmooth(rev(bsseq_test)), "'BSseq' must be sorted")
+        object = BSmooth(
+            BSseq = as(bsseq_test, "SummarizedExperiment"),
+            BPPARAM = SerialParam()),
+        regexp = "'BSseq' must be a BSseq object")
     expect_error(
-        BSmooth(resize(bsseq_test, 2)),
-        "All loci in 'BSseq' must have width == 1")
+        object =  BSmooth(rev(bsseq_test), BPPARAM = SerialParam()),
+        regexp = "'BSseq' must be sorted")
+    expect_error(
+        object = BSmooth(resize(bsseq_test, 2), BPPARAM = SerialParam()),
+        regexp = "All loci in 'BSseq' must have width == 1")
 })
 
 test_that("BSmooth properly inherits 'dir'", {
-    infile <- system.file("extdata", "test_data.fastq_bismark.bismark.cov.gz",
-                          package = "bsseq")
-    bsseq <- read.bismark(files = infile, BACKEND = "HDF5Array")
-    bsseq <- BSmooth(bsseq)
+    infile <- system.file(
+        "extdata", "test_data.fastq_bismark.bismark.cov.gz",
+        package = "bsseq")
+    bsseq <- read.bismark(
+        files = infile,
+        BACKEND = "HDF5Array",
+        BPPARAM = SerialParam())
+    bsseq <- BSmooth(bsseq, BPPARAM = SerialParam())
     expect_is(bsseq, "BSseq")
     expect_true(hasBeenSmoothed(bsseq))
     expect_error(

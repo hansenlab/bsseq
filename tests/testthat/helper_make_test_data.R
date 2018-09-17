@@ -14,7 +14,7 @@ expect_equivalent_SE <- function(SE1, SE2) {
     assays(SE1) <- endoapply(assays(SE1), as.matrix)
     assays(SE2) <- endoapply(assays(SE2), as.matrix)
     if (isTRUE(all.equal(SE1, SE2))) {
-        return(all.equal(assays(SE1), assays(SE2)))
+        return(invisible(all.equal(assays(SE1), assays(SE2))))
     }
-    FALSE
+    invisible(FALSE)
 }
