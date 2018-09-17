@@ -39,21 +39,17 @@ setValidity2("BSseq", function(object) {
     }
     msg <- validMsg(msg, .checkAssayNames(object, c("Cov", "M")))
 
-    # TODO: Are colnames strictly necessary?
-    if (is.null(colnames(object))) {
-        msg <- validMsg(msg, "colnames (aka sampleNames) need to be set")
+    msg <- validMsg(
+        msg = msg,
+        result = .checkMandCov(
+            M = assay(object, "M", withDimnames = FALSE),
+            Cov = assay(object, "Cov", withDimnames = FALSE)))
+
+    if (is.null(msg)) {
+        TRUE
+    } else {
+        msg
     }
-
-    assay_rownames <- lapply(assays(object), rownames)
-    if (!all(S4Vectors:::sapply_isNULL(assay_rownames))) {
-        msg <- validMsg(msg, "unnecessary rownames on one-or-more assays")
-    }
-
-    msg <- validMsg(msg,
-                    .checkMandCov(assay(object, "M", withDimnames = FALSE),
-                                  assay(object, "Cov", withDimnames = FALSE)))
-
-    if (is.null(msg)) TRUE else msg
 })
 
 # Internal functions -----------------------------------------------------------
@@ -69,135 +65,113 @@ setValidity2("BSseq", function(object) {
 
 # Exported functions -----------------------------------------------------------
 
-# TODO: Document that if duplicate loci are detected then the output `M` and
-#       `Cov` will be numeric even if input `M` and `Cov` were integer.
 # TODO: BSseq() is arguably a bad constructor. It doesn't return a valid BSseq
 #       object when called without any arguments. It also does some pretty
 #       complicated parsing of the inputs. But we're stuck with it because it's
 #       been around for a long time.
 BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
-                  trans = NULL, parameters = NULL, pData = NULL,
-                  gr = NULL, pos = NULL, chr = NULL, sampleNames = NULL,
+                  trans = NULL, parameters = NULL, pData = NULL, gr = NULL,
+                  pos = NULL, chr = NULL, sampleNames = NULL,
                   rmZeroCov = FALSE) {
 
-    # Process 'gr', or 'pos' and 'chr'
+    # Argument checks ----------------------------------------------------------
+
+    # Process assays.
+    # NOTE: Nothing to do for 'coef', and 'se.coef'.
+    if (is.null(M) || is.null(Cov)) {
+        stop("Need 'M' and 'Cov'.")
+    }
+    # Process 'trans' and 'parameters'.
+    if (is.null(trans)) {
+        trans <- function(x) NULL
+    }
+    if (is.null(parameters)) {
+        parameters <- list()
+    }
+    # Process 'sampleNames' and 'pData'.
+    if (is.null(sampleNames)) {
+        if (is.null(pData)) {
+            # BSseq object will have no colnames.
+            pData <- S4Vectors:::new_DataFrame(nrows = ncol(M))
+        } else {
+            # BSseq object will have 'sampleNames' as colnames.
+            pData <- DataFrame(row.names = sampleNames)
+        }
+    } else {
+        if (is.null(pData)) {
+            # BSseq object will have 'sampleNames' as colnames.
+            pData <- DataFrame(row.names = sampleNames)
+        } else {
+            if (is.null(rownames(pData))) {
+                rownames(pData) <- sampleNames
+            } else {
+                stopifnot(identical(rownames(pData), sampleNames))
+            }
+        }
+    }
+    # Process 'gr', 'pos', and 'chr'.
     if (is.null(gr)) {
         if (is.null(pos) || is.null(chr)) {
             stop("Need 'pos' and 'chr' if 'gr' not supplied.")
         }
         gr <- GRanges(seqnames = chr, ranges = IRanges(start = pos, width = 1L))
     }
-    if (!is(gr, "GRanges")) stop("'gr' needs to be a GRanges.")
-    if (any(width(gr) != 1L)) stop("'gr' needs to have widths of 1.")
+    if (!is(gr, "GRanges")) {
+        stop("'gr' needs to be a GRanges.")
+    }
+    # Process 'rmZeroCov'.
+    stopifnot(isTRUEorFALSE(rmZeroCov))
 
-    # Process 'M' and 'Cov'
-    if (is.null(M) || is.null(Cov)) stop("Need 'M' and 'Cov'.")
-    if (length(gr) != nrow(M) ||
-        length(gr) != nrow(Cov) ||
-        ncol(Cov) != ncol(M)) {
-        stop("'gr', 'M' and 'Cov' need to have compatible dimensions.")
-    }
-    if (!is.null(rownames(M))) rownames(M) <- NULL
-    if (!is.null(rownames(Cov))) rownames(Cov) <- NULL
-    if (!is.null(names(gr))) names(gr) <- NULL
+    # Collapse duplicate loci --------------------------------------------------
 
-    # Process 'sampleNames' and 'pData'
-    if (is.null(pData)) {
-        if (is.null(sampleNames)) {
-            if (!is.null(colnames(M))) {
-                sampleNames <- colnames(M)
-            } else if (!is.null(colnames(Cov))) {
-                sampleNames <- colnames(Cov)
-            } else {
-                sampleNames <- paste0("V", seq_len(ncol(M)))
-            }
-        }
-        pData <- DataFrame(row.names = sampleNames)
-    } else {
-        pData <- as(pData, "DataFrame")
-    }
-    if (is.null(sampleNames) && !is.null(pData) && !is.null(rownames(pData))) {
-        sampleNames <- rownames(pData)
-    }
-    if (length(unique(sampleNames)) != ncol(M)) {
-        stop("sampleNames need to be unique and of the right length.")
-    }
-
-    # TODO: Is this really necessary? It complicates things because HDF5Matrix
-    #       will be degraded to a DelayedMatrix
-    # Add column names to assays
-    if (is.null(colnames(M)) || any(sampleNames != colnames(M))) {
-        colnames(M) <- sampleNames
-    }
-    if (is.null(colnames(Cov)) || any(sampleNames != colnames(Cov))) {
-        colnames(Cov) <- sampleNames
-    }
-    if (!is.null(coef)) {
-        if (nrow(coef) != nrow(M) || ncol(coef) != ncol(M)) {
-            stop("'coef' does not have the right dimensions")
-        }
-        if (is.null(colnames(coef)) || any(sampleNames != colnames(coef))) {
-            colnames(coef) <- sampleNames
-        }
-        if (!is.null(rownames(coef))) {
-            rownames(coef) <- NULL
-        }
-    }
-    if (!is.null(se.coef)) {
-        if (nrow(se.coef) != nrow(M) || ncol(se.coef) != ncol(M)) {
-            stop("'se.coef' does not have the right dimensions")
-        }
-        if (is.null(colnames(se.coef)) ||
-            any(sampleNames != colnames(se.coef))) {
-            colnames(se.coef) <- sampleNames
-        }
-        if (!is.null(rownames(se.coef))) {
-            rownames(se.coef) <- NULL
-        }
-    }
-
-    # Optionally, remove positions with Cov == 0
-    if (rmZeroCov) {
-        loci_with_zero_cov <- rowAlls(Cov, value = 0)
-        if (any(loci_with_zero_cov)) {
-            gr <- gr[!loci_with_zero_cov]
-            M <- M[!loci_with_zero_cov, , drop = FALSE]
-            Cov <- Cov[!loci_with_zero_cov, , drop = FALSE]
-        }
-    }
-
-    # Collapse duplicate loci
-    if (any(duplicated(gr))) {
+    is_duplicated <- duplicated(gr)
+    if (any(is_duplicated)) {
         warning("Detected duplicate loci. Collapsing counts in 'M' and 'Cov' ",
                 "at these positions.")
         if (!is.null(coef) || !is.null(se.coef)) {
-            stop("Cannot collapse when 'coef' or 'se.coef' are present.")
+            stop("Cannot collapse when 'coef' or 'se.coef' are non-NULL.")
         }
-        unique_gr <- unique(gr)
-        ol <- findOverlaps(unique_gr, gr, type = "equal")
-        gr <- unique_gr
-        # TODO: Can we avoid making `idx`?
-        idx <- as.list(ol)
-        M <- .collapseMatrixLike(M, idx, MARGIN = 2L)
-        Cov <- .collapseMatrixLike(Cov, idx, MARGIN = 2L)
+        loci <- gr[!is_duplicated]
+        ol <- findOverlaps(gr, loci, type = "equal")
+        M <- rowsum(x = M, group = subjectHits(ol), reorder = FALSE)
+        rownames(M) <- NULL
+        Cov <- rowsum(x = Cov, group = subjectHits(ol), reorder = FALSE)
+        rownames(Cov) <- NULL
+    } else {
+        loci <- gr
     }
 
-    # Construct BSseq object
+    # Optionally, remove positions with zero coverage --------------------------
+
+    if (rmZeroCov) {
+        loci_with_zero_cov <- rowAlls(Cov, value = 0)
+        if (any(loci_with_zero_cov)) {
+            loci_with_nonzero_cov <- !loci_with_zero_cov
+            gr <- gr[loci_with_nonzero_cov]
+            M <- M[loci_with_nonzero_cov, , drop = FALSE]
+            Cov <- Cov[loci_with_nonzero_cov, , drop = FALSE]
+            coef <- coef[loci_with_nonzero_cov, , drop = FALSE]
+            se.coef <- se.coef[loci_with_nonzero_cov, , drop = FALSE]
+        }
+    }
+
+    # Construct BSseq object ---------------------------------------------------
+
     assays <- SimpleList(M = M, Cov = Cov, coef = coef, se.coef = se.coef)
     assays <- assays[!S4Vectors:::sapply_isNULL(assays)]
-    se <- SummarizedExperiment(assays = assays, rowRanges = gr, colData = pData)
-    if (is.null(parameters)) {
-        parameters <- list()
-    }
-    if (is.null(trans)) {
-        trans <- function(x) NULL
-    }
+    se <- SummarizedExperiment(
+        assays = assays,
+        rowRanges = loci,
+        colData = pData)
     .BSseq(se, trans = trans, parameters = parameters)
 }
 
-hasBeenSmoothed <- function(BSseq) "coef" %in% assayNames(BSseq)
+# Move to BSseq-utils?
+hasBeenSmoothed <- function(BSseq) {
+    "coef" %in% assayNames(BSseq)
+}
 
-# TODO: Document withDimnames
+# Move to BSseq-utils?
 getBSseq <- function(BSseq,
                      type = c("Cov", "M", "gr", "coef", "se.coef", "trans",
                               "parameters"),
@@ -206,33 +180,135 @@ getBSseq <- function(BSseq,
     if (type %in% c("M", "Cov")) {
         return(assay(BSseq, type, withDimnames = withDimnames))
     }
-    if (type %in% c("coef", "se.coef") && type %in% assayNames(BSseq)) {
-        return(assay(BSseq, type, withDimnames = withDimnames))
+    if (type %in% c("coef", "se.coef")) {
+        if (type %in% assayNames(BSseq)) {
+            return(assay(BSseq, type, withDimnames = withDimnames))
+        } else {
+            return(NULL)
+        }
     }
-    if (type %in% c("coef", "se.coef")) return(NULL)
-    if (type == "trans") return(BSseq@trans)
-    if (type == "parameters") return(BSseq@parameters)
-    if (type == "gr") return(BSseq@rowRanges)
-
+    if (type == "trans") {
+        return(BSseq@trans)
+    }
+    if (type == "parameters") {
+        return(BSseq@parameters)
+    }
+    if (type == "gr") {
+        return(BSseq@rowRanges)
+    }
 }
 
-strandCollapse <- function(BSseq, shift = TRUE) {
+# Move to BSseq-utils?
+strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
+                           BACKEND = getRealizationBackend(),
+                           dir = tempfile("BSseq"), replace = FALSE,
+                           chunkdim = NULL, level = NULL,
+                           type = c("double", "integer")) {
+
+    # Argument checks ----------------------------------------------------------
+
     if (all(runValue(strand(BSseq)) == "*")) {
-        warning("All loci are unstranded; nothing to collapse")
+        warning("All loci are unstranded, nothing to collapse.", call. = FALSE)
         return(BSseq)
     }
     if (!(all(runValue(strand(BSseq)) %in% c("+", "-")))) {
         stop("'BSseq' object has a mix of stranded and unstranded loci.")
     }
-    BS.forward <- BSseq[strand(BSseq) == "+"]
-    strand(BS.forward) <- "*"
-    BS.reverse <- BSseq[strand(BSseq) == "-"]
-    strand(BS.reverse) <- "*"
-    if (shift) rowRanges(BS.reverse) <- shift(rowRanges(BS.reverse), -1L)
-    sampleNames(BS.reverse) <- paste0(sampleNames(BS.reverse), "_REVERSE")
-    BS.comb <- combine(BS.forward, BS.reverse)
-    newBSseq <- collapseBSseq(BS.comb, columns = rep(sampleNames(BSseq), 2))
-    newBSseq
+    # Register 'BACKEND' and return to current value on exit.
+    # TODO: Is this strictly necessary?
+    current_BACKEND <- getRealizationBackend()
+    on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
+    setRealizationBackend(BACKEND)
+    # Check compatability of 'BPPARAM' with 'BACKEND'.
+    if (!.areBackendsInMemory(BACKEND)) {
+        if (!.isSingleMachineBackend(BPPARAM)) {
+            stop("The parallelisation strategy must use a single machine ",
+                 "when using an on-disk realization backend.\n",
+                 "See help(\"read.bismark\") for details.",
+                 call. = FALSE)
+        }
+    } else {
+        if (!is.null(BACKEND)) {
+            # NOTE: Currently do not support any in-memory realization
+            #       backends. If the realization backend is NULL then an
+            #       ordinary matrix is returned rather than a matrix-backed
+            #       DelayedMatrix.
+            stop("The '", BACKEND, "' realization backend is not supported.",
+                 "\n  See help(\"read.bismark\") for details.",
+                 call. = FALSE)
+        }
+    }
+    # If using HDF5Array as BACKEND, check remaining options are sensible.
+    if (identical(BACKEND, "HDF5Array")) {
+        # NOTE: Most of this copied from
+        #       HDF5Array::saveHDF5SummarizedExperiment().
+        if (!isSingleString(dir)) {
+            stop(wmsg("'dir' must be a single string specifying the path to ",
+                      "the directory where to save the BSseq object (the ",
+                      "directory will be created)."))
+        }
+        if (!isTRUEorFALSE(replace)) {
+            stop("'replace' must be TRUE or FALSE")
+        }
+        HDF5Array:::.create_dir(dir = dir, replace = replace)
+        h5_path <- file.path(dir, "assays.h5")
+    } else if (identical(BACKEND, NULL)) {
+        h5_path <- NULL
+    }
+
+    # Collapse loci ------------------------------------------------------------
+
+    loci <- rowRanges(BSseq)
+    if (shift) {
+        loci <- shift(loci, shift = as.integer(-1L * (strand(loci) == "-")))
+    }
+    collapsed_loci <- reduce(loci, min.gapwidth = 0L, ignore.strand = TRUE)
+
+    # Collapse 'M' and 'Cov' matrices ------------------------------------------
+
+    ol <- findOverlaps(loci, collapsed_loci, type = "equal")
+    group <- subjectHits(ol)
+    M <- rowsum(
+        x = assay(BSseq, "M", withDimnames = FALSE),
+        group = group,
+        # NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
+        reorder = TRUE,
+        BPPARAM = BPPARAM,
+        filepath = h5_path,
+        name = "Cov",
+        chunkdim = chunkdim,
+        level = level,
+        type = type)
+    Cov <- rowsum(
+        x = assay(BSseq, "Cov", withDimnames = FALSE),
+        group = group,
+        # NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
+        reorder = TRUE,
+        BPPARAM = BPPARAM,
+        filepath = h5_path,
+        name = "Cov",
+        chunkdim = chunkdim,
+        level = level,
+        type = type)
+
+    # Construct BSseq object, saving it if it is HDF5-backed -------------------
+
+    se <- SummarizedExperiment(
+        assays = SimpleList(M = unname(M), Cov = unname(Cov)),
+        rowRanges = collapsed_loci,
+        colData = colData(BSseq))
+    # TODO: Is there a way to use the internal constructor with `check = FALSE`?
+    #       Assuming input was valid, the output is valid, too.
+    # .BSseq(se, trans = function(x) NULL, parameters = list())
+    bsseq <- new2("BSseq", se, check = FALSE)
+    if (!is.null(BACKEND) && BACKEND == "HDF5Array") {
+        # NOTE: Save BSseq object; mimicing
+        #       HDF5Array::saveHDF5SummarizedExperiment().
+        x <- bsseq
+        x@assays <- HDF5Array:::.shorten_h5_paths(x@assays)
+        saveRDS(x, file = file.path(dir, "se.rds"))
+    }
+    bsseq
 }
 
 # Exported methods -------------------------------------------------------------
@@ -290,7 +366,8 @@ setReplaceMethod(
 setMethod("updateObject", "BSseq",
           function(object, ...) {
               # NOTE: identical() is too strong
-              if (isTRUE(all.equal(getBSseq(object, "trans"), .oldTrans))) {
+              if (hasBeenSmoothed(object) &
+                  isTRUE(all.equal(getBSseq(object, "trans"), .oldTrans))) {
                   object@trans <- plogis
               }
               if (is(object, "SummarizedExperiment")) {
@@ -298,14 +375,15 @@ setMethod("updateObject", "BSseq",
                   object <- callNextMethod()
                   return(object)
               } else {
-                  BSseq(gr = object@gr,
-                        M = object@M,
-                        Cov = object@Cov,
-                        coef = object@coef,
-                        se.coef = object@se.coef,
-                        trans = object@trans,
-                        parameters = object@parameters,
-                        pData = object@phenoData@data)
+                  BSseq(
+                      gr = object@gr,
+                      M = object@M,
+                      Cov = object@Cov,
+                      coef = object@coef,
+                      se.coef = object@se.coef,
+                      trans = object@trans,
+                      parameters = object@parameters,
+                      pData = object@phenoData@data)
               }
           }
 )
