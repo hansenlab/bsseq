@@ -114,6 +114,7 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
 
 # Exported functions -----------------------------------------------------------
 
+# TODO: verbose = TRUE should report timings.
 # TODO: BSmooth() should warn if BSseq object contains mix of strands.
 # TODO: Consider having BSmooth() create a 'smoothed' assay in addition to or
 #       instead of the 'coef' and 'se.coef' assays.
