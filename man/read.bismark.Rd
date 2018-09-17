@@ -13,12 +13,12 @@
              rmZeroCov = FALSE,
              strandCollapse = TRUE,
              BPPARAM = bpparam(),
-             BACKEND = getRealizationBackend()
-             dir = tempdir(),
+             BACKEND = getRealizationBackend(),
+             dir = tempfile("BSseq"),
              replace = FALSE,
              chunkdim = NULL,
              level = NULL,
-             verbose = TRUE)
+             verbose = getOption("verbose"))
 }
 \arguments{
   \item{files}{The path to the files created by running Bismark's methylation
@@ -53,7 +53,8 @@
     (Unix, Mac, and Windows, limited to single-machine clusters), and
     \linkS4class{BatchJobsParam} (Unix, Mac, Windows, only with the in-memory
     realization backend).
-    See sections 'Parallelization and progress  monitoring' and 'Realization backends' for further details.}
+    See sections 'Parallelization and progress  monitoring' and 'Realization
+    backends' for further details.}
   \item{BACKEND}{\code{NULL} or a single string specifying the name of the
     realization backend.
     When the backend is set to \code{NULL}, the \code{M} and \code{Cov} assays
@@ -80,59 +81,13 @@
     should be printed (default \code{TRUE}).}
 }
 
-\section{Efficient use of \code{read.bismark()}}{
-  We recommend the following to achieve fast and efficient importing of Bismark files:
-
-  \itemize{
-    \item Specify the set of methylation loci via the \code{loci} argument.
-    \item Leave \code{rmZeroCov = FALSE}.
-    \item Use a \code{BPPARAM} with a large number of workers (cores).
-    \item Use \code{BACKEND = "HDF5Array"}.
-  }
-
-  Each point is discussed below.
-  \subsection{Specifying \code{loci}}{
-    Specifying the set of methylation loci via the \code{loci} argument means that \code{read.bismark()} does not need to first parse all \code{files} to identify the set of candidate loci.
-    Provided that \code{rmZeroCov = FALSE}, this means that each file is only read once.
-    This may be a considerable saving when there are a large number of \code{files}.
-
-    \strong{If you are unsure whether the below-described shortcuts apply to your data, leave \code{loci = NULL} and let \code{read.bismark()} identify the set of candidate loci from \code{files}.}
-
-    If all \code{files} are 'genome wide cytosine reports' for samples aligned to the same reference genome, then all \code{files} contain the exact same set of methylation loci.
-    In this case, you may wish to first construct \code{loci} using the internal function \code{bsseq:::.readBismarkAsFWGRanges()} applied to a single file, e.g., \code{loci = bsseq:::.readBismarkAsFWGRanges(files[1], rmZeroCov, strandCollapse)}.
-
-    % TODO: Uncomment once findCytosines is exported and documented.
-    % Alternatively, you may wish to use the \code{\link{findCytosines}()} function to construct all methylation loci of interest (e.g., all CpGs) in your reference genome and then pass this via the \code{loci} argument.
-  }
-
-  \subsection{Leaving \code{rmZeroCov = FALSE}}{
-    If you set \code{rmZeroCov = TRUE}, then \code{read.bismark()} must first parse all the \code{files} to identify which loci have zero coverage in all samples and then filter these out from the set of candidate loci.
-    \strong{This will happen regardless of whether \code{loci} is \code{NULL} or is supplied as a \linkS4class{GenomicRanges} of candidate loci.}
-
-    Furthermore, any coverage-based filtering of methylation loci is best left until you have constructed your final \linkS4class{BSseq} object.
-    In our experience, the final \linkS4class{BSseq} object is often the product of combining multiple \linkS4class{BSseq} objects, each constructed with a separate call to \code{read.bismark()}.
-    In such cases, it is premature to use \code{rmZeroCov = TRUE} when running each \code{read.bismark()} and combining these objects will regretably often lead to an inefficiently constructed final \linkS4class{BSseq} object.
-  }
-
-  \subsection{Using a \code{BPPARAM} with a large number of workers (cores)}{
-    Each file can be processed on its own, so you can process in parallel as many files as you have workers. We have good experience using as many as 40 cores via \code{BPPARAM = MulticoreParam(workers = 40)}.}
-
-  \subsection{Using \code{BACKEND = "HDF5Array"}}{
-    By using the HDF5Array realization backend from \pkg{HDF5Array}, we reduce the amount of data that is kept in-memory at any one time.
-    Once each file is parsed, the data are written to the HDF5 file and are no longer needed in-memory.
-    When combined with multiple workers (cores), this means that each file will only need to read and retain in-memory 1 sample's worth of data at a time.
-
-    Conversely, if you opt for all data to be in-memory (via \code{BACKEND = NULL}), then each worker will pass each file's data back to the main process and memory usage will steadily accumulate to often unreasonable levels.
-    }
-}
-
 \section{File formats}{
   The format of each file is automatically detected using the internal function \code{bsseq:::.guessBismarkFileType()}.
-  Files ending in \code{.gz}, \code{.bz2}, \code{.xz}, or \code{.zip} will be automatically uncompressed.
+  Files ending in \code{.gz}, \code{.bz2}, \code{.xz}, or \code{.zip} will be automatically decompressed to \code{\link[base]{tempdir}()}.
   \subsection{Supported file formats}{
-     We strongly recommend that you use the 'genome wide cytosine report' output format
-     (\url{https://github.com/FelixKrueger/Bismark/tree/master/Docs#the-genome-wide-cytosine-report-optional-is-tab-delimited-in-the-following-format-1-based-coords}) as this includes trand information for each locus.
-     The 'coverage' output format (\url{https://github.com/FelixKrueger/Bismark/tree/master/Docs#the-coverage-output-looks-like-this-tab-delimited-1-based-genomic-coords}) is also supported, although all loci from these files will have their \code{\link[BiocGenerics]{strand}} set to \code{*} in the returned \linkS4class{BSseq} object because this file format does not include strand information.
+    Bismark's 'genome wide cytosine report' (\url{https://github.com/FelixKrueger/Bismark/tree/master/Docs#the-genome-wide-cytosine-report-optional-is-tab-delimited-in-the-following-format-1-based-coords}) and 'coverage' (\url{https://github.com/FelixKrueger/Bismark/tree/master/Docs#the-coverage-output-looks-like-this-tab-delimited-1-based-genomic-coords}) formats are both supported.
+    If setting \code{loci = NULL}, then we strongly recommend using the 'genome wide cytosine report' output format because this includes strand information for each locus.
+     The 'coverage' output does not contain strand information and so the \code{\link[BiocGenerics]{strand}} of the returned \linkS4class{BSseq} object will be set to \code{*} unless stranded \code{loci} are supplied.
   }
 
   \subsection{Unsupported file formats}{
@@ -146,6 +101,57 @@
 
     Since Bioconductor packages typically use one-based co-ordinates, we strongly recommend that your Bismark files are also one-based.
   }
+}
+
+\section{Efficient use of \code{read.bismark()}}{
+  We recommend the following to achieve fast and efficient importing of Bismark files:
+
+  \itemize{
+    \item Specify the set of methylation loci via the \code{loci} argument.
+    \item Use Bismark files in the 'coverage' output format.
+    \item Leave \code{rmZeroCov = FALSE}.
+    \item Use a \code{BPPARAM} with a moderate number of workers (cores).
+    \item Use \code{BACKEND = "HDF5Array"}.
+  }
+
+  Each point is discussed below.
+  \subsection{Specifying \code{loci}}{
+    Specifying the set of methylation loci via the \code{loci} argument means that \code{read.bismark()} does not need to first parse all \code{files} to identify the set of candidate loci.
+    Provided that \code{rmZeroCov = FALSE}, this means that each file is only read once.
+    This may be a considerable saving when there are a large number of \code{files}.
+
+    \strong{If you are unsure whether the below-described shortcuts apply to your data, leave \code{loci = NULL} and let \code{read.bismark()} identify the set of candidate loci from \code{files}.}
+
+    You may wish to use the \code{\link{findLoci}()} function to find all methylation loci of interest in your reference genome (e.g., all CpGs) and then pass the result via the \code{loci} argument.
+
+    Alternatively, if all \code{files} are 'genome wide cytosine reports' for samples aligned to the same reference genome, then all \code{files} contain the exact same set of methylation loci.
+    In this case, you may wish to first construct \code{loci} using the internal function \code{bsseq:::.readBismarkAsFWGRanges()} applied to a single file, e.g., \code{loci = bsseq:::.readBismarkAsFWGRanges(files[1], rmZeroCov, strandCollapse)}.
+  }
+
+  \subsection{Using the 'coverage' Bismark files}{
+    It will generally be faster to parse Bismark files in the 'coverage' output format than those in the 'genome wide cytosine report' format This is because the former only includes loci with non-zero coverage and so the file size is often considerably smaller, particularly for shallowly sequenced samples (e.g., those from single-cell bisulfite sequencing).
+  }
+
+  \subsection{Leaving \code{rmZeroCov = FALSE}}{
+    If you set \code{rmZeroCov = TRUE}, then \code{read.bismark()} must first parse all the \code{files} to identify which loci have zero coverage in all samples and then filter these out from the set of candidate loci.
+    \strong{This will happen even if you supply \code{loci} with a \linkS4class{GenomicRanges} of candidate loci.}
+
+    Furthermore, any coverage-based filtering of methylation loci is best left until you have constructed your final \linkS4class{BSseq} object.
+    In our experience, the final \linkS4class{BSseq} object is often the product of combining multiple \linkS4class{BSseq} objects, each constructed with a separate call to \code{read.bismark()}.
+    In such cases, it is premature to use \code{rmZeroCov = TRUE} when running each \code{read.bismark()}; regretably, combining these objects will often then lead to an inefficiently stored \linkS4class{BSseq} object.
+  }
+
+  \subsection{Using a \code{BPPARAM} with a moderate number of workers (cores)}{
+    Each file can be processed on its own, so you can process in parallel as many files as you have workers. However, if using the HDF5Array backend, then writing to the HDF5 file cannot be performed in parallel and so becomes the bottleneck. Nonetheless, by using a moderate number of workers (2 - 10), we can ensure there is processed data available to write to disk as soon as the current write is completed.
+  }
+
+  \subsection{Using \code{BACKEND = "HDF5Array"}}{
+    By using the HDF5Array realization backend from \pkg{HDF5Array}, we reduce the amount of data that is kept in-memory at any one time.
+    Once each file is parsed, the data are written to the HDF5 file and are no longer needed in-memory.
+    When combined with multiple workers (cores), this means that each file will only need to read and retain in-memory 1 sample's worth of data at a time.
+
+    Conversely, if you opt for all data to be in-memory (via \code{BACKEND = NULL}), then each worker will pass each file's data back to the main process and memory usage will steadily accumulate to often unreasonable levels.
+    }
 }
 
 \section{Realization backends}{
@@ -211,10 +217,12 @@
 }
 
 \seealso{
-  \code{\link{read.bsmooth}()} for parsing output from the BSmooth
+  \itemize{
+    \item \code{\link{read.bsmooth}()} for parsing output from the BSmooth
   alignment suite.
-  \code{\link{read.umtab}()} for parsing legacy (old) formats from the BSmooth alignment suite.
-  \code{\link{collapseBSseq}()} for collapsing (aggregating) data from sample's with multiple Bismark methylation extractor files (e.g., technical replicates).
+    \item \code{\link{read.umtab}()} for parsing legacy (old) formats from the BSmooth alignment suite.
+    \item \code{\link{collapseBSseq}()} for collapsing (aggregating) data from sample's with multiple Bismark methylation extractor files (e.g., technical replicates).
+  }
 }
 
 \examples{
@@ -252,3 +260,5 @@
 \author{
   Peter Hickey \email{peter.hickey@gmail.com}
 }
+
+% TODO: Mention and link to findLoci().

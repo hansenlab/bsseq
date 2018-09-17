@@ -11,13 +11,10 @@ BSmooth(BSseq,
         h = 1000,
         maxGap = 10^8,
         keep.se = FALSE,
-        verbose = TRUE,
         BPPARAM = bpparam(),
-        BACKEND = getRealizationBackend(),
-        ...,
-        parallelBy = c("sample", "chromosome"),
-        mc.preschedule = FALSE,
-        mc.cores = 1)
+        chunkdim = NULL,
+        level = NULL,
+        verbose = getOption("verbose"))
 }
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
@@ -25,17 +22,9 @@ BSmooth(BSseq,
   \item{h}{The minimum smoothing window, in bases.}
   \item{maxGap}{The maximum gap between two methylation loci, before the smoothing is broken across the gap.
   The default smoothes each chromosome separately.}
-  \item{parallelBy}{\strong{Deprecated}.
-    See section 'Parallelization and progress monitoring' for further details.}
-  \item{mc.preschedule}{\strong{Deprecated}.
-    See section 'Parallelization and progress monitoring' for further details.}
-  \item{mc.cores}{\strong{Deprecated}.
-    See section 'Parallelization and progress monitoring' for further details.}
   \item{keep.se}{Should the estimated standard errors from the smoothing
     algorithm be kept. This will make the return object roughly 30
     percent bigger and is currently not be used for anything in \pkg{bsseq}.}
-  \item{verbose}{\strong{Deprecated}.
-    See section, 'Parallelization and progress monitoring' for further details.}
   \item{BPPARAM}{An optional \linkS4class{BiocParallelParam} instance
     determining the parallel back-end to be used during evaluation. Currently
     supported are \linkS4class{SerialParam} (Unix, Mac, Windows),
@@ -44,13 +33,18 @@ BSmooth(BSseq,
     \linkS4class{BatchJobsParam} (Unix, Mac, Windows, only with the in-memory
     realization backend). See sections 'Parallelization and progress
     monitoring' and 'Realization backends' for further details.}
-  \item{BACKEND}{\code{NULL} or a single string specifying the name of the
-    realization backend. When the backend is set to \code{NULL}, the
-    \code{coef} and \code{se.coef} assays are realized in memory as ordinary
-    matrices, otherwise these are realized with the given \code{BACKEND}.}
-  \item{...}{Additional arguments passed to the \linkS4class{RealizationSink}
-    constructor.
-    See section 'Realization backends' for further details.}
+  \item{chunkdim}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
+    The dimensions of the chunks to use for writing the data to
+    disk. By default, \code{\link[HDF5Array]{getHDF5DumpChunkDim}()} using the
+    dimensions of the returned \linkS4class{BSseq} object will be used. See
+    \code{?\link[HDF5Array]{getHDF5DumpChunkDim}} for more information.}
+  \item{level}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
+    The compression level to use for writing the data to disk. By
+    default, \code{\link[HDF5Array]{getHDF5DumpCompressionLevel}()} will be
+    used. See \code{?\link[HDF5Array]{getHDF5DumpCompressionLevel}} for more
+    information.}
+  \item{verbose}{A \code{logical(1)} indicating whether progress messages
+    should be printed (default \code{TRUE}).}
 }
 \details{
   \code{ns} and \code{h} are passed to the \code{locfit} function. The
