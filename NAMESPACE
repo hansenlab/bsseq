@@ -71,8 +71,7 @@ exportMethods("[", "show",
               "sampleNames", "sampleNames<-",
               "pData", "pData<-",
               "findOverlaps", "subsetByOverlaps",
-              "combine", "updateObject",
-              "findCytosines")
+              "combine", "updateObject")
 
 export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
        "collapseBSseq", "orderBSseq", "hasBeenSmoothed", "chrSelectBSseq",
@@ -83,7 +82,7 @@ export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
        "poissonGoodnessOfFit", "binomialGoodnessOfFit",
        "data.frame2GRanges", "BSseqTstat",
        "BSseqStat",
-       "findCytosines")
+       "findLoci")
 
 S3method("print", "chisqGoodnessOfFit")
 S3method("plot", "chisqGoodnessOfFit")
