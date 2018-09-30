@@ -85,7 +85,9 @@ computeStat <- function(BSseqStat, coef = NULL) {
     raw_tstats <- getStats(BSseqStat, what = "rawTstats")[, coef, drop = FALSE]
     scaled_sds <- getStats(BSseqStat, what = "rawSds") /
         getStats(BSseqStat, what = "smoothSds")
-    scaled_sds_matrix <- do.call(cbind, replicate(ncol(raw_tstats), scaled_sds))
+    scaled_sds_matrix <- matrix(
+        rep(scaled_sds, ncol(raw_tstats)),
+        ncol = ncol(raw_tstats))
     tstats <- raw_tstats * scaled_sds_matrix
     if(length(coef) > 1) {
         cor.coefficients <- getStats(BSseqStat,
