@@ -64,7 +64,7 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
                              rawSds <- as.array(rawSds)
                              smoothSd(rawSds, k = k, qSd = qSd)
                          }, mc.cores = mc.cores))
-    smoothSds <- .DelayedMatrix(as.matrix(smoothSds))
+    smoothSds <- as.matrix(smoothSds)
     if("smoothSds" %in% names(getStats(BSseqStat)))
         BSseqStat@stats[["smoothSds"]] <- smoothSds
     else
@@ -92,12 +92,11 @@ computeStat <- function(BSseqStat, coef = NULL) {
                                      what = "cor.coefficients")[coef,coef]
         # NOTE: classifyTestsF() calls as.matrix(tstats) and so realises this
         #       array
-        stat <- .DelayedMatrix(as.matrix(classifyTestsF(tstats,
-                                                        cor.coefficients,
-                                                        fstat.only = TRUE)))
+        stat <- as.matrix(
+            classifyTestsF(tstats, cor.coefficients, fstat.only = TRUE))
         stat.type <- "fstat"
     } else {
-        stat <- .DelayedMatrix(tstats)
+        stat <- tstats
         stat.type <- "tstat"
     }
     if("stat" %in% names(getStats(BSseqStat))) {
