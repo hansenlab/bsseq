@@ -39,6 +39,7 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
     }, logical(1L))
 }
 
+# TODO: The below is a hack, need a more reliable way to do this.
 .getBSseqBackends <- function(x) {
     assay_backends <- lapply(assays(x, withDimnames = FALSE), function(assay) {
         if (is.matrix(assay)) return(NULL)
@@ -46,14 +47,11 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
         if (all(vapply(seed_classes, function(x) x == "matrix", logical(1)))) {
             return(NULL)
         }
-        if (is.list(seed_classes)) {
-            seed_packages <- lapply(seed_classes, attr, "package")
-        } else {
-            seed_packages <- attr(seed_classes, "package")
+        backend <- gsub("Seed", "", as.vector(seed_classes))
+        if (!identical(backend, "HDF5Array")) {
+            stop("Don't know backend of object with seed '", seed_classes, "'.")
         }
-        seed_packages <- unique(seed_packages)
-        srb <- supportedRealizationBackends()
-        srb[srb[["package"]] == seed_packages, "BACKEND"]
+        backend
     })
     unique(unlist(assay_backends))
 }
