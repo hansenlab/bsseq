@@ -27,19 +27,6 @@
     quantile(x, ...)
 }
 
-.DelayedMatrix <- function(x) {
-    x_name <- deparse(substitute(x))
-    X <- try(DelayedArray(x), silent = TRUE)
-    if (is(X, "try-error")) {
-        stop("Could not construct DelayedMatrix from '", x_name, "'",
-             call. = FALSE)
-    }
-    if (!is(X, "DelayedMatrix")) {
-        stop("'", x_name, "' must be matrix-like", call. = FALSE)
-    }
-    X
-}
-
 .isSimpleDelayedMatrix <- function(x) {
     is(x@seed, "matrix")
 }

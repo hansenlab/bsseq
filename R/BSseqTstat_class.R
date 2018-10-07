@@ -1,5 +1,5 @@
 setClass("BSseqTstat", contains = "hasGRanges",
-         representation(stats = "DelayedMatrix",
+         representation(stats = "matrix",
                         parameters = "list")
          )
 setValidity("BSseqTstat", function(object) {
@@ -17,11 +17,6 @@ setMethod("show", signature(object = "BSseqTstat"),
               cat(" ", object@parameters$smoothText, "\n")
               cat("with parameters\n")
               cat(" ", object@parameters$tstatText, "\n")
-              if (.isHDF5ArrayBacked(object@stats)) {
-                  cat("'stats' slot is HDF5Array-backed\n")
-              } else {
-                  cat("'stats' slot is in-memory\n")
-              }
           })
 
 setMethod("[", "BSseqTstat", function(x, i, ...) {
@@ -37,7 +32,7 @@ setMethod("[", "BSseqTstat", function(x, i, ...) {
 BSseqTstat <- function(gr = NULL, stats = NULL, parameters = NULL) {
     out <- new("BSseqTstat")
     out@gr <- gr
-    out@stats <- .DelayedMatrix(stats)
+    out@stats <- stats
     out@parameters <- parameters
     out
 }
@@ -75,7 +70,7 @@ plot.BSseqTstat <- function(x, y, ...) {
 setMethod("updateObject", "BSseqTstat",
           function(object, ...) {
               stats <- object@stats
-              stats <- .DelayedMatrix(stats)
+              stats <- stats
               object@stats <- stats
               object
           }
