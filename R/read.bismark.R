@@ -95,31 +95,13 @@
         message("[.readBismarkAsDT] Parsing '", file, "'")
     }
     ptime1 <- proc.time()
-    if (isGzipped(file)) {
-        if (verbose) {
-            message("[.readBismarkAsDT] Decompressing to tempfile() ...")
-        }
-        file <- gunzip(
-            filename = file,
-            destname = tempfile(),
-            remove = FALSE)
-        on.exit(unlink(file), add = TRUE)
-    } else if (isBzipped(file)) {
-        if (verbose) {
-            message("[.readBismarkAsDT] Decompressing to tempfile() ...")
-
-        }
-        file <- bunzip2(
-            filename = file,
-            destname = tempfile(),
-            remove = FALSE)
-        on.exit(unlink(file), add = TRUE)
-    }
     if (verbose) {
         message("[.readBismarkAsDT] Reading file ...")
     }
     x <- fread(
-        file = file,
+        # TODO: This should be file = file, but need to wait for data.table
+        #       v.1.11.9 for fix.
+        input = file,
         sep = "\t",
         header = header,
         verbose = fread_verbose,
@@ -161,7 +143,7 @@
 
 .constructCountsFromSingleFile <- function(b, files, loci, strandCollapse,
                                            grid, M_sink, Cov_sink, sink_lock,
-                                           verbose) {
+                                           nThread, verbose) {
 
     # Argument checks ----------------------------------------------------------
 
@@ -180,6 +162,7 @@
         file = file,
         col_spec = "BSseq",
         check = TRUE,
+        nThread = nThread,
         verbose = subverbose)
     # NOTE: Can only collapse by strand if the data are stranded!
     if (strandCollapse && !is.null(dt[["strand"]])) {
@@ -234,7 +217,8 @@
 }
 
 .constructCounts <- function(files, loci, strandCollapse, BPPARAM,
-                             BACKEND, dir, chunkdim, level, verbose = FALSE) {
+                             BACKEND, dir, chunkdim, level, nThread,
+                             verbose = FALSE) {
 
     # Argument checks ----------------------------------------------------------
 
@@ -319,6 +303,7 @@
         Cov_sink = Cov_sink,
         sink_lock = sink_lock,
         verbose = subverbose,
+        nThread = nThread,
         BPPARAM = BPPARAM))
     if (!all(bpok(counts))) {
         stop(".constructCounts() encountered errors for these files:\n  ",
@@ -359,11 +344,12 @@ read.bismark <- function(files,
                          rmZeroCov = FALSE,
                          strandCollapse = TRUE,
                          BPPARAM = bpparam(),
-                         BACKEND = getRealizationBackend(),
+                         BACKEND = NULL,
                          dir = tempfile("BSseq"),
                          replace = FALSE,
                          chunkdim = NULL,
                          level = NULL,
+                         nThread = 1L,
                          verbose = getOption("verbose")) {
     # Argument checks ----------------------------------------------------------
 
@@ -457,6 +443,7 @@ read.bismark <- function(files,
             rmZeroCov = rmZeroCov,
             strandCollapse = strandCollapse,
             verbose = subverbose,
+            nThread = nThread,
             BPPARAM = BPPARAM)
         ptime2 <- proc.time()
         stime <- (ptime2 - ptime1)[3]
@@ -491,6 +478,7 @@ read.bismark <- function(files,
                 rmZeroCov = rmZeroCov,
                 strandCollapse = strandCollapse,
                 verbose = subverbose,
+                nThread = nThread,
                 BPPARAM = BPPARAM)
             # Retain those elements of 'loci' with non-zero coverage.
             loci <- subsetByOverlaps(loci, loci_from_files, type = "equal")
@@ -517,6 +505,7 @@ read.bismark <- function(files,
         dir = dir,
         chunkdim = chunkdim,
         level = level,
+        nThread = nThread,
         verbose = subverbose)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]

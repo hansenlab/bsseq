@@ -13,11 +13,12 @@
              rmZeroCov = FALSE,
              strandCollapse = TRUE,
              BPPARAM = bpparam(),
-             BACKEND = getRealizationBackend(),
+             BACKEND = NULL,
              dir = tempfile("BSseq"),
              replace = FALSE,
              chunkdim = NULL,
              level = NULL,
+             nThread = 1L,
              verbose = getOption("verbose"))
 }
 \arguments{
@@ -77,6 +78,10 @@
     default, \code{\link[HDF5Array]{getHDF5DumpCompressionLevel}()} will be
     used. See \code{?\link[HDF5Array]{getHDF5DumpCompressionLevel}} for more
     information.}
+  \item{nThread}{The number of threads used by \code{\link[data.table]{fread}}
+    when reading the \code{files}. Be careful when combining a parallel backend
+    specified with \code{BPPARAM} with \code{nThread} > 1 because each worker
+    will use \code{nThread}.}
   \item{verbose}{A \code{logical(1)} indicating whether progress messages
     should be printed (default \code{TRUE}).}
 }
@@ -112,6 +117,7 @@
     \item Leave \code{rmZeroCov = FALSE}.
     \item Use a \code{BPPARAM} with a moderate number of workers (cores).
     \item Use \code{BACKEND = "HDF5Array"}.
+    \item Use multiple threads per worker (i.e. \code{nThread} > 1).
   }
 
   Each point is discussed below.
@@ -152,6 +158,17 @@
 
     Conversely, if you opt for all data to be in-memory (via \code{BACKEND = NULL}), then each worker will pass each file's data back to the main process and memory usage will steadily accumulate to often unreasonable levels.
     }
+
+  \subsection{Using \code{nThread} > 1}{
+    \code{read.bismark} uses \code{data.table::\link[data.table]{fread}} to
+    read each file, which supports threaded-parallisation. Depending on the
+    system, increasing \code{nThread} can achieve near-linear speed-ups in the
+    number of threads for reading each file. Care needs to be taken when
+    \code{nThread} > 1 is used in conjunction with a parallel backend via
+    \code{BPPARAM} to ensure the system isn't overloaded. For example, using
+    \code{BPPARAM = MulticoreParam(workers = 10)} with \code{nThread = 4} may
+    use up to 40 workers simultaneously.
+  }
 }
 
 \section{Realization backends}{

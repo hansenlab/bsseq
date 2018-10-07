@@ -1,6 +1,6 @@
 test_that(".isHDF5ArrayBacked()", {
     matrix <- matrix(1:10, ncol = 2)
-    da <- bsseq:::.DelayedMatrix(matrix)
+    da <- DelayedArray(matrix)
     ha <- realize(da, BACKEND = "HDF5Array")
     ha_ha <- rbind(ha, ha)
     da_da <- rbind(da, da)

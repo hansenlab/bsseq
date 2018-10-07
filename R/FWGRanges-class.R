@@ -217,7 +217,7 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
 #       the smallest returned object (albeit at the small cost of a sort).
 .readBismarkAsFWGRanges <- function(file, rmZeroCov = FALSE,
                                     strandCollapse = FALSE, sort = TRUE,
-                                    verbose = FALSE) {
+                                    nThread = 1L, verbose = FALSE) {
     # Argument checks ----------------------------------------------------------
 
     stopifnot(isTRUEorFALSE(rmZeroCov))
@@ -251,6 +251,7 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
             file = file,
             col_spec = "GRanges",
             check = FALSE,
+            nThread = nThread,
             verbose = verbose)
         if (strandCollapse && !is.null(dt[["strand"]]) &&
             !dt[, all(strand == "*")]) {
@@ -304,6 +305,7 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
                                                rmZeroCov,
                                                strandCollapse,
                                                verbose,
+                                               nThread,
                                                BPPARAM) {
     subverbose <- max(as.integer(verbose) - 1L, 0L)
 
@@ -337,6 +339,7 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
         file = files[[1L]],
         rmZeroCov = rmZeroCov,
         strandCollapse = strandCollapse,
+        nThread = nThread,
         verbose = subverbose)
     # Identify loci not found in first file.
     # TODO: Pre-process loci as a GNCList?

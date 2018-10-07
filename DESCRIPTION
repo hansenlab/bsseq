@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.17.3
+Version: 1.17.4
 Encoding: UTF-8
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
@@ -22,7 +22,7 @@ Imports:
     Biobase,
     locfit,
     gtools,
-    data.table,
+    data.table (>= 1.11.8),
     S4Vectors,
     R.utils (>= 2.0.0),
     DelayedMatrixStats (>= 1.3.6),
