@@ -71,3 +71,4 @@ findLoci <- function(pattern, subject, include = seqlevels(subject),
 # TODO: Default value of seqlevels may not be working.
 # TODO: What happens if subject is a non-filepath character (e.g., "CATGCG") or
 #       a DNAString?
+# TODO: Allow passing of seqinfo and/or autogenerate?

@@ -135,12 +135,13 @@ blockApplyWithRealization <- function(x, FUN, ..., sink = NULL, x_grid = NULL,
 #       can contain other files besides these; check.
 .isHDF5BackedBSseqUpdatable <- function(x) {
     stopifnot(is(x, "BSseq"))
-    if (!identical(.getBSseqBackends(x), "HDF5Array")) {
+    assay_class <- vapply(assays(x, withDimnames = FALSE), class, character(1L))
+    if (!all(assay_class == "HDF5Matrix")) {
         return(FALSE)
     }
     paths <- vapply(assays(x, withDimnames = FALSE), path, character(1L))
-    if (all(paths == paths[[1L]]) && all(basename(paths) == "assays.h5")) {
-        return(TRUE)
+    if (!all(paths == paths[[1L]]) || !all(basename(paths) == "assays.h5")) {
+        return(FALSE)
     }
-    FALSE
+    TRUE
 }

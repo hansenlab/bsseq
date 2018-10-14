@@ -55,7 +55,8 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
         M = unname(read_block(M, grid[[b]])),
         Cov = unname(read_block(Cov, grid[[b]])))
     # Ensure 0 < M < Cov to avoid boundary issues (only relevant at loci with
-    # non-zero coverage, so doesn't matter what M is for these loci).
+    # non-zero coverage, so doesn't matter what M is for loci with zero
+    # coverage).
     sdata[["M"]] <- pmin(pmax(sdata[["M"]], 0.01), pmax(sdata[["Cov"]] - 0.01))
     n_loci <- nrow(sdata)
     n_loci_with_non_zero_coverage <- sum(sdata[["Cov"]] > 0)
