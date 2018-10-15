@@ -152,7 +152,7 @@ combineList <- function(x, ..., BACKEND = NULL) {
         combine_smooths <- FALSE
         ans_coef <- NULL
         ans_se.coef <- NULL
-        ans_trans <- function(x) NULL
+        ans_trans <- function() NULL
         ans_parameters <- list()
     }
 

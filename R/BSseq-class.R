@@ -83,7 +83,7 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     }
     # Process 'trans' and 'parameters'.
     if (is.null(trans)) {
-        trans <- function(x) NULL
+        trans <- function() NULL
     }
     if (is.null(parameters)) {
         parameters <- list()
