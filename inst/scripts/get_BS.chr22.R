@@ -45,7 +45,7 @@ read.lister <- function(file) {
         Cov = as.matrix(tmp$Cov, ncol = 1),
         sampleNames = "reverse")
     BS <- combine(BS.forward, BS.reverse)
-    BS <- collapseBSseq(BS, columns = c("a", "a"))
+    BS <- collapseBSseq(BS, group = c("a", "a"), type = "integer")
     BS
 }
 
@@ -59,12 +59,5 @@ pData(BS.chr22)$Rep <- c("replicate1", "replicate2")
 validObject(BS.chr22)
 pData(BS.chr22)
 
-# NOTE: To reduce size of object, set the storage.mode() of assays to integer.
-#       (at this point they use doubles because collapseBSseq() returns
-#       doubles).
-storage.mode(assay(BS.chr22, 1)) <- "integer"
-storage.mode(assay(BS.chr22, 2)) <- "integer"
-
 save(BS.chr22, file = "BS.chr22.rda")
-library(tools)
-resaveRdaFiles("BS.chr22.rda")
+tools::resaveRdaFiles("BS.chr22.rda")
