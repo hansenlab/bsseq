@@ -169,8 +169,8 @@ BSmooth <- function(BSseq,
             h5_path <- path(assay(BSseq, withDimnames = FALSE))
             if (any(c("coef", "se.coef") %in% rhdf5::h5ls(h5_path)[, "name"])) {
                 # TODO: Better error message; what should be done in this case?
-                stop(wmsg("The HDF5 file '", h5_path, "' already contains a ",
-                          "dataset named 'coef' or 'se.coef'."))
+                stop("The HDF5 file '", h5_path, "' already contains a ",
+                          "dataset named 'coef' or 'se.coef'.")
             }
         } else {
             h5_path <- NULL
