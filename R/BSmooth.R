@@ -235,12 +235,12 @@ BSmooth <- function(BSseq,
         #       (implicitly) only support in-memory or HDF5Array backends.
         #       However, we retain it for now (e.g., fstArray backend would
         #       use this until a dedicated branch was implemented).
-        coef_sink <- DelayedArray:::RealizationSink(dim(M), type = "double")
+        coef_sink <- DelayedArray::RealizationSink(dim(M), type = "double")
         on.exit(close(coef_sink), add = TRUE)
         sink_lock <- ipcid()
         on.exit(ipcremove(sink_lock), add = TRUE)
         if (keep.se) {
-            se.coef_sink <- DelayedArray:::RealizationSink(
+            se.coef_sink <- DelayedArray::RealizationSink(
                 dim(M),
                 type = "double")
             on.exit(close(se.coef_sink), add = TRUE)

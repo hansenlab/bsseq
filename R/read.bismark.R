@@ -267,11 +267,11 @@
         #       (implicitly) only support in-memory or HDF5Array backends.
         #       However, we retain it for now (e.g., fstArray backend would use
         #       this until a dedicated branch was implemented).
-        M_sink <- DelayedArray:::RealizationSink(
+        M_sink <- DelayedArray::RealizationSink(
             dim = ans_dim,
             type = "integer")
         on.exit(close(M_sink), add = TRUE)
-        Cov_sink <- DelayedArray:::RealizationSink(
+        Cov_sink <- DelayedArray::RealizationSink(
             dim = ans_dim,
             type = "integer")
         on.exit(close(Cov_sink), add = TRUE)

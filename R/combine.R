@@ -57,7 +57,7 @@
     #       minfi:::.highestType(x)
     x_types <- vapply(x, DelayedArray::type, character(1L))
     ans_type <- typeof(do.call("c", lapply(x_types, vector)))
-    sink <- DelayedArray:::RealizationSink(
+    sink <- DelayedArray::RealizationSink(
         dim = c(length(ans_rowRanges), sum(vapply(x, ncol, integer(1L)))),
         type = ans_type)
     on.exit(close(sink))
