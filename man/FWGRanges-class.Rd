@@ -17,7 +17,7 @@
 \alias{strand,FWGRanges-method}
 \alias{seqnames,FWGRanges-method}
 \alias{width,FWGRanges-method}
-\alias{dimnames,arrayRealizationSink}
+\alias{dimnames,arrayRealizationSink-method}
 \title{Classes FWIRanges and FWGRanges}
 \description{
   Classes for fixed-width IRanges and GRanges, ie. objects where all
