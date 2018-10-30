@@ -38,6 +38,8 @@ importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo",
                   "seqlevels<-", "sortSeqlevels")
 importFrom(GenomeInfoDb, "Seqinfo")
 importFrom(gtools, "combinations")
+importFrom(Rcpp, sourceCpp)
+
 # NOTE: data.table has some NAMESPACE clashes with functions in Bioconductor,
 #       e.g., shift(). If new ones are discovered, add them to this list.
 import(data.table, except = c(shift, first, second))

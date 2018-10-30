@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.17.7
+Version: 1.17.8
 Encoding: UTF-8
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
@@ -35,7 +35,7 @@ Imports:
     Biostrings,
     utils,
     HDF5Array,
-    beachmat
+    rhdf5
 Suggests:
     testthat,
     bsseqData,
@@ -45,7 +45,8 @@ Suggests:
     Matrix,
     doParallel,
     rtracklayer,
-    BSgenome.Hsapiens.UCSC.hg38
+    BSgenome.Hsapiens.UCSC.hg38,
+    beachmat
 Collate:
     utils.R
     hasGRanges.R

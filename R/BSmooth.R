@@ -35,13 +35,13 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
     # Load packages on worker (required for SnowParam) -------------------------
 
     suppressPackageStartupMessages({
-        library(BiocParallel)
+        requireNamespace("BiocParallel")
     })
     suppressPackageStartupMessages({
-        library(locfit)
+        requireNamespace("locfit")
     })
     suppressPackageStartupMessages({
-        library(DelayedArray)
+        requireNamespace("DelayedArray")
     })
 
     # Construct inputs for smoothing -------------------------------------------
