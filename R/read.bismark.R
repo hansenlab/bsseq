@@ -422,7 +422,11 @@ read.bismark <- function(files,
         if (!isTRUEorFALSE(replace)) {
             stop("'replace' must be TRUE or FALSE")
         }
-        HDF5Array:::.create_dir(dir = dir, replace = replace)
+        if (!dir.exists(dir)) {
+            HDF5Array:::.create_dir(dir)
+        } else {
+            HDF5Array:::.replace_dir(dir, replace)
+        }
     }
     # Set verbosity used by internal functions.
     subverbose <- as.logical(max(verbose - 1L, 0L))
@@ -533,7 +537,7 @@ read.bismark <- function(files,
         # NOTE: Save BSseq object; mimicing
         #       HDF5Array::saveHDF5SummarizedExperiment().
         x <- bsseq
-        x@assays <- HDF5Array:::.shorten_h5_paths(x@assays)
+        x@assays <- HDF5Array:::.shorten_assay2h5_links(x@assays)
         saveRDS(x, file = file.path(dir, "se.rds"))
     }
     bsseq

@@ -86,7 +86,11 @@ collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
         if (!isTRUEorFALSE(replace)) {
             stop("'replace' must be TRUE or FALSE")
         }
-        HDF5Array:::.create_dir(dir = dir, replace = replace)
+        if (!dir.exists(dir)) {
+            HDF5Array:::.create_dir(dir)
+        } else {
+            HDF5Array:::.replace_dir(dir, replace)
+        }
         h5_path <- file.path(dir, "assays.h5")
     } else if (identical(BACKEND, NULL)) {
         h5_path <- NULL
@@ -138,7 +142,7 @@ collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
         # NOTE: Save BSseq object; mimicing
         #       HDF5Array::saveHDF5SummarizedExperiment().
         x <- bsseq
-        x@assays <- HDF5Array:::.shorten_h5_paths(x@assays)
+        x@assays <- HDF5Array:::.shorten_assay2h5_links(x@assays)
         saveRDS(x, file = file.path(dir, "se.rds"))
     }
     bsseq

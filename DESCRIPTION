@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.19.0
+Version: 1.19.1
 Encoding: UTF-8
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
@@ -34,7 +34,7 @@ Imports:
     BSgenome,
     Biostrings,
     utils,
-    HDF5Array,
+    HDF5Array (>= 1.11.9),
     rhdf5
 Suggests:
     testthat,
