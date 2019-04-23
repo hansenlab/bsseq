@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.19.0
+Version: 1.19.3
 Encoding: UTF-8
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
@@ -25,16 +25,16 @@ Imports:
     data.table (>= 1.11.8),
     S4Vectors,
     R.utils (>= 2.0.0),
-    DelayedMatrixStats (>= 1.3.6),
+    DelayedMatrixStats (>= 1.5.2),
     permute,
     limma,
-    DelayedArray (>= 0.7.15),
+    DelayedArray (>= 0.9.8),
     Rcpp,
     BiocParallel,
     BSgenome,
     Biostrings,
     utils,
-    HDF5Array,
+    HDF5Array (>= 1.11.9),
     rhdf5
 Suggests:
     testthat,
@@ -46,7 +46,7 @@ Suggests:
     doParallel,
     rtracklayer,
     BSgenome.Hsapiens.UCSC.hg38,
-    beachmat,
+    beachmat (>= 1.5.2),
     BatchJobs
 Collate:
     utils.R
