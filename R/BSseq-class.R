@@ -272,7 +272,7 @@ strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
 
     ol <- findOverlaps(loci, collapsed_loci, type = "equal")
     group <- subjectHits(ol)
-    M <- rowsum(
+    M <- .rowsum(
         x = assay(BSseq, "M", withDimnames = FALSE),
         group = group,
         # NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
@@ -283,7 +283,7 @@ strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
         chunkdim = chunkdim,
         level = level,
         type = type)
-    Cov <- rowsum(
+    Cov <- .rowsum(
         x = assay(BSseq, "Cov", withDimnames = FALSE),
         group = group,
         # NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.

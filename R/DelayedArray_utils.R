@@ -1,4 +1,4 @@
-# Functions/methods that would be good to have in DelayedArray
+# Functions/methods that would be good to have in DelayedArray -----------------
 
 .rowVars <- function(x, rows = NULL, cols = NULL, ...) {
     if (is(x, "DelayedArray")) {
@@ -40,6 +40,176 @@
         stop("'type' = ", type, " is not supported")
     }
 }
+
+# A temporary workaround to
+# https://github.com/Bioconductor/DelayedArray/issues/41.
+.colsum <- function(x, group, reorder = TRUE, na.rm = FALSE, filepath = NULL,
+                    name = NULL, chunkdim = NULL, level = NULL,
+                    type = c("double", "integer"), BPPARAM = bpparam()) {
+
+    # NOTE: Special case for HDF5Matrix, otherwise defer to rowsum().
+    if (is(x, "HDF5Matrix")) {
+        # Check arguments ------------------------------------------------------
+
+        type <- match.arg(type)
+        if (any(!c(type(x), type) %in% c("integer", "double"))) {
+            stop("'type(x)' must be 'integer' or 'double'.")
+        }
+        if (length(group) != NCOL(x)) {
+            stop("incorrect length for 'group'")
+        }
+        if (anyNA(group)) {
+            warning("missing values for 'group'")
+        }
+        ugroup <- unique(group)
+        if (reorder) {
+            ugroup <- sort(ugroup, na.last = TRUE, method = "quick")
+        }
+        # TODO: Default is type = "double" because rowSums2() returns numeric,
+        #       but it can be useful to manually override this when you know
+        #       the result is integer.
+
+        # Construct RealizationSink --------------------------------------------
+
+        # NOTE: This is ultimately coerced to the output DelayedMatrix
+        #       object
+        ans_nrow <- nrow(x)
+        ans_ncol <- length(ugroup)
+        ans_dim <- c(ans_nrow, ans_ncol)
+        sink <- HDF5RealizationSink(
+            dim = ans_dim,
+            dimnames = list(rownames(x), as.character(ugroup)),
+            type = type,
+            filepath = filepath,
+            name = name,
+            chunkdim = chunkdim,
+            level = level)
+        sink_lock <- ipcid()
+        on.exit(ipcremove(sink_lock), add = TRUE)
+
+        # Construct ArrayGrid --------------------------------------------------
+
+        sink_grid <- colGrid(x = sink, ncol = 1L)
+        list_of_cols <- split(seq_along(group), group)[ugroup]
+
+        # Compute colsum() -----------------------------------------------------
+
+        bplapply(
+            X = seq_along(sink_grid),
+            FUN = function(b, x, sink, sink_lock, sink_grid, list_of_cols) {
+                cols <- list_of_cols[[b]]
+                if (length(cols) == 1L) {
+                    ans <- as.matrix(x[, cols, drop = FALSE])
+                    if (na.rm) {
+                        ans[is.na(ans)] <- 0L
+                    }
+                } else {
+                    ans <- matrix(
+                        rowSums2(x, cols = cols, na.rm = na.rm),
+                        ncol = 1)
+                }
+                ipclock(sink_lock)
+                write_block(x = sink, viewport = sink_grid[[b]], block = ans)
+                ipcunlock(sink_lock)
+                NULL
+            },
+            x = x,
+            sink = sink,
+            sink_lock = sink_lock,
+            sink_grid = sink_grid,
+            list_of_cols = list_of_cols,
+            BPPARAM = BPPARAM)
+        return(as(sink, "DelayedArray"))
+    }
+
+    colsum(x, group, reorder)
+}
+
+# A temporary workaround to
+# https://github.com/Bioconductor/DelayedArray/issues/41.
+.rowsum <- function(x, group, reorder = TRUE, na.rm = FALSE, filepath = NULL,
+                    name = NULL, chunkdim = NULL, level = NULL,
+                    type = c("double", "integer"), BPPARAM = bpparam()) {
+
+    # NOTE: Special case for HDF5Matrix, otherwise defer to rowsum().
+    if (is(x, "HDF5Matrix")) {
+
+        # Check arguments ------------------------------------------------------
+
+        if (any(!c(type(x), type) %in% c("integer", "double"))) {
+            stop("'type(x)' must be 'integer' or 'double'.")
+        }
+        if (length(group) != NROW(x)) {
+            stop("incorrect length for 'group'")
+        }
+        if (anyNA(group)) {
+            warning("missing values for 'group'")
+        }
+        ugroup <- unique(group)
+        if (reorder) {
+            ugroup <- sort(ugroup, na.last = TRUE, method = "quick")
+        }
+        # NOTE: Default is type = "double" because colSums2() returns numeric,
+        #       but it can be useful to manually override this when you know the
+        #       result is integer.
+        type <- match.arg(type)
+
+        # Construct RealizationSink --------------------------------------------
+
+        # NOTE: This is ultimately coerced to the output DelayedMatrix
+        #       object
+        ans_nrow <- length(ugroup)
+        ans_ncol <- ncol(x)
+        ans_dim <- c(ans_nrow, ans_ncol)
+        sink <- HDF5RealizationSink(
+            dim = ans_dim,
+            dimnames = list(as.character(ugroup), colnames(x)),
+            type = type,
+            filepath = filepath,
+            name = name,
+            chunkdim = chunkdim,
+            level = level)
+        sink_lock <- ipcid()
+        on.exit(ipcremove(sink_lock), add = TRUE)
+
+        # Construct ArrayGrid --------------------------------------------------
+
+        sink_grid <- rowGrid(x = sink, nrow = 1L)
+        list_of_rows <- split(seq_along(group), group)[as.character(ugroup)]
+
+        # Compute colsum() -----------------------------------------------------
+
+        bplapply(
+            X = seq_along(sink_grid),
+            FUN = function(b, x, sink, sink_lock, sink_grid, list_of_rows) {
+                rows <- list_of_rows[[b]]
+                if (length(rows) == 1L) {
+                    ans <- as.matrix(x[rows, , drop = FALSE])
+                    if (na.rm) {
+                        ans[is.na(ans)] <- 0L
+                    }
+                } else {
+                    ans <- matrix(
+                        colSums2(x, rows = rows, na.rm = na.rm),
+                        nrow = 1)
+                }
+                ipclock(sink_lock)
+                write_block(x = sink, viewport = sink_grid[[b]], block = ans)
+                ipcunlock(sink_lock)
+                NULL
+            },
+            x = x,
+            sink = sink,
+            sink_lock = sink_lock,
+            sink_grid = sink_grid,
+            list_of_rows = list_of_rows,
+            BPPARAM = BPPARAM)
+        return(as(sink, "DelayedArray"))
+    }
+
+    rowsum(x, group, reorder)
+}
+
 
 # Missing methods --------------------------------------------------------------
 

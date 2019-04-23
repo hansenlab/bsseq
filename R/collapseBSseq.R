@@ -98,7 +98,7 @@ collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
 
     # Collapse 'M' and 'Cov' matrices ------------------------------------------
 
-    M <- colsum(
+    M <- .colsum(
         x = getCoverage(BSseq, type = "M", withDimnames = FALSE),
         group = group,
         reorder = FALSE,
@@ -108,7 +108,7 @@ collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
         chunkdim = chunkdim,
         level = level,
         type = type)
-    Cov <- colsum(
+    Cov <- .colsum(
         x = getCoverage(BSseq, type = "Cov", withDimnames = FALSE),
         group = group,
         reorder = FALSE,
