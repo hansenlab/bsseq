@@ -1,5 +1,10 @@
 #include "BSseq.h"
 
+#include "beachmat/integer_matrix.h"
+#include "beachmat/numeric_matrix.h"
+
+#include "utils.h"
+
 // NOTE: Returning Rcpp::CharacterVector rather than throwing an error because
 //       this function is used within a validity method.
 

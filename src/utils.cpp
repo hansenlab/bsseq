@@ -1,4 +1,4 @@
-#include "BSseq.h"
+#include "utils.h"
 
 // Special function to check for NA'ness.
 

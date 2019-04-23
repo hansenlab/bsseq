@@ -81,6 +81,6 @@ LazyDataCompression: xz
 BugReports: https://github.com/kasperdanielhansen/bsseq/issues
 biocViews: DNAMethylation
 SystemRequirements: C++11
-LinkingTo: Rcpp, Rhdf5lib, beachmat
+LinkingTo: Rcpp, beachmat
 NeedsCompilation: yes
 RoxygenNote: 6.1.0
