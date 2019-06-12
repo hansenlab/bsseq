@@ -118,7 +118,7 @@ setReplaceMethod(
 )
 
 set_FWIRanges_names <- function(x, value) {
-    x@NAMES <- S4Vectors:::normalize_names_replacement_value(value, x)
+    x@NAMES <- S4Vectors:::normarg_names(value, class(x), length(x))
     # NOTE: No need to validate an FWIRanges object after setting its names so
     #       this should be safe.
     x
