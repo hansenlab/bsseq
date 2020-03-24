@@ -35,7 +35,7 @@ setValidity2("FWIRanges", .valid.FWIRanges)
 
 # Internal methods -------------------------------------------------------------
 
-setMethod("parallelSlotNames", "FWIRanges",
+setMethod("vertical_slot_names", "FWIRanges",
           function(x) c("start", "NAMES", callNextMethod())
 )
 
@@ -53,7 +53,7 @@ setMethod("end", "FWIRanges", function(x) {
 
 setMethod("names", "FWIRanges", function(x) x@NAMES)
 
-setMethod("parallelSlotNames", "FWIRanges",
+setMethod("vertical_slot_names", "FWIRanges",
           function(x) c("start", "NAMES", callNextMethod())
 )
 
