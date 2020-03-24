@@ -17,7 +17,9 @@
         return(.getSeedClasses(seed))
     }
     else {
-        class(seed)
+        # Pick the first element returned by class() (starting with R 4.0,
+        # 'class(matrix())' is 'c("matrix", "array")').
+        class(seed)[[1L]]
     }
 }
 
