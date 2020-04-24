@@ -59,6 +59,9 @@ test_that("BSseq with HDF5Backend", {
 })
 
 test_overlaps <- function() {
+    # TODO: Re-enable test on Windows once
+    #       https://github.com/Bioconductor/HDF5Array/issues/29 is fixed.
+    skip_on_os("windows")
     M <- matrix(1:9, 3, 3)
     colnames(M) <- c("A1", "A2", "A3")
     Cov <- M + 2
