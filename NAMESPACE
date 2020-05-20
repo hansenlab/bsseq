@@ -72,7 +72,7 @@ exportMethods("[", "show",
               "dim", "nrow", "ncol",
               "sampleNames", "sampleNames<-",
               "pData", "pData<-",
-              "findOverlaps", "subsetByOverlaps",
+              "findOverlaps", "overlapsAny", "subsetByOverlaps",
               "combine", "updateObject")
 
 export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
