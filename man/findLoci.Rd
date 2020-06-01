@@ -41,8 +41,12 @@ findLoci(pattern,
   }
 }
 \details{
-  This function provides a convenience wrapper for finding methylation loci in a genome, based on running \code{\link[Biostrings]{vmatchPattern}()}.
-  Users requiring finer-grained control should directly use the \code{\link[Biostrings]{vmatchPattern}()} function and coerce the result to a \linkS4class{GRanges} object.
+  This function provides a convenience wrapper for finding methylation loci in
+  a genome, based on running
+  \code{\link[Biostrings:matchPattern]{vmatchPattern}()}.
+  Users requiring finer-grained control should directly use the
+  \code{\link[Biostrings:matchPattern]{vmatchPattern}()} function and coerce
+  the result to a \linkS4class{GRanges} object.
 }
 \value{
   A \linkS4class{GRanges} object storing the found loci.
@@ -52,7 +56,7 @@ findLoci(pattern,
 }
 \seealso{
   \itemize{
-    \item \code{Biostrings::\link[Biostrings]{vmatchPattern}()}
+    \item \code{Biostrings::\link[Biostrings:matchPattern]{vmatchPattern}()}
     \item \code{?BSgenome::`\link[BSgenome]{BSgenome-utils}`}
     }
 }

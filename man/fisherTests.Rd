@@ -20,7 +20,7 @@ fisherTests(BSseq, group1, group2, lookup = NULL,
   \item{returnLookup}{Should a \sQuote{lookup} object be returned, see
     details.}
   \item{mc.cores}{The number of cores used.  Note that setting
-    \code{mc.cores} to a value greater than 1 is not  supported on MS
+    \code{mc.cores} to a value greater than 1 is not supported on MS
     Windows, see the help page for \code{mclapply}.}
   \item{verbose}{Should the function be verbose.}
 }
@@ -52,7 +52,7 @@ fisherTests(BSseq, group1, group2, lookup = NULL,
 }
 \seealso{
   \link[stats]{fisher.test} for information about Fisher's test.
-  \link[parallel]{mclapply} for the \code{mc.cores} argument.
+  \code{\link{mclapply}} for the \code{mc.cores} argument.
 }
 \examples{
 M <- matrix(1:9, 3,3)
