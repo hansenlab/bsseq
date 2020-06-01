@@ -31,7 +31,7 @@ BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
 \details{
   The 'M', 'Cov', 'coef', and 'se.coef' matrix-like objects will be coerced to
   \linkS4class{DelayedMatrix} objects; see
-  \code{?DelayedArray::\link[DelayedArray]{DelayedMatrix}} for the full list of
+  \code{?DelayedArray::\linkS4class{DelayedMatrix}} for the full list of
   supported matrix-like objects. We recommend using \link[base]{matrix} objects
   for in-memory storage of data and \linkS4class{HDF5Matrix} for on-disk
   storage of data.

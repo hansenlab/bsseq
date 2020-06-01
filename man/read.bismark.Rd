@@ -33,7 +33,7 @@
     If \code{loci = NULL}, then \code{read.bismark()} will perform a first pass over the Bismark file to identify candidate loci.
     If \code{loci} is a \linkS4class{GenomicRanges} instance, then these form the candidate loci.
     In either case, the candidate loci will be filtered if
-    \code{rmZeroCov = TRUE} and collapsed if \code{strandCollapse = TRUE} to form the final set of methylation loci that form the \code{\link[SummarizedExperiment]{rowRanges}} of the returned \linkS4class{BSseq} object.
+    \code{rmZeroCov = TRUE} and collapsed if \code{strandCollapse = TRUE} to form the final set of methylation loci that form the \code{\link[SummarizedExperiment:RangedSummarizedExperiment-class]{rowRanges}} of the returned \linkS4class{BSseq} object.
     See section 'Efficient use of \code{read.bismark()}' for further details.}
   \item{colData}{An optional \linkS4class{DataFrame} describing the samples.
     Row names, if present, become the column names of the \linkS4class{BSseq}
@@ -70,14 +70,18 @@
     with a new one? The content of the existing directory will be lost!}
   \item{chunkdim}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
     The dimensions of the chunks to use for writing the data to
-    disk. By default, \code{\link[HDF5Array]{getHDF5DumpChunkDim}()} using the
-    dimensions of the returned \linkS4class{BSseq} object will be used. See
-    \code{?\link[HDF5Array]{getHDF5DumpChunkDim}} for more information.}
+    disk. By default,
+    \code{\link[HDF5Array:HDF5-dump-management]{getHDF5DumpChunkDim}()}
+    using the dimensions of the returned \linkS4class{BSseq} object will be
+    used. See \code{?\link[HDF5Array:HDF5-dump-management]{getHDF5DumpChunkDim}}
+    for more information.}
   \item{level}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
     The compression level to use for writing the data to disk. By
-    default, \code{\link[HDF5Array]{getHDF5DumpCompressionLevel}()} will be
-    used. See \code{?\link[HDF5Array]{getHDF5DumpCompressionLevel}} for more
-    information.}
+    default,
+    \code{\link[HDF5Array:HDF5-dump-management]{getHDF5DumpCompressionLevel}()}
+    will be used. See
+    \code{?\link[HDF5Array:HDF5-dump-management]{getHDF5DumpCompressionLevel}}
+    for more information.}
   \item{nThread}{The number of threads used by \code{\link[data.table]{fread}}
     when reading the \code{files}. Be careful when combining a parallel backend
     specified with \code{BPPARAM} with \code{nThread} > 1 because each worker
@@ -88,7 +92,7 @@
 
 \section{File formats}{
   The format of each file is automatically detected using the internal function \code{bsseq:::.guessBismarkFileType()}.
-  Files ending in \code{.gz}, \code{.bz2}, \code{.xz}, or \code{.zip} will be automatically decompressed to \code{\link[base]{tempdir}()}.
+  Files ending in \code{.gz}, \code{.bz2}, \code{.xz}, or \code{.zip} will be automatically decompressed to \code{\link{tempdir}()}.
   \subsection{Supported file formats}{
     Bismark's 'genome wide cytosine report' (\url{https://github.com/FelixKrueger/Bismark/tree/master/Docs#the-genome-wide-cytosine-report-optional-is-tab-delimited-in-the-following-format-1-based-coords}) and 'coverage' (\url{https://github.com/FelixKrueger/Bismark/tree/master/Docs#the-coverage-output-looks-like-this-tab-delimited-1-based-genomic-coords}) formats are both supported.
     If setting \code{loci = NULL}, then we strongly recommend using the 'genome wide cytosine report' output format because this includes strand information for each locus.
@@ -174,7 +178,7 @@
 \section{Realization backends}{
   The \code{read.bismark()} function creates a \linkS4class{BSseq} object with two assays, \code{M} and \code{Cov}.
   The choice of \emph{realization backend} controls whether these assays are stored in-memory as an ordinary \link[base]{matrix} or on-disk as a \linkS4class{HDF5Array}, for example.
-  The choice of realization backend is controlled by the \code{BACKEND} argument, which defaults to the current value of \code{DelayedArray::\link[DelayedArray]{getRealizationBackend}()}.
+  The choice of realization backend is controlled by the \code{BACKEND} argument, which defaults to the current value of \code{DelayedArray::\link[DelayedArray:RealizationSink]{getRealizationBackend}()}.
 
   \code{read.bismark()} supports the following realization backends:
 

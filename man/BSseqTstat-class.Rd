@@ -24,7 +24,7 @@
 \details{
   The 'stats' matrix-like object will be coerced to a
   \linkS4class{DelayedMatrix} object; see
-  \code{?DelayedArray::\link[DelayedArray]{DelayedMatrix}} for the full list of
+  \code{?DelayedArray::\linkS4class{DelayedMatrix}} for the full list of
   supported matrix-like objects. We recommend using \link[base]{matrix} objects
   for in-memory storage of data and \linkS4class{HDF5Matrix} for on-disk
   storage of data.
