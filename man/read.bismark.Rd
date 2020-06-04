@@ -71,17 +71,14 @@
   \item{chunkdim}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
     The dimensions of the chunks to use for writing the data to
     disk. By default,
-    \code{\link[HDF5Array:HDF5-dump-management]{getHDF5DumpChunkDim}()}
-    using the dimensions of the returned \linkS4class{BSseq} object will be
-    used. See \code{?\link[HDF5Array:HDF5-dump-management]{getHDF5DumpChunkDim}}
-    for more information.}
+    \code{\link{getHDF5DumpChunkDim}()} using the dimensions of the returned
+    \linkS4class{BSseq} object will be used. See
+    \code{?\link{getHDF5DumpChunkDim}} for more information.}
   \item{level}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
     The compression level to use for writing the data to disk. By
     default,
-    \code{\link[HDF5Array:HDF5-dump-management]{getHDF5DumpCompressionLevel}()}
-    will be used. See
-    \code{?\link[HDF5Array:HDF5-dump-management]{getHDF5DumpCompressionLevel}}
-    for more information.}
+    \code{\link{getHDF5DumpCompressionLevel}()} will be used. See
+    \code{?\link{getHDF5DumpCompressionLevel}} for more information.}
   \item{nThread}{The number of threads used by \code{\link[data.table]{fread}}
     when reading the \code{files}. Be careful when combining a parallel backend
     specified with \code{BPPARAM} with \code{nThread} > 1 because each worker
@@ -178,7 +175,7 @@
 \section{Realization backends}{
   The \code{read.bismark()} function creates a \linkS4class{BSseq} object with two assays, \code{M} and \code{Cov}.
   The choice of \emph{realization backend} controls whether these assays are stored in-memory as an ordinary \link[base]{matrix} or on-disk as a \linkS4class{HDF5Array}, for example.
-  The choice of realization backend is controlled by the \code{BACKEND} argument, which defaults to the current value of \code{DelayedArray::\link[DelayedArray:RealizationSink]{getRealizationBackend}()}.
+  The choice of realization backend is controlled by the \code{BACKEND} argument, which defaults to the current value of \code{DelayedArray::\link{getRealizationBackend}()}.
 
   \code{read.bismark()} supports the following realization backends:
 
