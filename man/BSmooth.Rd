@@ -35,18 +35,13 @@ BSmooth(BSseq,
     monitoring' and 'Realization backends' for further details.}
   \item{chunkdim}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
     The dimensions of the chunks to use for writing the data to
-    disk. By default,
-    \code{\link[HDF5Array:HDF5-dump-management]{getHDF5DumpChunkDim}()}
-    using the dimensions of the returned \linkS4class{BSseq} object will be
-    used. See \code{?\link[HDF5Array:HDF5-dump-management]{getHDF5DumpChunkDim}}
-    for more information.}
+    disk. By default, \code{\link{getHDF5DumpChunkDim}()} using the dimensions
+    of the returned \linkS4class{BSseq} object will be used. See
+    \code{?{getHDF5DumpChunkDim}} for more information.}
   \item{level}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
     The compression level to use for writing the data to disk. By
-    default,
-    \code{\link[HDF5Array:HDF5-dump-management]{getHDF5DumpCompressionLevel}()}
-    will be used. See
-    \code{?\link[HDF5Array:HDF5-dump-management]{getHDF5DumpCompressionLevel}}
-    for more information.}
+    default, \code{\link{getHDF5DumpCompressionLevel}()} will be used. See
+    \code{?\link{getHDF5DumpCompressionLevel}} for more information.}
   \item{verbose}{A \code{logical(1)} indicating whether progress messages
     should be printed (default \code{TRUE}).}
 }
@@ -67,8 +62,7 @@ BSmooth(BSseq,
   \linkS4class{HDF5Array}, for example.
 
   The choice of realization backend is controlled by the \code{BACKEND}
-  argument, which defaults to the current value of
-  \code{DelayedArray::\link[DelayedArray:RealizationSink]{getRealizationBackend}()}.
+  argument, which defaults to the current value of \code{DelayedArray::\link{getRealizationBackend}()}.
 
   \code{BSmooth} supports the following realization backends:
 
