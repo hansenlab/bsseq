@@ -35,7 +35,7 @@ setValidity2("FWIRanges", .valid.FWIRanges)
 
 # Internal methods -------------------------------------------------------------
 
-setMethod("vertical_slot_names", "FWIRanges",
+setMethod("parallel_slot_names", "FWIRanges",
           function(x) c("start", "NAMES", callNextMethod())
 )
 
@@ -52,10 +52,6 @@ setMethod("end", "FWIRanges", function(x) {
 })
 
 setMethod("names", "FWIRanges", function(x) x@NAMES)
-
-setMethod("vertical_slot_names", "FWIRanges",
-          function(x) c("start", "NAMES", callNextMethod())
-)
 
 # TODO: Room for optmisation (e.g., write in C to reduce memory allocations).
 .set_FWIRanges_start <- function(x, value, check = TRUE) {

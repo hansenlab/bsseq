@@ -22,12 +22,12 @@
 
 # Internal methods -------------------------------------------------------------
 
-# NOTE: Combine the new "vertical slots" with those of the parent class. Make
-#       sure to put the new vertical slots **first**. See R/bindROWS.R file in
-#       the S4Vectors package for what slots should or should not be considered
-#       "vertical".
+# NOTE: Combine the new "parallel slots" with those of the parent class. Make
+#       sure to put the new parallel slots **first**. See R/Vector-class.R file
+#       in the S4Vectors package for what slots should or should not be
+#       considered "parallel".
 setMethod(
-    "vertical_slot_names",
+    "parallel_slot_names",
     "FWGRanges",
     function(x) {
         c(GenomicRanges:::extraColumnSlotNames(x), "seqnames", "ranges",
@@ -146,7 +146,7 @@ setMethod("update", "FWGRanges", function(object, ...) {
         s_space <- as.integer(strand(subject)) - 3L
     }
 
-    # IRanges:::NCList_find_overlaps_in_groups() ---------------------------
+    # IRanges:::find_overlaps_in_groups_NCList() ---------------------------
     q <- query@ranges
     s <- subject@ranges
     circle.length <- circle_length
@@ -186,7 +186,7 @@ setMethod("update", "FWGRanges", function(object, ...) {
         x = s,
         x_groups = s_groups,
         circle.length = s_circle_len)
-    .Call2("NCList_find_overlaps_in_groups",
+    .Call2("C_find_overlaps_in_groups_NCList",
            start(q), end(q), q_space, q_groups,
            start(s), end(s), s_space, s_groups,
            nclists, nclist_is_q,
@@ -281,7 +281,7 @@ setMethod("findOverlaps", c("FWGRanges", "FWGRanges"), .findOverlaps_FWGRanges)
     seqinfo <- Seqinfo(seqnames = levels(seqnames))
     ranges <- .FWIRanges(start = dt[["start"]], width = 1L)
     dt[, start := NULL]
-    mcols <- S4Vectors:::make_zero_col_DataFrame(length(ranges))
+    mcols <- make_zero_col_DFrame(length(ranges))
     if (is.null(dt[["strand"]])) {
         strand <- strand(Rle("*", length(seqnames)))
     } else {

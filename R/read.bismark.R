@@ -180,7 +180,7 @@
     seqinfo <- Seqinfo(seqnames = levels(seqnames))
     ranges <- .FWIRanges(start = dt[["start"]], width = 1L)
     dt[, start := NULL]
-    mcols <- S4Vectors:::make_zero_col_DataFrame(length(ranges))
+    mcols <- make_zero_col_DFrame(length(ranges))
     if (is.null(dt[["strand"]])) {
         strand <- strand(Rle("*", length(seqnames)))
     } else {

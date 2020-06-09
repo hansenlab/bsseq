@@ -92,7 +92,7 @@ BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
     if (is.null(sampleNames)) {
         if (is.null(pData)) {
             # BSseq object will have no colnames.
-            pData <- S4Vectors:::new_DataFrame(nrows = ncol(M))
+            pData <- make_zero_col_DFrame(ncol(M))
         } else {
             # BSseq object will have 'sampleNames' as colnames.
             pData <- DataFrame(row.names = sampleNames)
