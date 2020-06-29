@@ -8,7 +8,7 @@ Authors@R: c(person(c("Kasper", "Daniel"), "Hansen", role = c("aut", "cre"),
     email = "kasperdanielhansen@gmail.com"),
     person("Peter", "Hickey", role = "aut", email = "peter.hickey@gmail.com"))
 Depends:
-    R (>= 3.5),
+    R (>= 4.0),
     methods,
     BiocGenerics,
     GenomicRanges (>= 1.41.5),
@@ -34,7 +34,7 @@ Imports:
     BSgenome,
     Biostrings,
     utils,
-    HDF5Array (>= 1.11.9),
+    HDF5Array (>= 1.15.19),
     rhdf5
 Suggests:
     testthat,
