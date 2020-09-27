@@ -30,7 +30,7 @@
 # TODO: Make optional the collapsing of colData?
 # TODO: Document (and warn) that coef and se.coef aren't collapsed?
 collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
-                          BACKEND = getRealizationBackend(),
+                          BACKEND = getAutoRealizationBackend(),
                           dir = tempfile("BSseq"), replace = FALSE,
                           chunkdim = NULL, level = NULL,
                           type = c("double", "integer")) {
@@ -52,9 +52,9 @@ collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
     }
     # Register 'BACKEND' and return to current value on exit.
     # TODO: Is this strictly necessary?
-    # current_BACKEND <- getRealizationBackend()
-    # on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
-    # setRealizationBackend(BACKEND)
+    # current_BACKEND <- getAutoRealizationBackend()
+    # on.exit(setAutoRealizationBackend(current_BACKEND), add = TRUE)
+    # setAutoRealizationBackend(BACKEND)
     # Check compatability of 'BPPARAM' with 'BACKEND'.
     if (!.areBackendsInMemory(BACKEND)) {
         if (!.isSingleMachineBackend(BPPARAM)) {

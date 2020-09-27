@@ -62,7 +62,7 @@ BSmooth(BSseq,
   \linkS4class{HDF5Array}, for example.
 
   The choice of realization backend is controlled by the \code{BACKEND}
-  argument, which defaults to the current value of \code{DelayedArray::\link{getRealizationBackend}()}.
+  argument, which defaults to the current value of \code{DelayedArray::\link{getAutoRealizationBackend}()}.
 
   \code{BSmooth} supports the following realization backends:
 

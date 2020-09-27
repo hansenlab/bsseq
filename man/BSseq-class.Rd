@@ -134,7 +134,7 @@ slots for representing smoothed data. This class is an extension of
       matrices (the latter two can only be combined if all objects have the
       same rowRanges). The default, \code{BACKEND = NULL}, corresponds to using
       \link[base]{matrix} objects. See
-      \code{?DelayedArray::\link{setRealizationBackend}} for alternative
+      \code{?DelayedArray::\link{setAutoRealizationBackend}} for alternative
       backends.}
 
     \item{\code{strandCollapse(BSseq, shift = TRUE)}}{

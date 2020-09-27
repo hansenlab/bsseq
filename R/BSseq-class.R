@@ -200,7 +200,7 @@ getBSseq <- function(BSseq,
 
 # Move to BSseq-utils?
 strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
-                           BACKEND = getRealizationBackend(),
+                           BACKEND = getAutoRealizationBackend(),
                            dir = tempfile("BSseq"), replace = FALSE,
                            chunkdim = NULL, level = NULL,
                            type = c("double", "integer")) {
@@ -216,9 +216,9 @@ strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
     }
     # Register 'BACKEND' and return to current value on exit.
     # TODO: Is this strictly necessary?
-    current_BACKEND <- getRealizationBackend()
-    on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
-    setRealizationBackend(BACKEND)
+    current_BACKEND <- getAutoRealizationBackend()
+    on.exit(setAutoRealizationBackend(current_BACKEND), add = TRUE)
+    setAutoRealizationBackend(BACKEND)
     # Check compatability of 'BPPARAM' with 'BACKEND'.
     if (!.areBackendsInMemory(BACKEND)) {
         if (!.isSingleMachineBackend(BPPARAM)) {

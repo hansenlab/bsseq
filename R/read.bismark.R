@@ -267,11 +267,11 @@
         #       (implicitly) only support in-memory or HDF5Array backends.
         #       However, we retain it for now (e.g., fstArray backend would use
         #       this until a dedicated branch was implemented).
-        M_sink <- DelayedArray::RealizationSink(
+        M_sink <- DelayedArray::AutoRealizationSink(
             dim = ans_dim,
             type = "integer")
         on.exit(close(M_sink), add = TRUE)
-        Cov_sink <- DelayedArray::RealizationSink(
+        Cov_sink <- DelayedArray::AutoRealizationSink(
             dim = ans_dim,
             type = "integer")
         on.exit(close(Cov_sink), add = TRUE)
@@ -388,9 +388,9 @@ read.bismark <- function(files,
     stopifnot(isTRUEorFALSE(strandCollapse))
     # Register 'BACKEND' and return to current value on exit.
     # TODO: Is this strictly necessary?
-    current_BACKEND <- getRealizationBackend()
-    on.exit(setRealizationBackend(current_BACKEND), add = TRUE)
-    setRealizationBackend(BACKEND)
+    current_BACKEND <- getAutoRealizationBackend()
+    on.exit(setAutoRealizationBackend(current_BACKEND), add = TRUE)
+    setAutoRealizationBackend(BACKEND)
     # Check compatability of 'BPPARAM' with 'BACKEND'.
     if (!.areBackendsInMemory(BACKEND)) {
         if (!.isSingleMachineBackend(BPPARAM)) {

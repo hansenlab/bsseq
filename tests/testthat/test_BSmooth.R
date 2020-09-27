@@ -48,7 +48,7 @@ test_that("Backends work when using SerialParam parallelisation backend", {
 
 test_that(
     "Expected parallelisation backends work with in-memory realization backend", {
-        setRealizationBackend(NULL)
+        setAutoRealizationBackend(NULL)
 
         bsseq_serial_param <- BSmooth(bsseq_test, BPPARAM = SerialParam())
         bsseq_multicore_param <- BSmooth(
