@@ -89,7 +89,7 @@
 
         # Construct ArrayGrid --------------------------------------------------
 
-        sink_grid <- colGrid(x = sink, ncol = 1L)
+        sink_grid <- colAutoGrid(x = sink, ncol = 1L)
         list_of_cols <- split(seq_along(group), group)[ugroup]
 
         # Compute colsum() -----------------------------------------------------
@@ -174,7 +174,7 @@
 
         # Construct ArrayGrid --------------------------------------------------
 
-        sink_grid <- rowGrid(x = sink, nrow = 1L)
+        sink_grid <- rowAutoGrid(x = sink, nrow = 1L)
         list_of_rows <- split(seq_along(group), group)[as.character(ugroup)]
 
         # Compute colsum() -----------------------------------------------------

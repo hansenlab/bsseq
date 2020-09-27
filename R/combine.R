@@ -63,7 +63,7 @@
     on.exit(close(sink))
 
     # Set up ArrayGrid instance over columns of `sink`.
-    sink_grid <- colGrid(sink)
+    sink_grid <- colAutoGrid(sink)
 
     # Loop over column grid of 'sink', identify samples required for that
     # block, bring that data into memory, pass down to .combineList_matrix(),
