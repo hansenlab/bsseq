@@ -84,7 +84,7 @@
             x = block_x,
             x_rowRanges = block_rowRanges,
             ans_rowRanges = ans_rowRanges)
-        write_block(x = sink, viewport = sink_viewport, block = block_ans)
+        write_block(sink, viewport = sink_viewport, block = block_ans)
     }
 
     as(sink, "DelayedArray")

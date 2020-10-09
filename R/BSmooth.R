@@ -102,10 +102,10 @@ makeClusters <- function(hasGRanges, maxGap = 10^8) {
     }
     # Write to coef_sink and se.coef_sink while respecting the IPC lock.
     ipclock(sink_lock)
-    write_block(x = coef_sink, viewport = grid[[b]], block = as.matrix(coef))
+    write_block(coef_sink, viewport = grid[[b]], block = as.matrix(coef))
     if (keep.se) {
         write_block(
-            x = se.coef_sink,
+            se.coef_sink,
             viewport = grid[[b]],
             block = as.matrix(se.coef))
     }

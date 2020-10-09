@@ -109,7 +109,7 @@
                         ncol = 1)
                 }
                 ipclock(sink_lock)
-                write_block(x = sink, viewport = sink_grid[[b]], block = ans)
+                write_block(sink, viewport = sink_grid[[b]], block = ans)
                 ipcunlock(sink_lock)
                 NULL
             },
@@ -194,7 +194,7 @@
                         nrow = 1)
                 }
                 ipclock(sink_lock)
-                write_block(x = sink, viewport = sink_grid[[b]], block = ans)
+                write_block(sink, viewport = sink_grid[[b]], block = ans)
                 ipcunlock(sink_lock)
                 NULL
             },
@@ -272,7 +272,7 @@ blockApplyWithRealization <- function(x, FUN, ..., sink = NULL, x_grid = NULL,
         block_ans <- FUN(block, ...)
         # NOTE: This is the only part different from DelayedArray::blockApply()
         if (!is.null(sink)) {
-            write_block(x = sink, viewport = sink_viewport, block = block_ans)
+            write_block(sink, viewport = sink_viewport, block = block_ans)
             block_ans <- NULL
         }
         if (DelayedArray:::get_verbose_block_processing()) {

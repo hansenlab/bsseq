@@ -210,8 +210,8 @@
     # Write to M_sink and Cov_sink while respecting the IPC lock.
     viewport <- grid[[b]]
     ipclock(sink_lock)
-    write_block(x = M_sink, viewport = viewport, block = M)
-    write_block(x = Cov_sink, viewport = viewport, block = Cov)
+    write_block(M_sink, viewport = viewport, block = M)
+    write_block(Cov_sink, viewport = viewport, block = Cov)
     ipcunlock(sink_lock)
     NULL
 }
