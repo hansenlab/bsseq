@@ -111,7 +111,7 @@ combineList <- function(x, ..., BACKEND = NULL) {
     x_trans <- lapply(x, getBSseq, "trans")
     x_has_same_trans <- vapply(
         x_trans,
-        function(t) isTRUE(all.equal(t, x_trans[[1L]])),
+        function(t) isTRUE(all.equal(t, x_trans[[1L]], check.environment = FALSE)),
         logical(1L))
     stopifnot(isTRUE(all(x_has_same_trans)))
     x_parameters <- lapply(x, getBSseq, "parameters")
