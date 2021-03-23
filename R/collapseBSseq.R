@@ -136,8 +136,10 @@ collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
     # TODO: Is there a way to use the internal constructor with `check = FALSE`?
     #       Don't need to check M and Cov because this has already happened
     #       when files were parsed.
-    # .BSseq(se, trans = function(x) NULL, parameters = list())
     bsseq <- new2("BSseq", se, check = FALSE)
+    trans <- function() NULL
+    environment(trans) <- emptyenv()
+    bsseq@trans <- trans
     if (identical(BACKEND, "HDF5Array")) {
         # NOTE: Save BSseq object; mimicing
         #       HDF5Array::saveHDF5SummarizedExperiment().

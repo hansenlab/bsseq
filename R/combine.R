@@ -153,6 +153,7 @@ combineList <- function(x, ..., BACKEND = NULL) {
         ans_coef <- NULL
         ans_se.coef <- NULL
         ans_trans <- function() NULL
+        environment(ans_trans) <- emptyenv()
         ans_parameters <- list()
     }
 
