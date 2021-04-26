@@ -326,7 +326,7 @@ BSmooth <- function(BSseq,
         #       HDF5Array::saveHDF5SummarizedExperiment().
         dir <- dirname(h5_path)
         x <- BSseq
-        x@assays <- HDF5Array:::.shorten_assay2h5_links(x@assays)
+        x@assays <- HDF5Array::shorten_assay2h5_links(x@assays)
         saveRDS(x, file = file.path(dir, "se.rds"))
     }
     BSseq
