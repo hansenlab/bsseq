@@ -371,7 +371,7 @@ setReplaceMethod(
 setMethod("updateObject", "BSseq",
           function(object, ...) {
               # NOTE: identical() is too strong
-              if (hasBeenSmoothed(object) &
+              if (hasBeenSmoothed(object) &&
                   isTRUE(all.equal(getBSseq(object, "trans"), .oldTrans))) {
                   object@trans <- plogis
               }
