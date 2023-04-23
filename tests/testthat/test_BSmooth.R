@@ -63,7 +63,7 @@ test_that(
 
         bsseq_batch_jobs_param <- BSmooth(
             bsseq_test,
-            BPPARAM = BatchJobsParam(2, progressbar = FALSE))
+            BPPARAM = BatchtoolsParam(2, progressbar = FALSE))
         expect_equivalent_SE(bsseq_serial_param, bsseq_batch_jobs_param)
 
         skip_if_not_installed("doParallel")
@@ -108,7 +108,7 @@ test_that(
         expect_error(
             BSmooth(
                 bsseq_serial_param,
-                BPPARAM = BatchJobsParam(2, progressbar = FALSE)))
+                BPPARAM = BatchtoolsParam(2, progressbar = FALSE)))
         expect_error(
             BSmooth(bsseq_test,
                     BPPARAM = SnowParam(workers = c("fake1", "fake2"))))

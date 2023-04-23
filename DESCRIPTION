@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.35.0
+Version: 1.35.1
 Encoding: UTF-8
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
@@ -47,7 +47,7 @@ Suggests:
     rtracklayer,
     BSgenome.Hsapiens.UCSC.hg38,
     beachmat (>= 1.5.2),
-    BatchJobs
+    batchtools
 Collate:
     utils.R
     hasGRanges.R
@@ -78,7 +78,6 @@ VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq
 BugReports: https://github.com/kasperdanielhansen/bsseq/issues
 biocViews: DNAMethylation
-SystemRequirements: C++11
 LinkingTo: Rcpp, beachmat
 NeedsCompilation: yes
 RoxygenNote: 7.1.0

@@ -30,7 +30,7 @@ BSmooth(BSseq,
     supported are \linkS4class{SerialParam} (Unix, Mac, Windows),
     \linkS4class{MulticoreParam} (Unix and Mac), \linkS4class{SnowParam}
     (Unix, Mac, and Windows, limited to single-machine clusters), and
-    \linkS4class{BatchJobsParam} (Unix, Mac, Windows, only with the in-memory
+    \linkS4class{BatchtoolsParam} (Unix, Mac, Windows, only with the in-memory
     realization backend). See sections 'Parallelization and progress
     monitoring' and 'Realization backends' for further details.}
   \item{chunkdim}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
