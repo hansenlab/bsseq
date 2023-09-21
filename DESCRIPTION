@@ -57,6 +57,7 @@ Collate:
     combine.R
     read.bsmooth.R
     read.bismark.R
+    read.modbam2bed.R
     BSmooth.R
     BSmooth.tstat.R
     dmrFinder.R
