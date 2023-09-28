@@ -7,13 +7,14 @@
   The constructor function for BSseq objects.
 }
 \usage{
-BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
+BSseq(M = NULL, Cov = NULL, Filtered = NULL, coef = NULL, se.coef = NULL,
   trans = NULL, parameters = NULL, pData = NULL, gr = NULL,
   pos = NULL, chr = NULL, sampleNames = NULL, rmZeroCov = FALSE)
 }
 \arguments{
   \item{M}{A matrix-like object of methylation evidence (see 'Details' below).}
   \item{Cov}{A matrix-like object of coverage (see 'Details' below)).}
+  \item{Filtered}{A matrix-like object of ambiguous modification bases obtained from modbam2bed.}
   \item{coef}{A matrix-like object of smoothing estimates (see 'Details'
     below).}
   \item{se.coef}{A matrix-like object of smoothing standard errors (see
