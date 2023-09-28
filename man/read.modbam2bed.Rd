@@ -24,14 +24,13 @@ read.modbam2bed(
 \value{
 BSseq object
 }
-
 \details{
 This function reads in nanopore sequencing modified BED files
 to Bsseq objects. Nanopore sequencing data (i.e. aggregated modified base
 counts) is stored in modified-base BAM files. These modified-base BAM files
 are converted to bedMethyl (BED) files using \href{https://github.com/epi2me-labs/modbam2bed}{modbam2bed}.
 
-  \subsection{Details for using modbam2bed}{
+\subsection{Details for using modbam2bed}{
   After installing modbam2bed, a conda environment is activated. Index files
 for BAM files are created using \code{samtools index}. The code requires aligned reads with the Mm and Ml tags (MM and ML also supported), and the reference sequence used for alignment (<reference.fasta>).
 
@@ -48,17 +47,14 @@ probability lower than threshold (default = 0.66)
   After creating BED files using modbam2bed, the BED files are read in and the Bsseq object is constructed via \code{read.modbam2bed()} function. The function reads in BED files, extract genomic regions, methylation, coverage, ambiguous modification status data and sample information and then construct Bsseq object using \code{BSseq} function within the package.}
 }
 \examples{
-files = c(system.file("extdata/modbam2bed/Ctr1.bed.gz",package = "bsseq"),
-          system.file("extdata/modbam2bed/Ctr2.bed.gz",package = "bsseq"),
-          system.file("extdata/modbam2bed/Ctr3.bed.gz",package = "bsseq"),
-          system.file("extdata/modbam2bed/Tret1.bed.gz",package = "bsseq"),
-          system.file("extdata/modbam2bed/Tret2.bed.gz",package = "bsseq"),
-          system.file("extdata/modbam2bed/Tret3.bed.gz",package = "bsseq"))
-
-pd = data.frame(condition =c(rep("control",3),rep("treatment",3)),
-               replicate = rep(c("rep1","rep2","rep3"),2))
-
-bsseq_nano = bsseq::read.modbam2bed(files,colData=pd,rmZeroCov = FALSE,
-             strandCollapse=TRUE)
-
+files <- c(system.file("extdata/modbam2bed/Ctr1.bed.gz", package = "bsseq"),
+           system.file("extdata/modbam2bed/Ctr2.bed.gz", package = "bsseq"),
+           system.file("extdata/modbam2bed/Ctr3.bed.gz", package = "bsseq"),
+           system.file("extdata/modbam2bed/Tret1.bed.gz", package = "bsseq"),
+           system.file("extdata/modbam2bed/Tret2.bed.gz", package = "bsseq"),
+           system.file("extdata/modbam2bed/Tret3.bed.gz", package = "bsseq"))
+pd <- data.frame(condition = rep(c("control", "treatment"), each = 3),
+                 replicate = rep(c("rep1", "rep2", "rep3"), times = 2))
+bsseq_nano <- bsseq::read.modbam2bed(files,colData=pd,rmZeroCov = FALSE,
+                                     strandCollapse=TRUE)
 }

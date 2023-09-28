@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.35.1
+Version: 1.37.1
 Encoding: UTF-8
 Title: Analyze, manage and store bisulfite sequencing data
 Description: A collection of tools for analyzing and visualizing bisulfite
@@ -57,6 +57,7 @@ Collate:
     combine.R
     read.bsmooth.R
     read.bismark.R
+    read.modbam2bed.R
     BSmooth.R
     BSmooth.tstat.R
     dmrFinder.R
