@@ -165,8 +165,8 @@ BSseq <- function(M = NULL, Cov = NULL, Filtered = NULL, coef = NULL, se.coef = 
 
     # Construct BSseq object ---------------------------------------------------
 
-    assays <- SimpleList(M = M, Cov = Cov, Filtered = Filtered,
-                         coef = coef, se.coef = se.coef)
+    assays <- SimpleList(M = M, Cov = Cov, Filtered = Filtered, coef = coef,
+                         se.coef = se.coef)
     assays <- assays[!S4Vectors:::sapply_isNULL(assays)]
     se <- SummarizedExperiment(
         assays = assays,
