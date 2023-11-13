@@ -8,6 +8,6 @@ test_that("read.modkit() works for BED files", {
                          colData = NULL,
                          rmZeroCov = FALSE,
                          strandCollapse = TRUE)
-
+    
     lapply(bsseq, function(x) {expect_is(x, "BSseq")})
 })

@@ -41,7 +41,6 @@ files <- c(system.file("extdata/modkit/blood.cpg.chr22.top1000.bed.gz", package 
 bsseq_nano <- bsseq::read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
 
 # there is other modification, so two BSseq objects are constructed.
-files <- c(system.file("extdata/modkit/blood.cpg.other_mod.chr22.top1000.bed.gz",
-package = "bsseq"))
-bsseq_nano <- bsseq::read.modkit(files, rmZeroCov = FALSE, strandCollapse=TRUE)
+files <- c(system.file("extdata/modkit/blood.cpg.other_mod.chr22.top1000.bed.gz",package = "bsseq"))
+bsseq_nano <- bsseq::read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
 }
