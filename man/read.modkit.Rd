@@ -37,10 +37,10 @@ are converted to bedMethyl (BED) files using \href{https://github.com/nanoporete
 
 \examples{
 # only one modification and one BSseq object is constructed.
-files <- c(system.file("extdata/modkit/blood.cpg.chr22.top1000.bed.gz", package = "bsseq"))
+files <- c(system.file("extdata/modkit/chr22.HG002.top1000.bed.gz", package = "bsseq"))
 bsseq_nano <- bsseq::read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
 
 # there is other modification, so two BSseq objects are constructed.
-files <- c(system.file("extdata/modkit/blood.cpg.other_mod.chr22.top1000.bed.gz",package = "bsseq"))
+files <- c(system.file("extdata/modkit/chr22.HG002.top1000.other_mod.bed.gz",package = "bsseq"))
 bsseq_nano <- bsseq::read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
 }
