@@ -1,5 +1,5 @@
 data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
-    stopifnot(class(df) == "data.frame")
+    stopifnot(is(df, "data.frame"))
     stopifnot(all(c("start", "end") %in% names(df)))
     stopifnot(any(c("chr", "seqnames") %in% names(df)))
     if("seqnames" %in% names(df))

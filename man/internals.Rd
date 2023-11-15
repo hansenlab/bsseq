@@ -6,4 +6,7 @@
    which is either a matrix or \code{NULL} (representing missing
    information). 
 }
+\value{
+  Undocumented
+}
 \keyword{internal}

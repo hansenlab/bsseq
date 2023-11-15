@@ -24,8 +24,9 @@ getStats_BSseqStat <- function(BSseqStat, regions = NULL, what = NULL) {
     if(is.null(regions))
         return(BSseqStat@stats)
     ## Now we have regions and no what
-    if(class(regions) == "data.frame")
+    if(is(regions, "data.frame")) {
         regions <- data.frame2GRanges(regions)
+    }
     hits <- findOverlaps(BSseqStat, regions)
     regionStats <- .getRegionStats(stat = BSseqStat@stats$stat,
                                    hits = hits)
@@ -61,8 +62,9 @@ getStats_BSseqTstat <- function(BSseqTstat, regions = NULL, stat = "tstat.correc
     stopifnot(is(BSseqTstat, "BSseqTstat"))
     if(is.null(regions))
         return(BSseqTstat@stats)
-    if(class(regions) == "data.frame")
+    if(is(regions, "data.frame")) {
         regions <- data.frame2GRanges(regions)
+    }
     stopifnot(stat %in% colnames(BSseqTstat@stats))
     stopifnot(length(stat) == 1)
     stopifnot(is(regions, "GenomicRanges"))

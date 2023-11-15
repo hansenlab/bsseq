@@ -236,9 +236,6 @@
 
 \seealso{
   \itemize{
-    \item \code{\link{read.bsmooth}()} for parsing output from the BSmooth
-  alignment suite.
-    \item \code{\link{read.umtab}()} for parsing legacy (old) formats from the BSmooth alignment suite.
     \item \code{\link{collapseBSseq}()} for collapsing (aggregating) data from sample's with multiple Bismark methylation extractor files (e.g., technical replicates).
   }
 }
