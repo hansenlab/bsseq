@@ -77,4 +77,10 @@ Class \code{\linkS4class{hasGRanges}}, directly.
   \code{\link[bsseqData]{BS.cancer.ex.tstat}} for an example of the
   class in the \pkg{bsseqData} package.
 }
+\examples{
+if(require(bsseqData)) {
+    data(BS.cancer.ex.tstat)
+    dmrFinder(BS.cancer.ex.tstat)
+}
+}
 \keyword{classes}

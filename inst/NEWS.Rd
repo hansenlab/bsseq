@@ -1,6 +1,17 @@
 \name{bsseqnews}
 \title{bsseq news}
 \encoding{UTF-8}
+\section{Version 1.39.x}{
+  \itemize{
+    \item{Removed \code{read.umtab}, \code{read.bsmooth}. The alignment
+      program which produced these files have not been supported for
+      years. }
+    \item{Minor code and documentation chnages. Fixed usage of
+      \code{class(x) == "y"} and added examples to some man pages.}
+  }
+}
+      
+
 \section{Version 1.17.x}{
   \itemize{
     \item{\code{BSseq()} will no longer reorder inputs. Previously, the

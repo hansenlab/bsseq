@@ -64,7 +64,7 @@ getMeth <- function(BSseq, regions = NULL, type = c("smooth", "raw"),
     }
 
     ## At this point, regions have been specified
-    if (class(regions) == "data.frame") {
+    if (is(regions, "data.frame")) {
         regions <- data.frame2GRanges(regions)
     }
     stopifnot(is(regions, "GenomicRanges"))
@@ -128,7 +128,7 @@ getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
             return(colMeans2(getBSseq(BSseq, type, withDimnames)))
         }
     }
-    if (class(regions) == "data.frame") {
+    if (is(regions,  "data.frame")) {
         regions <- data.frame2GRanges(regions)
     }
     stopifnot(is(regions, "GenomicRanges"))

@@ -1,11 +1,12 @@
 Package: bsseq
-Version: 1.39.0
+Version: 1.39.1
 Encoding: UTF-8
-Title: Analyze, manage and store bisulfite sequencing data
-Description: A collection of tools for analyzing and visualizing bisulfite
-    sequencing data.
+Title: Analyze, manage and store whole-genome methylation data
+Description: A collection of tools for analyzing and visualizing whole-genome
+    methylation data from sequencing. This includes whole-genome bisulfite
+    sequencing and Oxford nanopore data.
 Authors@R: c(person(c("Kasper", "Daniel"), "Hansen", role = c("aut", "cre"),
-    email = "kasperdanielhansen@gmail.com"),
+    email = "kasperdanielhansen@gmail.com", comment = c(ORCID = "0000-0003-0086-0687")),
     person("Peter", "Hickey", role = "aut", email = "peter.hickey@gmail.com"))
 Depends:
     R (>= 4.0),
@@ -18,6 +19,8 @@ Imports:
     GenomeInfoDb,
     scales,
     stats,
+    parallel,
+    tools,
     graphics,
     Biobase,
     locfit,
@@ -55,7 +58,6 @@ Collate:
     BSseqTstat_class.R
     BSseq_utils.R
     combine.R
-    read.bsmooth.R
     read.bismark.R
     read.modbam2bed.R
     BSmooth.R
