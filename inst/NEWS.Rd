@@ -8,9 +8,16 @@
       years. }
     \item{Minor code and documentation chnages. Fixed usage of
       \code{class(x) == "y"} and added examples to some man pages.}
+    \item{\code{Bsseq()} is modified to store filtered matrix (ambigious modification         status) for nanopore data.
+         }
+    \item{New function \code{read.modkit()} to read in methyl bed files generated             from modkit and construct Bsseq objects. When there is no other                         modifications, one Bsseq object is constructed, and when there is other                 modification present, its methylation and corresponding coverage are also stored
+      and two Bsseq objects are constructed.
+          }
+    \item{New function \code{read.modbam2bed()} to read in, extract methylation,              coverage and filtered data and create Bsseq object from methyl bed files                obtained by modbam2bed. Some instructions for using modbam2bed is also provided.
+         }
   }
 }
-      
+
 
 \section{Version 1.17.x}{
   \itemize{
