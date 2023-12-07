@@ -55,8 +55,10 @@ Collate:
     utils.R
     hasGRanges.R
     BSseq-class.R
+    BSseq-mod-class.R
     BSseqTstat_class.R
     BSseq_utils.R
+    BSseq_mod_utils.R
     combine.R
     read.bismark.R
     read.modbam2bed.R
