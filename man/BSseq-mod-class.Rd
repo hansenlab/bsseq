@@ -15,6 +15,10 @@
 \alias{assayNames,BSseq_mod-method}
 \alias{show,BSseq_mod-method}
 \alias{getBSseq_mod}
+\alias{strandCollapse_mod}
+\alias{orderBSseq_mod}
+\alias{chrSelectBSseq_mod}
+\alias{hasBeenSmoothed_mod}
 
 \title{Class BSseq_mod}
 \description{
