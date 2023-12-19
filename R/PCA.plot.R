@@ -1,30 +1,41 @@
 PCA <- function(                                         
   BSseq.obj,
+  genome,
+  tilewidth,
+  cut.last.tile.in.chrom,
   CpG,
-  win_size,
   nudge_x,
   nudge_y,
   size
-) {
+)
+
+{
   
-  # Filtering number of CpGs with 0 coverage in all samples
+  # Tile the UCSC mm10 mouse genome
+  
+  mm10.mouse.genome.1kb.tiles <- GenomicRanges::tileGenome(seqinfo(genome), tilewidth = tilewidth, cut.last.tile.in.chrom = cut.last.tile.in.chrom)
+  
+  # Filtering number of CpGs with 0 coverage across all samples
+  
   coverage <- getCoverage(BSseq.obj)
   keep <- which(rowSums(coverage) !=0)
   BSseq.obj.filtered <- BSseq.obj[keep,]
+
+  # Find which 1kb tile has more than a number of CpGs (default is 3)
   
-  # Tile the genome
-  BSseq.obj.tiled <- tile_by_windows(bs = BSseq.obj.filtered, win_size = win_size)
+  one.kb.tiled.genome.more.number.of.CpGs <- mm10.mouse.genome.1kb.tiles[which(GenomicRanges::countOverlaps(mm10.mouse.genome.1kb.tiles, BSseq.obj.filtered) >= CpG), ]
+
+  # Find which CpG in BSseq.object overlap with 1kb tiled coordinates with more than number of CpGs and then keep those CpGs in the BSseq.obj
   
-  # Filter out CpG tiles based on cutoff of number of CpGs
-  
-  BSseq.obj.tiled.filtered <- BSseq.obj.tiled[rowSums(as.matrix(countOverlaps(BSseq.obj.tiled, BSseq.obj.filtered))) > CpG, ]
+  BSseq.obj.CpGs.within.1kb.tilled.genome <- BSseq.obj.filtered[as.data.frame(GenomicRanges::findOverlaps(BSseq.obj.filtered, one.kb.tiled.genome.more.number.of.CpGs))$queryHits, ]
   
   # Get raw methylation values
   
-  BSseq.obj.methylation <- getMeth(BSseq.obj.tiled.filtered, type = "raw")
-
+  BSseq.obj.methylation <- getMeth(BSseq.obj.CpGs.within.1kb.tilled.genome, type = "raw")
+  
   # Filter tiles with NA methylation values
-  BSseq.obj.methylation.filtered <- BSseq.obj.methylation[rowSums(is.na(BSseq.obj.methylation)) == 0,]
+  
+  BSseq.obj.methylation.filtered <- BSseq.obj.methylation[rowSums(is.na(BSseq.obj.methylation)) == 0, ]
   
   # Perform PCA
   pca_data <- prcomp(t(BSseq.obj.methylation.filtered))
@@ -33,7 +44,7 @@ PCA <- function(
     PC1 = pca_data$x[, 1],
     PC2 = pca_data$x[, 2])
   
-  pdf("PCA.pdf")  
+  pdf("PCA.function.2.pdf")  
   
   # Plot PCA
   p <- ggplot(df_pca_data, aes(PC1, PC2, label = row.names(df_pca_data))) +
@@ -48,4 +59,5 @@ PCA <- function(
   print(p)
   
   dev.off()
+
 }
