@@ -1,5 +1,5 @@
 BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paired", "group2"),
-                          local.correct = TRUE, maxGap = NULL, qSd = 0.75, k = 101, mc.cores = 1, verbose = TRUE){
+                          local.correct = TRUE, maxGap = NULL, qSd = 0.75, k = 21, mc.cores = 1, verbose = TRUE){
     smoothSd <- function(Sds, k) {
         k0 <- floor(k/2)
         if(all(is.na(Sds))) return(Sds)
