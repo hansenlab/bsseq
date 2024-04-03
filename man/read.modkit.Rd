@@ -32,15 +32,15 @@ are converted to bedMethyl (BED) files using \href{https://github.com/nanoporete
     Modkit outputs modified reads, unmodified reads, ambiguous modification reads (reads where the probability was below the threshold and usually failing the lowest 10th percentile), and other modified reads.}
 
 \subsection{modkit to Bsseq object}{
-    After creating BED files using modkit, the BED files are read in and the Bsseq object is constructed via \code{read.modkit()} function. The function reads in BED files, extract genomic regions, methylation, coverage, ambiguous modification status data and sample information and then construct Bsseq object using \code{BSseq} function within the package. If there are other modified reads, two Bsseq objects are constructed with the first one using major modified reads and their corresponding coverage and the second one using the other modified reads and their corresponding coverage.}
+    After creating BED files using modkit, the BED files are read in and the Bsseq object is constructed via \code{read.modkit()} function. The function reads in BED files, extract genomic regions, methylation, coverage, ambiguous modification status data and sample information and then construct Bsseq object using \code{BSseq} function within the package. Other modification bases such as hydroxymethylation are extracted and added to the methylation matrix when present.}
 }
 
 \examples{
-# only one modification and one BSseq object is constructed.
-files <- c(system.file("extdata/modkit/chr22.HG002.top1000.bed.gz", package = "bsseq"))
-bsseq_nano <- bsseq::read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
+# No other modification present
+files <- c(system.file("extdata/modkit/chr21.chr22.HG002.top1000.bed.gz", package = "bsseq"))
+bsseq_nano <- read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
 
-# there is other modification, so two BSseq objects are constructed.
-files <- c(system.file("extdata/modkit/chr22.HG002.top1000.other_mod.bed.gz",package = "bsseq"))
-bsseq_nano <- bsseq::read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
+# Other modification present
+files <- c(system.file("extdata/modkit/Hypo1.first50Bed.txt",package = "bsseq"))
+bsseq_nano <- read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
 }
