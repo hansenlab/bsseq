@@ -75,11 +75,8 @@ exportMethods("[", "show",
               "findOverlaps", "overlapsAny", "subsetByOverlaps",
               "combine", "updateObject")
 
-export("BSseq", "BSseq_mod", "getMeth", "getMeth_mod", "getCoverage",
-       "getCoverage_mod", "getBSseq", "getBSseq_mod","getStats",
-       "collapseBSseq", "orderBSseq", "orderBSseq_mod",
-       "hasBeenSmoothed", "hasBeenSmoothed_mod",
-       "chrSelectBSseq", "chrSelectBSseq_mod",
+export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
+       "collapseBSseq", "orderBSseq", "hasBeenSmoothed", "chrSelectBSseq",
        "BSmooth", "BSmooth.tstat", "dmrFinder", "fisherTests",
        "combineList", "strandCollapse", "strandCollapse_mod",
        "plotRegion", "plotManyRegions",
