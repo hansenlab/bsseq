@@ -3,6 +3,8 @@
 \encoding{UTF-8}
 \section{Version 1.39.x}{
   \itemize{
+    \item{Changing the default value of k in \code{BSmooth.tstat} from
+      \code{k=101} to \code{k=21}.}
     \item{Removed \code{read.umtab}, \code{read.bsmooth}. The alignment
       program which produced these files have not been supported for
       years. }
@@ -19,7 +21,6 @@
       coverage and filtered data and create Bsseq object from methyl bed files 
       obtained by modbam2bed. Some instructions for using modbam2bed is also provided.
          }
-  }
 }
 
 

@@ -11,7 +11,7 @@
 \usage{
 BSmooth.tstat(BSseq, group1, group2,
   estimate.var = c("same", "paired", "group2"), local.correct = TRUE,
-  maxGap = NULL, qSd = 0.75, k = 101, mc.cores = 1, verbose = TRUE)
+  maxGap = NULL, qSd = 0.75, k = 21, mc.cores = 1, verbose = TRUE)
 }
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
