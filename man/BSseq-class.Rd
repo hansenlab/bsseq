@@ -31,8 +31,8 @@
 An object from the class links together several pieces of information.
 (1) genomic locations stored as a \code{GRanges} object, a location by
 samples matrix of M values, a location by samples matrix of Cov
-(coverage) values, a location by samples matrix of Filtered (ambiguous modification status) values, and phenodata information. In addition, there are
-slots for representing smoothed data. This class is an extension of
+(coverage) values, a location by samples matrix of Filtered (ambiguous modification status) values, and phenodata information. 
+In addition, there are slots for representing smoothed data. This class is an extension of
 \linkS4class{RangedSummarizedExperiment}.
 }
 \section{Slots}{
@@ -59,7 +59,7 @@ slots for representing smoothed data. This class is an extension of
     \item{show}{The show method.}
     \item{combine}{This function combines two \code{BSSeq} objects.
       The genomic locations of the new object is the union of the
-      genomic locations of the individual objects. In addition, the
+      genomic locations of the individual objects.  In addition, the
       methylation data matrices are placed next to each other (as
       appropriate wrt. the new genomic locations) and zeros are entered
       into the matrices as needed.}
