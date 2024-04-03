@@ -175,7 +175,6 @@ BSseq <- function(M = NULL, Cov = NULL, Filtered = NULL, coef = NULL, se.coef = 
     .BSseq(se, trans = trans, parameters = parameters)
 }
 
-
 # Move to BSseq-utils?
 hasBeenSmoothed <- function(BSseq) {
     "coef" %in% assayNames(BSseq)
@@ -183,7 +182,8 @@ hasBeenSmoothed <- function(BSseq) {
 
 # Move to BSseq-utils?
 getBSseq <- function(BSseq,
-                     type = c("Cov", "M", "gr","coef", "se.coef", "trans", "parameters"),
+                     type = c("Cov", "M", "gr","coef", "se.coef","trans", 
+                              "parameters"),
                      withDimnames = TRUE) {
     type <- match.arg(type)
     if (type %in% c("M", "Cov")) {
