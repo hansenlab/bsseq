@@ -182,7 +182,7 @@ hasBeenSmoothed <- function(BSseq) {
 
 # Move to BSseq-utils?
 getBSseq <- function(BSseq,
-                     type = c("Cov", "M", "gr","coef", "se.coef","trans", 
+                     type = c("Cov", "M", "gr","coef", "se.coef","trans",
                               "parameters"),
                      withDimnames = TRUE) {
     type <- match.arg(type)
