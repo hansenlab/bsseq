@@ -59,7 +59,7 @@ slots for representing smoothed data. This class is an extension of
     \item{show}{The show method.}
     \item{combine}{This function combines two \code{BSSeq} objects.
       The genomic locations of the new object is the union of the
-      genomic locations of the individual objects.  In addition, the
+      genomic locations of the individual objects. In addition, the
       methylation data matrices are placed next to each other (as
       appropriate wrt. the new genomic locations) and zeros are entered
       into the matrices as needed.}
