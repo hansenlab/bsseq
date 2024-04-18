@@ -15,7 +15,8 @@ read.modkit <- function(files,
         if (length(unique(data$V4)) == 2){
             gr <- GRanges(seqnames = data[data$V4 == "m", ]$V1,
                     ranges = IRanges(start = data[data$V4 == "m", ]$V2+1,
-                                     end = data[data$V4 == "m", ]$V3))
+                                     end = data[data$V4 == "m", ]$V3),
+                    strand = data[data$V4 == "m", ]$V6)
 
             mcols(gr)$m <- data[data$V4 == "m", ]$V12
             mcols(gr)$h <- data[data$V4 != "m", ]$V12
@@ -23,7 +24,8 @@ read.modkit <- function(files,
             mcols(gr)$filter <- data[data$V4 == "m", ]$V16
         }else{
             gr <- GRanges(seqnames = data$V1,
-                          ranges = IRanges(start = data$V2+1, end = data$V3))
+                          ranges = IRanges(start = data$V2+1, end = data$V3),
+                          strand = data$V6)
 
             mcols(gr)$m <- data$V12
             mcols(gr)$u <- data$V13
@@ -61,7 +63,9 @@ read.modkit <- function(files,
                              parameters = NULL, pData = colData, gr = NULL,
                              chr = as.vector(seqnames(overlap_gr)),
                              sampleNames = sampleNames, rmZeroCov = rmZeroCov)
-          if (strandCollapse) {strandCollapse(bsseq_obj)}
+          if (strandCollapse) {
+            bsseq_obj <- strandCollapse(bsseq_obj)
+          }
     }else{
       bsseq_obj <- BSseq(M = as.matrix(m), Cov = as.matrix(u + m),
                          Filtered = as.matrix(filter),
@@ -70,7 +74,9 @@ read.modkit <- function(files,
                          parameters = NULL, pData = colData, gr = NULL,
                          chr = as.vector(seqnames(overlap_gr)),
                          sampleNames = sampleNames, rmZeroCov = rmZeroCov)
-      if (strandCollapse) {strandCollapse(bsseq_obj)}
+      if (strandCollapse) {
+        bsseq_obj <- strandCollapse(bsseq_obj)
+      }
     }
 
     return(bsseq_obj)
