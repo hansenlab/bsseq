@@ -11,6 +11,7 @@ read.modkit <- function(files,
     for (i in seq_along(files)){
         data <- read.table(files[i], header = FALSE, sep="\t",
                     stringsAsFactors=FALSE, quote="")
+        data$V6[data$V6 == "."] <- "*"
 
         if (length(unique(data$V4)) == 2){
             gr <- GRanges(seqnames = data[data$V4 == "m", ]$V1,
