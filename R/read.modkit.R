@@ -61,7 +61,7 @@ read.modkit <- function(files,
                              Filtered = as.matrix(filter),
                              coef = NULL, se.coef = NULL,
                              pos = start(overlap_gr), trans = NULL,
-                             parameters = NULL, pData = colData, gr = NULL,
+                             parameters = NULL, pData = colData, gr = overlap_gr,
                              chr = as.vector(seqnames(overlap_gr)),
                              sampleNames = sampleNames, rmZeroCov = rmZeroCov)
           if (strandCollapse) {
@@ -72,7 +72,7 @@ read.modkit <- function(files,
                          Filtered = as.matrix(filter),
                          coef = NULL, se.coef = NULL,
                          pos = start(overlap_gr), trans = NULL,
-                         parameters = NULL, pData = colData, gr = NULL,
+                         parameters = NULL, pData = colData, gr = overlap_gr,
                          chr = as.vector(seqnames(overlap_gr)),
                          sampleNames = sampleNames, rmZeroCov = rmZeroCov)
       if (strandCollapse) {
