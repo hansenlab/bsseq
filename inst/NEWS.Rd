@@ -1,6 +1,11 @@
 \name{bsseqnews}
 \title{bsseq news}
 \encoding{UTF-8}
+\section{Version 1.41.x}{
+  \itemize{
+    \item Changing saveRDS to base::saveRDS following upstream changes.
+  }
+}
 \section{Version 1.39.x}{
   \itemize{
     \item{Changing the default value of k in \code{BSmooth.tstat} from

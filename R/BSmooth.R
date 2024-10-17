@@ -327,7 +327,7 @@ BSmooth <- function(BSseq,
         dir <- dirname(h5_path)
         x <- BSseq
         x@assays <- HDF5Array::shorten_assay2h5_links(x@assays)
-        saveRDS(x, file = file.path(dir, "se.rds"))
+        base::saveRDS(x, file = file.path(dir, "se.rds"))
     }
     BSseq
 }

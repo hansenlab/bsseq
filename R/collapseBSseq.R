@@ -145,7 +145,7 @@ collapseBSseq <- function(BSseq, group, BPPARAM = bpparam(),
         #       HDF5Array::saveHDF5SummarizedExperiment().
         x <- bsseq
         x@assays <- HDF5Array::shorten_assay2h5_links(x@assays)
-        saveRDS(x, file = file.path(dir, "se.rds"))
+        base::saveRDS(x, file = file.path(dir, "se.rds"))
     }
     bsseq
 }
