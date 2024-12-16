@@ -9,7 +9,7 @@ extern "C" {
 
     static const R_CallMethodDef all_call_entries[] = {
         // Validity checking.
-        REGISTER(check_M_and_Cov, 2),
+        REGISTER(check_M_and_Cov, 3),
         {NULL, NULL, 0}
     };
 

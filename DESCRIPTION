@@ -38,7 +38,8 @@ Imports:
     Biostrings,
     utils,
     HDF5Array (>= 1.19.11),
-    rhdf5
+    rhdf5,
+    beachmat (>= 2.23.2)
 Suggests:
     testthat,
     bsseqData,
@@ -49,7 +50,6 @@ Suggests:
     doParallel,
     rtracklayer,
     BSgenome.Hsapiens.UCSC.hg38,
-    beachmat (>= 1.5.2),
     batchtools
 Collate:
     utils.R
@@ -82,6 +82,10 @@ VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq
 BugReports: https://github.com/kasperdanielhansen/bsseq/issues
 biocViews: DNAMethylation
-LinkingTo: Rcpp, beachmat
+LinkingTo:
+    Rcpp,
+    beachmat,
+    assorthead (>= 1.1.4)
+SystemRequirements: C++17
 NeedsCompilation: yes
 RoxygenNote: 7.1.0

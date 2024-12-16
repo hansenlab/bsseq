@@ -38,6 +38,7 @@ importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo",
                   "seqlevels<-", "sortSeqlevels")
 importFrom(GenomeInfoDb, "Seqinfo")
 importFrom(gtools, "combinations")
+importFrom(beachmat, initializeCpp)
 importFrom(Rcpp, sourceCpp)
 
 # NOTE: data.table has some NAMESPACE clashes with functions in Bioconductor,
