@@ -8,7 +8,7 @@ extern "C" {
 
     // Validity checking.
 
-    SEXP check_M_and_Cov(SEXP, SEXP);
+    SEXP check_M_and_Cov(SEXP, SEXP, SEXP);
 }
 
 #endif

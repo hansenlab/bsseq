@@ -26,7 +26,7 @@
 
 .checkMandCov <- function(M, Cov) {
     msg <- NULL
-    validMsg(msg, .Call(cxx_check_M_and_Cov, M, Cov))
+    validMsg(msg, .Call(cxx_check_M_and_Cov, initializeCpp(M), initializeCpp(Cov), 1))
 }
 
 # TODO: Benchmark validity method

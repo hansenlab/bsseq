@@ -7,7 +7,9 @@ Description: A collection of tools for analyzing and visualizing whole-genome
     sequencing and Oxford nanopore data.
 Authors@R: c(person(c("Kasper", "Daniel"), "Hansen", role = c("aut", "cre"),
     email = "kasperdanielhansen@gmail.com", comment = c(ORCID = "0000-0003-0086-0687")),
-    person("Peter", "Hickey", role = "aut", email = "peter.hickey@gmail.com"))
+    person("Peter", "Hickey", role = "aut", email = "peter.hickey@gmail.com", comment = c(ORCID = "0000-0002-8153-6258")),
+    person("Hervé", "Pagès", role = "ctb"),
+    person("Aaron", "Lun", role = "ctb"))
 Depends:
     R (>= 4.0),
     methods,
@@ -38,7 +40,8 @@ Imports:
     Biostrings,
     utils,
     HDF5Array (>= 1.19.11),
-    rhdf5
+    rhdf5,
+    beachmat (>= 2.23.2)
 Suggests:
     testthat,
     bsseqData,
@@ -49,7 +52,6 @@ Suggests:
     doParallel,
     rtracklayer,
     BSgenome.Hsapiens.UCSC.hg38,
-    beachmat (>= 1.5.2),
     batchtools
 Collate:
     utils.R
@@ -82,6 +84,10 @@ VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq
 BugReports: https://github.com/kasperdanielhansen/bsseq/issues
 biocViews: DNAMethylation
-LinkingTo: Rcpp, beachmat
+LinkingTo:
+    Rcpp,
+    beachmat,
+    assorthead (>= 1.1.4)
+SystemRequirements: C++17
 NeedsCompilation: yes
 RoxygenNote: 7.1.0
