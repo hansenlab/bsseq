@@ -27,7 +27,7 @@ The BSmooth algorithm is described in detail in [@Hansen:2012].  It was applied 
 
 The main focus for our development has been the analysis of CpG methylation in humans, and we have successfully used it in other primates [@Tung:2012].  It is highly likely that the approach will work in non-human organisms, but care must be taken: the smoothing parameters (which we have selected based on human data) should be evaluated carefully.  Furthermore, it may not be suitable at all for organisms with vastly different (from humans) methylation structures.
 
-With respect to non-CpG methylation, the situation is mixed.  We have never used the algorithm to analyze non-CpG methylation, but it should be straightforward to do so.  However, the data structures used in the current code might not conveniently scale from the 28.2M CpGs in the human genome to the roughly 2x585M Cs (it may well be possible to do an separate analysis for each chromosome).  This should be less of an issue for organisms with smaller genomes.  We are considering changing these underlying data structures to allow for easier analysis of non-CpG methylation in humans.
+Later, we have used the approach to analyze a large WGBS dataset in human brain [@gtexWGBS]. The data consisted of more than 300 samples and our analysis included non-CpG methylation. To do so, we extended the package to support HDF5 backed data and we imnplemented a more flexible F-statistics. Doing so, we were able to not only analyse CpG methylation in this large sample size, but also non-CpG methylation which is far larger. However, especially the non-CpG methylation analysis was still difficult to accomplish due to computational due to computational requirements. 
 
 ## System Requirements
 
@@ -245,6 +245,47 @@ For a more detailed discussion of the analysis tools, read the companion vignett
 Fisher's exact tests may be efficiently computed using the function `fisherTests`()`.
 
 Binomial and poisson goodness of fit tests statistics may be computed using `binomialGoodnessOfFit()` and `poissonGoodnessOfFit()`.
+
+
+# HDF5 support
+
+`bsseq` supports HDF5-backed objects. This allows computations to happen in bounded memory, facilitating analysis of large datasets. We use the `HDF5Array` package together with `SummarizedExperiment`.
+
+An HDF5-backed `BSseq` object has a small memory footprint: the data contained in the `assay` slot (particular the `M` and `Cov` matrices as well as the smoothed methylation values) are all stored on disk. The only thing in memory is the (relatively small) data in `colData` as well as some minimal overhead such as a pointer to the files on disk. Together with the `BiocParallel` package this allows large computations to happen where only parts of the data (such as the data on a single chromosome for a signle sample) is read into memory. 
+
+The easiest way to convert an existing in-memory `BSseq` object to an HDF5-backed object is to save it
+```{r, eval=FALSE}
+library(HDF5Array)
+saveHDF5SummarizedExperiment(BSseq, dir = "./BSseqName.h5")
+```
+The second argument of this is a directory (not a file). I often append `.h5` to the name, but that is not necessary. After saving, the contents of the directory will be
+```{bash, eval=FALSE}
+assays.h5  se.rds
+```
+The `se.rds` refers to a `SummarizedExperiment`. To move this object around, you need to transfer the entire directory. But otherwise, this is like a normal R object file which is platform independent.
+
+Loading of the object uses the RDS syntax where a return object is explicitely named, such as
+```{r, eval=FALSE}
+BSseq <- loadHDF5SummarizedExperiment(dir = "./BSseqName.h5")
+```
+Loading is instantenous because most of the data is not being read.
+
+## Parallizing using HDF5
+
+It is easy to parallize over multiple cores on the same node using `BiocParallel`, by specifying the `BPPARAM` argument, like
+```{e, eval=FALSE}
+BSseq <- BSmooth(BSseq, BPPARAM = MulticoreParam(workers = 10)
+```
+would use 10 workers. In our experience, the bottle neck is almost always memory consumption. You would need to have enough memory to have the 10 workers operate simultanously. For `BSmooth()` the max memory consumption per worker will be what is needed to have 1 chromosome for 1 sample in memory. In fact, what is needed, is only `M` and `Cov` for that sample. But the details of memory consumption is function specific. 
+
+## Constructing a new object using HDF5
+
+Currently, we support constructing a new object from Bismark input files using HDF5. Again, this implies that the memory consumption will be bounded by the number of workers times the max consumption of a single worker. For reading files, this typically ends up being the memory needed to read the relevant columns from a single file, for the entire genome. An example invocation is
+```{r eval=FALSE}
+BSseq <- read.bismark(bismarkfiles, BACKEND = "HDF5Array", BPPARAM = MulticoreParam(workers = 10))
+```
+There is no benefits to using more workers than you have files.
+
 
 # sessionInfo()
 
