@@ -1,6 +1,11 @@
 \name{bsseqnews}
 \title{bsseq news}
 \encoding{UTF-8}
+\section{Version 1.43.x}{
+  \itemize{
+    \item Included text in the vignette on HDF5.
+  }
+}
 \section{Version 1.41.x}{
   \itemize{
     \item Changing saveRDS to base::saveRDS following upstream changes.
