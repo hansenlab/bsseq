@@ -115,11 +115,11 @@
 # TODO: Document that this applies sort(sortSeqlevels()) to the output. It is
 #       deliberate that there is no option to override this behaviour.
 .constructFWGRangesFromBismarkFiles <- function(files,
-                                               rmZeroCov,
-                                               strandCollapse,
-                                               verbose,
-                                               nThread,
-                                               BPPARAM) {
+                                                rmZeroCov,
+                                                strandCollapse,
+                                                verbose,
+                                                nThread,
+                                                BPPARAM) {
     subverbose <- max(as.integer(verbose) - 1L, 0L)
 
     # TODO: Instead of using the 'largest' file, use the largest
