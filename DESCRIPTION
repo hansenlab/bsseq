@@ -1,5 +1,5 @@
 Package: bsseq
-Version: 1.45.0
+Version: 1.45.1
 Encoding: UTF-8
 Title: Analyze, manage and store whole-genome methylation data
 Description: A collection of tools for analyzing and visualizing whole-genome
@@ -61,6 +61,7 @@ Collate:
     BSseq_utils.R
     combine.R
     read.bismark.R
+    read.bedMethyl.R
     read.modbam2bed.R
     read.modkit.R
     BSmooth.R
@@ -79,6 +80,7 @@ Collate:
     FWIRanges-class.R
     FWGRanges-class.R
     findLoci.R
+    Likelihood_functions.R
 License: Artistic-2.0
 VignetteBuilder: knitr
 URL: https://github.com/kasperdanielhansen/bsseq

@@ -21,7 +21,7 @@ importFrom(stats, "approxfun", "fisher.test", "ppoints",
            "qqplot", "qunif", "cov2cor",
            "setNames")
 importFrom(graphics, "abline", "axis", "layout", "legend", "lines",
-           "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text")
+           "mtext", "par", "plot", "points", "polygon", "rect", "rug", "text", "hist")
 import(parallel)
 importFrom(locfit, "locfit", "lp")
 importFrom(DelayedMatrixStats, "rowSds", "rowVars", "colMeans2", "colSums2",
@@ -81,12 +81,14 @@ export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
        "BSmooth", "BSmooth.tstat", "dmrFinder", "fisherTests",
        "combineList", "strandCollapse",
        "plotRegion", "plotManyRegions",
-       "read.bismark",
+       "read.bismark", "read.bedMethyl",
        "read.modbam2bed", "read.modkit",
        "poissonGoodnessOfFit", "binomialGoodnessOfFit",
        "data.frame2GRanges", "BSseqTstat",
        "BSseqStat",
-       "findLoci")
+       "findLoci","estimateErrorRate",
+       "getCpGs",
+       "getMaxLikelihoodMatrix","getCpGMatrix")
 
 S3method("print", "chisqGoodnessOfFit")
 S3method("plot", "chisqGoodnessOfFit")
