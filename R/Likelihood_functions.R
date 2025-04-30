@@ -231,12 +231,13 @@ getMaxLikelihoodMatrix <- function(
     if (allCpG) {
       Q[, i] <- ifelse(SL_i[, 3] >= 1/3, SL_i[, 3], (1 - SL_i[, 3]))
     } else {
-      Q[, i] <- matrixStats::rowMaxs(SL_i)
+      Q[, i] <- DelayedMatrixStats::rowMaxs(SL_i)
     }
   }
   
   return(Q)
 }
+
 
 
 
