@@ -22,12 +22,13 @@
     \item{parameters}{A list of parameters.}
 }
 \details{
-  The matrix-like elements of the list in the 'stats' slot will be coerced to
-  \linkS4class{DelayedMatrix} objects; see
-  \code{?DelayedArray::\linkS4class{DelayedMatrix}} for the full list of
-  supported matrix-like objects. We recommend using \link[base]{matrix} objects
-  for in-memory storage of data and \linkS4class{HDF5Matrix} for on-disk
-  storage of data.
+    The matrix-like elements of the list in the 'stats' slot will be
+    coerced to \code{\link[DelayedArray]{DelayedMatrix}} objects; see
+    \code{\link[DelayedArray]{DelayedMatrix}} in the \pkg{DelayedArray}
+    package for the full list of supported matrix-like objects. We
+    recommend using \code{\link[base]{matrix}} objects for in-memory
+    storage of data and \code{\link[HDF5Array]{HDF5Matrix}} for on-disk
+    storage of data.
 }
 \section{Objects from the Class}{
     Objects can be created by calls of the form \code{BSseqStat(...)}.
@@ -35,15 +36,15 @@
     not constructed by the user.
 }
 \section{Slots}{
-    \describe{
-        \item{\code{stats}:}{This is a list of \linkS4class{DelayedMatrix}
-            objects with list elements representing various statistics for
-            methylation loci along the genome.}
-        \item{\code{parameters}:}{Object of class \code{list}.  A list of
-            parameters representing how the statistics were computed.}
-        \item{\code{gr}:}{Object of class \code{GRanges} giving genomic
-            locations.}
-    }
+  \describe{
+    \item{\code{stats}:}{This is a list of   \code{\link[DelayedArray]{DelayedMatrix}}
+      objects with list elements representing various statistics for
+      methylation loci along the genome.}
+    \item{\code{parameters}:}{Object of class \code{list}.  A list of
+      parameters representing how the statistics were computed.}
+    \item{\code{gr}:}{Object of class \code{GRanges} giving genomic
+      locations.}
+  }
 }
 \section{Extends}{
     Class \code{\linkS4class{hasGRanges}}, directly.

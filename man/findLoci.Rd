@@ -22,7 +22,7 @@ findLoci(pattern,
   }
   \item{subject}{
     A string containing a file path to the genome sequence, in FASTA or 2bit format, to be searched.
-    Alternatively, a \linkS4class{BSgenome} or \linkS4class{DNAStringSet} object storing the genome sequence to be searched.
+    Alternatively, a \code{\link[BSgenome]{BSgenome}} or \code{\link[Biostrings]{DNAStringSet}} object storing the genome sequence to be searched.
   }
   \item{include}{
     A character vector indicating the seqlevels of \code{subject} to be used.
@@ -46,17 +46,17 @@ findLoci(pattern,
   \code{\link[Biostrings:matchPattern]{vmatchPattern}()}.
   Users requiring finer-grained control should directly use the
   \code{\link[Biostrings:matchPattern]{vmatchPattern}()} function and coerce
-  the result to a \linkS4class{GRanges} object.
+  the result to a \code{\link[GenomicRanges]{GRanges}} object.
 }
 \value{
-  A \linkS4class{GRanges} object storing the found loci.
+  A \code{\link[GenomicRanges]{GRanges}} object storing the found loci.
 }
 \author{
   Peter F. Hickey
 }
 \seealso{
   \itemize{
-    \item \code{Biostrings::\link[Biostrings:matchPattern]{vmatchPattern}()}
+    \item \code{Biostrings::\link[Biostrings]{vmatchPattern}()}
     \item \code{?BSgenome::`\link[BSgenome]{BSgenome-utils}`}
     }
 }

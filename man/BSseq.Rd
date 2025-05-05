@@ -21,21 +21,22 @@ BSseq(M = NULL, Cov = NULL, Filtered = NULL, coef = NULL, se.coef = NULL,
     'Details' below).}
   \item{trans}{A smoothing transformation.}
   \item{parameters}{A list of smoothing parameters.}
-  \item{pData}{An \code{data.frame} or \linkS4class{DataFrame}.}
+  \item{pData}{An \code{data.frame} or \code{\link[S4Vectors]{DataFrame}}.}
   \item{sampleNames}{A vector of sample names.}
-  \item{gr}{An object of type \linkS4class{GRanges}.}
+  \item{gr}{An object of type \code{\link[GenomicRanges]{GRanges}}.}
   \item{pos}{A vector of locations.}
   \item{chr}{A vector of chromosomes.}
   \item{rmZeroCov}{Should genomic locations with zero coverage in all
     samples be removed.}
 }
 \details{
-  The 'M', 'Cov', 'coef', and 'se.coef' matrix-like objects will be coerced to
-  \linkS4class{DelayedMatrix} objects; see
-  \code{?DelayedArray::\linkS4class{DelayedMatrix}} for the full list of
-  supported matrix-like objects. We recommend using \link[base]{matrix} objects
-  for in-memory storage of data and \linkS4class{HDF5Matrix} for on-disk
-  storage of data.
+  The 'M', 'Cov', 'coef', and 'se.coef' matrix-like objects will be
+  coerced to \code{\link[DelayedArray]{DelayedMatrix}} objects; see
+  \code{\link[DelayedArray]{DelayedMatrix}} in the \pkg{DelayedArray}
+  package for the full list of supported matrix-like objects. We
+  recommend using \link[base]{matrix} objects for in-memory storage of
+  data and \code{\link[HDF5Array]{HDF5Matrix}} for on-disk storage of
+  data.
 
   Genomic locations are specified either through \code{gr} or through
   \code{chr} and \code{pos} but not both.  There should be the same

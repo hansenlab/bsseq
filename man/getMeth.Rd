@@ -36,11 +36,11 @@ getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
 
   If \code{region = NULL} the \code{what} argument is ignored.  This is
   also the only situation in which \code{confint = TRUE} is supported.
-  The return value is either a \linkS4class{DelayedMatrix}
-  (\code{confint = FALSE} or a list with three \linkS4class{DelayedMatrix}
-  components \code{confint = TRUE} (\code{meth}, \code{upper} and
-  \code{lower}), giving the methylation estimates and (optionally) confidence
-  intervals.
+  The return value is either a \code{\link[DelayedArray]{DelayedMatrix}}
+  (\code{confint = FALSE} or a list with three
+  \code{\link[DelayedArray]{DelayedMatrix}} components \code{confint =
+  TRUE} (\code{meth}, \code{upper} and \code{lower}), giving the
+  methylation estimates and (optionally) confidence intervals.
 
   Confidence intervals for \code{type = "smooth"} is based on standard
   errors from the smoothing algorithm (if present).  Otherwise it is
@@ -50,10 +50,11 @@ getMeth(BSseq, regions = NULL, type = c("smooth", "raw"),
 
   If \code{regions} are specified, \code{what = "perBase"} will make the
   function return a list, each element of the list being a
-  \linkS4class{DelayedMatrix} corresponding to a genomic region (and each row
-  of the \linkS4class{DelayedMatrix} being a loci inside the region). If
-  \code{what = "perRegion"} the function returns a \linkS4class{DelayedMatrix},
-  with each row corresponding to a region and containing the average
+  \code{\link[DelayedArray]{DelayedMatrix}} corresponding to a genomic
+  region (and each row of the \code{\link[DelayedArray]{DelayedMatrix}}
+  being a loci inside the region). If \code{what = "perRegion"} the
+  function returns a \code{\link[DelayedArray]{DelayedMatrix}}, with
+  each row corresponding to a region and containing the average
   methylation level in that region.
 }
 \references{

@@ -25,23 +25,26 @@ BSmooth(BSseq,
   \item{keep.se}{Should the estimated standard errors from the smoothing
     algorithm be kept. This will make the return object roughly 30
     percent bigger and is currently not be used for anything in \pkg{bsseq}.}
-  \item{BPPARAM}{An optional \linkS4class{BiocParallelParam} instance
-    determining the parallel back-end to be used during evaluation. Currently
-    supported are \linkS4class{SerialParam} (Unix, Mac, Windows),
-    \linkS4class{MulticoreParam} (Unix and Mac), \linkS4class{SnowParam}
-    (Unix, Mac, and Windows, limited to single-machine clusters), and
-    \linkS4class{BatchtoolsParam} (Unix, Mac, Windows, only with the in-memory
-    realization backend). See sections 'Parallelization and progress
-    monitoring' and 'Realization backends' for further details.}
+  \item{BPPARAM}{An optional
+    \code{\link[BiocParallel]{BiocParallelParam}} instance determining
+    the parallel back-end to be used during evaluation. Currently
+    supported are \code{\link[BiocParallel]{SerialParam}} (Unix, Mac,
+    Windows), \code{\link[BiocParallel]{MulticoreParam}} (Unix and Mac),
+    \code{\link[BiocParallel]{SnowParam}} (Unix, Mac, and Windows,
+    limited to single-machine clusters), and
+    \code{\link[BiocParallel]{BatchtoolsParam}} (Unix, Mac, Windows,
+    only with the in-memory realization backend). See sections
+    'Parallelization and progress monitoring' and 'Realization backends'
+    for further details.}
   \item{chunkdim}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
     The dimensions of the chunks to use for writing the data to
-    disk. By default, \code{\link{getHDF5DumpChunkDim}()} using the dimensions
-    of the returned \linkS4class{BSseq} object will be used. See
-    \code{?{getHDF5DumpChunkDim}} for more information.}
+    disk. By default, \code{\link[HDF5Array]{getHDF5DumpChunkDim}()}
+    using the dimensions of the returned \linkS4class{BSseq} object will
+    be used. See \code{?{getHDF5DumpChunkDim}} for more information.}
   \item{level}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.}
     The compression level to use for writing the data to disk. By
-    default, \code{\link{getHDF5DumpCompressionLevel}()} will be used. See
-    \code{?\link{getHDF5DumpCompressionLevel}} for more information.}
+    default, \code{\link[HDF5Array]{getHDF5DumpCompressionLevel}()} will be used. See
+    \code{?\link[HDF5Array]{getHDF5DumpCompressionLevel}} for more information.}
   \item{verbose}{A \code{logical(1)} indicating whether progress messages
     should be printed (default \code{TRUE}).}
 }
@@ -59,10 +62,10 @@ BSmooth(BSseq,
 
   The choice of \emph{realization backend} controls whether these assay(s) are
   stored in-memory as an ordinary \link[base]{matrix} or on-disk as a
-  \linkS4class{HDF5Array}, for example.
+  \code{\link[HDF5Array]{HDF5Array}}, for example.
 
   The choice of realization backend is controlled by the \code{BACKEND}
-  argument, which defaults to the current value of \code{DelayedArray::\link{getAutoRealizationBackend}()}.
+  argument, which defaults to the current value of \code{DelayedArray::\link[DelayedArray]{getAutoRealizationBackend}()}.
 
   \code{BSmooth} supports the following realization backends:
 
@@ -70,14 +73,14 @@ BSmooth(BSseq,
     \item \code{NULL} (in-memory): This stores each new assay in-memory using
       an ordinary \link[base]{matrix}.
     \item \code{HDF5Array} (on-disk): This stores each new assay on-disk in a
-    HDF5 file using an \linkS4class{HDF5Matrix} from \pkg{HDF5Array}.
+    HDF5 file using an \code{\link[HDF5Array]{HDF5Matrix}} from \pkg{HDF5Array}.
   }
 
   Please note that certain combinations of realization backend and
   parallelization backend are currently not supported. For example, the
-  \linkS4class{HDF5Array} realization backend is currently only compatible when
+  \code{\link[HDF5Array]{HDF5Array}} realization backend is currently only compatible when
   used with a single-machine parallelization backend (i.e. it is not compatible
-  with a \linkS4class{SnowParam} that specifies an \emph{ad hoc} cluster of
+  with a \code{\link[BiocParallel]{SnowParam}} that specifies an \emph{ad hoc} cluster of
   \strong{multiple} machines). \code{BSmooth()} will issue an error when given
   such incompatible realization and parallelization backends. Furthermore, to
   avoid memory usage blow-ups, \code{BSmooth()} will issue an error if an
@@ -86,7 +89,7 @@ BSmooth(BSseq,
 
   Additional arguments related to the realization backend can be passed via the
   \code{...} argument. These arguments must be named and are passed to the
-  relevant \linkS4class{RealizationSink} constructor. For example, the
+  relevant \code{\link[DelayedArray]{RealizationSink}} constructor. For example, the
   \code{...} argument can be used to specify the path to the HDF5 file to be
   used by \code{BSmooth()}. Please see the examples at the bottom of the page.
 }
@@ -101,7 +104,7 @@ BSmooth(BSseq,
       usage compared to previous versions of \pkg{bsseq} that required all
       results be retained in-memory.
     \item Parallelization is now supported on Windows through the use of a
-    \linkS4class{SnowParam} object as the value of \code{BPPARAM}.
+    \code{\link[BiocParallel]{SnowParam}} object as the value of \code{BPPARAM}.
     \item Detailed and extensive job logging facilities.
   }
 
@@ -109,8 +112,8 @@ BSmooth(BSseq,
   In general, we recommend that users combine multicore (single-machine)
   parallelization with an on-disk realization backend (see section,
   'Realization backend'). For Unix and Mac users, this means using
-  a \linkS4class{MulticoreParam}. For Windows users, this means using a
-  single-machine \linkS4class{SnowParam}. Please consult the \pkg{BiocParallel}
+  a \code{\link[BiocParallel]{MulticoreParam}}. For Windows users, this means using a
+  single-machine \code{\link[BiocParallel]{SnowParam}}. Please consult the \pkg{BiocParallel}
   documentation to take full advantage of the more advanced features.
 
   \subsection{Deprecated arguments}{
@@ -127,7 +130,7 @@ BSmooth(BSseq,
     A useful feature of \pkg{BiocParallel} are progress bars to monitor the
     status of long-running jobs, such as \code{BSmooth()}. Progress bars are
     controlled via the \code{progressbar} argument in the
-    \linkS4class{BiocParallelParam} constructor. Progress bars replace the
+    \code{\link[BiocParallel]{BiocParallelParam}} constructor. Progress bars replace the
     use of the deprecated \code{verbose} argument to print out information on
     the status of \code{BSmooth()}.
 

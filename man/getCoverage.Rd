@@ -28,20 +28,23 @@ getCoverage(BSseq, regions = NULL, type = c("Cov", "M"),
   arguments.
 
   If \code{regions} are not specified (\code{regions = NULL}) a
-  \linkS4class{DelayedMatrix} object (\code{what = "perBase"}) is returned.
-  This will either contain the per-base coverage, the average coverage, or the
-  genome total coverage (depending on value of \code{what}).
+  \code{\link[DelayedArray]{DelayedMatrix}} object (\code{what =
+  "perBase"}) is returned.  This will either contain the per-base
+  coverage, the average coverage, or the genome total coverage
+  (depending on value of \code{what}).
 
   If \code{what = "perBase"} and \code{regions} are specified, a list is
-  returned.  Each element of the list is a \linkS4class{DelayedMatrix} object
-  corresponding to the genomic loci inside the region.  It is conceptually the
-  same as splitting the coverage by region.
+  returned.  Each element of the list is a
+  \code{\link[DelayedArray]{DelayedMatrix}} object corresponding to the
+  genomic loci inside the region.  It is conceptually the same as
+  splitting the coverage by region.
 
   If \code{what = "perRegionAverage"} or \code{what = "perRegionTotal"}
   and \code{regions} are specified the return value is a
-  \linkS4class{DelayedMatrix} object. Each row of the
-  \linkS4class{DelayedMatrix} corresponds to a region and contains either the
-  average coverage or the total coverage in the region.
+  \code{\link[DelayedArray]{DelayedMatrix}} object. Each row of the
+  \code{\link[DelayedArray]{DelayedMatrix}} corresponds to a region and
+  contains either the average coverage or the total coverage in the
+  region.
 }
 \author{
   Kasper Daniel Hansen \email{khansen@jhsph.edu}.
