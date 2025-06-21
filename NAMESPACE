@@ -33,10 +33,10 @@ importMethodsFrom(Biobase, "annotatedDataFrameFrom",
                   "pData", "pData<-",
                   "sampleNames", "sampleNames<-")
 importFrom(Biobase, "validMsg")
-importMethodsFrom(GenomeInfoDb, "seqlengths", "seqlengths<-", "seqinfo",
+importMethodsFrom(Seqinfo, "seqlengths", "seqlengths<-", "seqinfo",
                   "seqinfo<-", "seqnames", "seqnames<-", "seqlevels",
                   "seqlevels<-", "sortSeqlevels")
-importFrom(GenomeInfoDb, "Seqinfo")
+importFrom(Seqinfo, "Seqinfo")
 importFrom(gtools, "combinations")
 importFrom(beachmat, initializeCpp)
 importFrom(Rcpp, sourceCpp)
