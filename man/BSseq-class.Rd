@@ -28,12 +28,14 @@
   data.
 }
 \section{Objects from the Class}{
-An object from the class links together several pieces of information.
-(1) genomic locations stored as a \code{GRanges} object, a location by
-samples matrix of M values, a location by samples matrix of Cov
-(coverage) values, a location by samples matrix of Filtered (ambiguous modification status) values, and phenodata information.In addition, there are
-slots for representing smoothed data. This class is an extension of
-\linkS4class{RangedSummarizedExperiment}.
+  An object from the class links together several pieces of information.
+  (1) genomic locations stored as a \code{GRanges} object, a location by
+  samples matrix of M values, a location by samples matrix of Cov
+  (coverage) values, a location by samples matrix of Filtered (ambiguous
+  modification status) values, and phenodata information.In addition,
+  there are slots for representing smoothed data. This class is an
+  extension of \link[SummarizedExperiment]{RangedSummarizedExperiment}
+  from the \pkg{SummarizedExperiment} package.
 }
 \section{Slots}{
   \describe{
@@ -65,7 +67,9 @@ slots for representing smoothed data. This class is an extension of
       into the matrices as needed.}
 }}
 \section{Utilities}{
-  This class extends \linkS4class{RangedSummarizedExperiment} and therefore
+  This class extends
+  \link[SummarizedExperiment]{RangedSummarizedExperiment}
+  from the \pkg{SummarizedExperiment} package and therefore
   inherits a number of useful \code{GRanges} methods that operate on the
   \code{rowRanges} slot, used for accessing and setting the genomic locations
   and also do \code{subsetByOverlaps}.
@@ -134,8 +138,8 @@ slots for representing smoothed data. This class is an extension of
       matrices (the latter two can only be combined if all objects have the
       same rowRanges). The default, \code{BACKEND = NULL}, corresponds to using
       \link[base]{matrix} objects. See
-      \code{?DelayedArray::\link{setAutoRealizationBackend}} for alternative
-      backends.}
+      \code{\link[DelayedArray]{setAutoRealizationBackend}} (in the
+      \pkg{DelayedArray} package) for alternative backends.}
 
     \item{\code{strandCollapse(BSseq, shift = TRUE)}}{
 
@@ -171,11 +175,13 @@ slots for representing smoothed data. This class is an extension of
 \seealso{
 
   The package vignette.  \code{\link{BSseq}} for the constructor
-  function.  \code{\linkS4class{RangedSummarizedExperiment}}
-  for the underlying class.  \code{\link{getBSseq}},
-  \code{\link{getCoverage}}, and \code{\link{getMeth}} for accessing the
-  data stored in the object and finally \code{\link{BSmooth}} for
-  smoothing the bisulfite sequence data.
+  function.
+  \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
+  (in the \pkg{SummarizedExperiment} package) for the underlying class.
+  \code{\link{getBSseq}}, \code{\link{getCoverage}}, and
+  \code{\link{getMeth}} for accessing the data stored in the object and
+  finally \code{\link{BSmooth}} for smoothing the bisulfite sequence
+  data.
 
 }
 \examples{
