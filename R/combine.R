@@ -196,8 +196,8 @@ combineList <- function(x, ..., BACKEND = NULL) {
             ans_M <- do.call(cbind, Map(extractROWS, x_M, x_order))
             ans_Cov <- do.call(cbind, Map(extractROWS, x_Cov, x_order))
             if (combine_smooths) {
-                ans_M <- do.call(cbind, Map(extractROWS, x_M, x_order))
-                ans_Cov <- do.call(cbind, Map(extractROWS, x_Cov, x_order))
+                ans_coef <- do.call(cbind, Map(extractROWS, x_coef, x_order))
+                ans_se.coef <- do.call(cbind, Map(extractROWS, x_se.coef, x_order))
             }
         }
     } else {
