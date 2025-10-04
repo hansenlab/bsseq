@@ -13,10 +13,17 @@
     }
     idx <- split(seq_along(group), group)[ugroup]
     if (ncol(x)) {
-        ans <- endoapply(x, function(xx) {
+        ans <- lapply(x, function(xx) {
             sapply(X = idx, function(i) unique(xx[i]))
         })
-        rownames(ans) <- names(idx)
+        ## The following only retains columns of colData which
+        ## are constant across group
+        if(any(!sapply(ans, is.vector)))
+            warning("Dropping columns from colData(BSseq) which are not constant within `group`")
+        if(length(ans) >= 1)
+            ans <- ans[sapply(ans, is.vector)]
+        if(length(ans) >= 1)
+            ans <- DataFrame(ans, row.names = names(idx))
         return(ans)
     }
     DataFrame(row.names = names(idx))

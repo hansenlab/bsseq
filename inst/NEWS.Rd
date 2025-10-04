@@ -3,6 +3,11 @@
 \encoding{UTF-8}
 \section{Version 1.43.x}{
   \itemize{
+    \item Fixed an issue with `collapseBSseq()` omitting an error.
+  }
+}
+\section{Version 1.43.x}{
+  \itemize{
     \item Included text in the vignette on HDF5.
   }
 }
