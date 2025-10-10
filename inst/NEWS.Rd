@@ -4,6 +4,8 @@
 \section{Version 1.43.x}{
   \itemize{
     \item Fixed an issue with `collapseBSseq()` omitting an error.
+    \item Deprecating `read.modkit()` and `read.modbam2bed()` in favor
+      of `read.bedMethyl()`.
   }
 }
 \section{Version 1.43.x}{

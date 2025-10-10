@@ -2,6 +2,7 @@ read.modkit <- function(files,
                         colData = NULL,
                         rmZeroCov = FALSE,
                         strandCollapse = TRUE){
+    .Deprecated("read.bedMethyl")
     gr_list <- list()
     sampleNames <- sub("\\.bed.gz$", "", basename(files))
     if (!is.null(colData)){

@@ -1,5 +1,6 @@
 read.modbam2bed <- function(files, colData = NULL, rmZeroCov = FALSE,
                             strandCollapse = TRUE) {
+    .Deprecated("read.bedMethyl")
     gr_list <- list()
     sampleNames <- sub("\\.bed$","",basename(files))
     if (!is.null(colData)) {

@@ -23,6 +23,8 @@ read.modkit(
 BSseq objects
 }
 \details{
+This function is deprecated in favor of `read.bedMethyl()`.
+  
 This function reads in nanopore sequencing modified BED files
 to Bsseq objects. Nanopore sequencing data (i.e. aggregated modified base
 counts) is stored in modified-base BAM files. These modified-base BAM files
@@ -38,9 +40,9 @@ are converted to bedMethyl (BED) files using \href{https://github.com/nanoporete
 \examples{
 # No other modification present
 files <- c(system.file("extdata/modkit/chr21.chr22.HG002.top1000.bed.gz", package = "bsseq"))
-bsseq_nano <- read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
+## bsseq_nano <- read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
 
 # Other modification present
 files <- c(system.file("extdata/modkit/Hypo1.first50Bed.txt",package = "bsseq"))
-bsseq_nano <- read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
+## bsseq_nano <- read.modkit(files, rmZeroCov = FALSE, strandCollapse=FALSE)
 }

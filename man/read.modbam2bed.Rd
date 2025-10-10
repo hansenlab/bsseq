@@ -23,6 +23,8 @@ read.modbam2bed(
 BSseq object
 }
 \details{
+This function is deprecated in favor of `read.bedMethyl()`.
+
 This function reads in nanopore sequencing modified BED files
 to Bsseq objects. Nanopore sequencing data (i.e. aggregated modified base
 counts) is stored in modified-base BAM files. These modified-base BAM files
@@ -53,6 +55,6 @@ files <- c(system.file("extdata/modbam2bed/ctr1.chr10.chr11.bed.gz", package = "
     system.file("extdata/modbam2bed/tret3.chr10.chr11.bed.gz", package = "bsseq"))
 pd <- data.frame(condition = rep(c("control", "treatment"), each = 3),
     replicate = rep(c("rep1", "rep2", "rep3"), times = 2))
-bsseq_nano <- bsseq::read.modbam2bed(files,colData=pd,rmZeroCov = FALSE,
-    strandCollapse=TRUE)
+## bsseq_nano <- bsseq::read.modbam2bed(files,colData=pd,rmZeroCov = FALSE,
+##     strandCollapse=TRUE)
 }
