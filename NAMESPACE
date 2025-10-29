@@ -59,6 +59,7 @@ exportClasses("hasGRanges",
               "BSseq",
               "BSseqTstat",
               "BSseqStat",
+              "MethylCounts",
               "matrixOrNULL")
 
 exportMethods("[", "show",
@@ -77,6 +78,7 @@ exportMethods("[", "show",
               "combine", "updateObject")
 
 export("BSseq", "getMeth", "getCoverage", "getBSseq", "getStats",
+       "MethylCounts", "getMethylCounts",
        "collapseBSseq", "orderBSseq", "hasBeenSmoothed", "chrSelectBSseq",
        "BSmooth", "BSmooth.tstat", "dmrFinder", "fisherTests",
        "combineList", "strandCollapse",

@@ -157,3 +157,120 @@ getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
     outMatrix[as.integer(rownames(out)), ] <- out
     outMatrix
 }
+
+strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
+                           BACKEND = getAutoRealizationBackend(),
+                           dir = tempfile("BSseq"), replace = FALSE,
+                           chunkdim = NULL, level = NULL,
+                           type = c("double", "integer")) {
+
+    # Argument checks ----------------------------------------------------------
+
+    if (all(runValue(strand(BSseq)) == "*")) {
+        warning("All loci are unstranded, nothing to collapse.", call. = FALSE)
+        return(BSseq)
+    }
+    if (!(all(runValue(strand(BSseq)) %in% c("+", "-")))) {
+        stop("'BSseq' object has a mix of stranded and unstranded loci.")
+    }
+    # Register 'BACKEND' and return to current value on exit.
+    # TODO: Is this strictly necessary?
+    current_BACKEND <- getAutoRealizationBackend()
+    on.exit(setAutoRealizationBackend(current_BACKEND), add = TRUE)
+    setAutoRealizationBackend(BACKEND)
+    # Check compatability of 'BPPARAM' with 'BACKEND'.
+    if (!.areBackendsInMemory(BACKEND)) {
+        if (!.isSingleMachineBackend(BPPARAM)) {
+            stop("The parallelisation strategy must use a single machine ",
+                 "when using an on-disk realization backend.\n",
+                 "See help(\"read.bismark\") for details.",
+                 call. = FALSE)
+        }
+    } else {
+        if (!is.null(BACKEND)) {
+            # NOTE: Currently do not support any in-memory realization
+            #       backends. If the realization backend is NULL then an
+            #       ordinary matrix is returned rather than a matrix-backed
+            #       DelayedMatrix.
+            stop("The '", BACKEND, "' realization backend is not supported.",
+                 "\n  See help(\"read.bismark\") for details.",
+                 call. = FALSE)
+        }
+    }
+    # If using HDF5Array as BACKEND, check remaining options are sensible.
+    if (identical(BACKEND, "HDF5Array")) {
+        # NOTE: Most of this copied from
+        #       HDF5Array::saveHDF5SummarizedExperiment().
+        if (!isSingleString(dir)) {
+            stop(wmsg("'dir' must be a single string specifying the path to ",
+                      "the directory where to save the BSseq object (the ",
+                      "directory will be created)."))
+        }
+        if (!isTRUEorFALSE(replace)) {
+            stop("'replace' must be TRUE or FALSE")
+        }
+        if (!dir.exists(dir)) {
+            HDF5Array::create_dir(dir)
+        } else {
+            HDF5Array::replace_dir(dir, replace)
+        }
+        h5_path <- file.path(dir, "assays.h5")
+    } else if (identical(BACKEND, NULL)) {
+        h5_path <- NULL
+    }
+
+    # Collapse loci ------------------------------------------------------------
+
+    loci <- rowRanges(BSseq)
+    if (shift) {
+        loci <- shift(loci, shift = as.integer(-1L * (strand(loci) == "-")))
+    }
+    collapsed_loci <- reduce(loci, min.gapwidth = 0L, ignore.strand = TRUE)
+
+    # Collapse 'M' and 'Cov' matrices ------------------------------------------
+
+    ol <- findOverlaps(loci, collapsed_loci, type = "equal")
+    group <- subjectHits(ol)
+    M <- .rowsum(
+        x = assay(BSseq, "M", withDimnames = FALSE),
+        group = group,
+        # NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
+        reorder = TRUE,
+        BPPARAM = BPPARAM,
+        filepath = h5_path,
+        name = "Cov",
+        chunkdim = chunkdim,
+        level = level,
+        type = type)
+    Cov <- .rowsum(
+        x = assay(BSseq, "Cov", withDimnames = FALSE),
+        group = group,
+        # NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
+        reorder = TRUE,
+        BPPARAM = BPPARAM,
+        filepath = h5_path,
+        name = "Cov",
+        chunkdim = chunkdim,
+        level = level,
+        type = type)
+
+    # Construct BSseq object, saving it if it is HDF5-backed -------------------
+
+    se <- SummarizedExperiment(
+        assays = SimpleList(M = unname(M), Cov = unname(Cov)),
+        rowRanges = collapsed_loci,
+        colData = colData(BSseq))
+    # TODO: Is there a way to use the internal constructor with `check = FALSE`?
+    #       Assuming input was valid, the output is valid, too.
+    # .BSseq(se, trans = function(x) NULL, parameters = list())
+    bsseq <- new2("BSseq", se, check = FALSE)
+    if (!is.null(BACKEND) && BACKEND == "HDF5Array") {
+        # NOTE: Save BSseq object; mimicing
+        #       HDF5Array::saveHDF5SummarizedExperiment().
+        x <- bsseq
+        x@assays <- HDF5Array::shorten_assay2h5_links(x@assays)
+        base::saveRDS(x, file = file.path(dir, "se.rds"))
+    }
+    bsseq
+}
+

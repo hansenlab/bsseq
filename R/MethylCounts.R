@@ -45,21 +45,17 @@ MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
 
     # Process assays.
     # NOTE: Nothing to do for 'coef', and 'se.coef'.
-    if (is.null(M) || is.null(Cov)) {
-        stop("Need 'M' and 'Cov'.")
+    if (is.null(M) || is.null(U)) {
+        stop("Need 'M' and 'U'.")
     }
-    # Process 'trans' and 'parameters'.
-    if (is.null(trans)) {
-        trans <- function() NULL
-        environment(trans) <- emptyenv()
-    }
+    # Process 'parameters'.
     if (is.null(parameters)) {
         parameters <- list()
     }
     # Process 'sampleNames' and 'pData'.
     if (is.null(sampleNames)) {
         if (is.null(pData)) {
-            # BSseq object will have no colnames.
+            ## BSseq object will have no colnames.
             pData <- make_zero_col_DFrame(ncol(M))
         } else {
             # BSseq object will have 'sampleNames' as colnames.
@@ -94,20 +90,22 @@ MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
 
     is_duplicated <- duplicated(gr)
     if (any(is_duplicated)) {
-        warning("Detected duplicate loci. Collapsing counts in 'M' and 'Cov' ",
-                "at these positions.")
-        if (!is.null(coef) || !is.null(se.coef)) {
-            stop("Cannot collapse when 'coef' or 'se.coef' are non-NULL.")
-        }
+        warning("Detected duplicate loci. Collapsing counts in 'M' and 'U'",
+                "(optionally 'H' and 'D') at these positions.")
         loci <- gr[!is_duplicated]
         ol <- findOverlaps(gr, loci, type = "equal")
         M <- rowsum(x = M, group = subjectHits(ol), reorder = FALSE)
         rownames(M) <- NULL
-        Cov <- rowsum(x = Cov, group = subjectHits(ol), reorder = FALSE)
+        U <- rowsum(x = U, group = subjectHits(ol), reorder = FALSE)
         rownames(Cov) <- NULL
-        if (!is.null(Filtered)){
-          Filtered <- rowsum(x = Filtered, group = subjectHits(ol), reorder = FALSE)
-          rownames(Filtered) <- NULL}
+        if(!is.null(H)) {
+            H <- rowsum(x = H, group = subjectHits(ol), reorder = FALSE)
+            rownames(H) <- NULL
+        }
+        if(!is.null(D)) {
+            D <- rowsum(x = D, group = subjectHits(ol), reorder = FALSE)
+            rownames(D) <- NULL
+        }
     } else {
         loci <- gr
     }
@@ -115,28 +113,34 @@ MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
     # Optionally, remove positions with zero coverage --------------------------
 
     if (rmZeroCov) {
+        Cov <- M + U
+        if(!is.null(H)) {
+            Cov <- Cov + H
+        }
         loci_with_zero_cov <- rowAlls(Cov, value = 0)
         if (any(loci_with_zero_cov)) {
             loci_with_nonzero_cov <- !loci_with_zero_cov
             gr <- gr[loci_with_nonzero_cov]
             M <- M[loci_with_nonzero_cov, , drop = FALSE]
-            Cov <- Cov[loci_with_nonzero_cov, , drop = FALSE]
-            coef <- coef[loci_with_nonzero_cov, , drop = FALSE]
-            se.coef <- se.coef[loci_with_nonzero_cov, , drop = FALSE]
-            Filtered <- Filtered[loci_with_nonzero_cov, , drop = FALSE]
+            U <- U[loci_with_nonzero_cov, , drop = FALSE]
+            if(!is.null(H)) {
+                H <- H[loci_with_nonzero_cov, , drop = FALSE]
+            }
+            if(!is.null(D)) {
+                D <- D[loci_with_nonzero_cov, , drop = FALSE]
+            }
         }
     }
 
     # Construct BSseq object ---------------------------------------------------
 
-    assays <- SimpleList(M = M, Cov = Cov, Filtered = Filtered,
-                         coef = coef, se.coef = se.coef)
+    assays <- SimpleList(M = M, U = U, H = H, D = D)
     assays <- assays[!S4Vectors:::sapply_isNULL(assays)]
     se <- SummarizedExperiment(
         assays = assays,
         rowRanges = loci,
         colData = pData)
-    .BSseq(se, trans = trans, parameters = parameters)
+    .MethylCounts(se, parameters = parameters)
 }
 
 ## Move to BSseq-utils?

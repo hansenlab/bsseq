@@ -58,6 +58,7 @@ Collate:
     hasGRanges.R
     BSseq-class.R
     BSseqTstat_class.R
+    MethylCounts.R
     BSseq_utils.R
     combine.R
     read.bismark.R
