@@ -1,7 +1,12 @@
 \name{bsseqnews}
 \title{bsseq news}
 \encoding{UTF-8}
-\section{Version 1.43.x}{
+\section{Version 1.47.x}{
+  \itemize{
+    \item Making `read.modkit()` and `read.modbam2bed()` defunct.
+  }
+}
+\section{Version 1.45.x}{
   \itemize{
     \item Fixed an issue with `collapseBSseq()` omitting an error.
     \item Deprecating `read.modkit()` and `read.modbam2bed()` in favor

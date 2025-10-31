@@ -61,6 +61,7 @@ test_that(
             BPPARAM = SnowParam(2))
         expect_equivalent_SE(bsseq_test, bsseq_snow_param_single_machine)
 
+        skip_if_not_installed("batchtools")
         bsseq_batch_jobs_param <- BSmooth(
             bsseq_test,
             BPPARAM = BatchtoolsParam(2, progressbar = FALSE))
