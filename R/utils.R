@@ -74,3 +74,10 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
         return(FALSE)
     }
 }
+
+SimpleListExcludeNull <- function(...) {
+    sl <- SimpleList(...)
+    sl <- sl[!S4Vectors:::sapply_isNULL(sl)]
+    sl
+}
+

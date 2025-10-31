@@ -37,7 +37,7 @@ setValidity2("MethylCounts", function(object) {
 #       been around for a long time.
 
 MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
-                     parameters = NULL, pData = NULL, gr = NULL,
+                     parameters = NULL, colData = NULL, gr = NULL,
                      pos = NULL, chr = NULL, sampleNames = NULL,
                      rmZeroCov = FALSE) {
 
@@ -52,24 +52,24 @@ MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
     if (is.null(parameters)) {
         parameters <- list()
     }
-    # Process 'sampleNames' and 'pData'.
+    # Process 'sampleNames' and 'colData'.
     if (is.null(sampleNames)) {
-        if (is.null(pData)) {
+        if (is.null(colData)) {
             ## BSseq object will have no colnames.
-            pData <- make_zero_col_DFrame(ncol(M))
+            colData <- make_zero_col_DFrame(ncol(M))
         } else {
             # BSseq object will have 'sampleNames' as colnames.
-            pData <- DataFrame(row.names = sampleNames)
+            colData <- DataFrame(row.names = sampleNames)
         }
     } else {
-        if (is.null(pData)) {
+        if (is.null(colData)) {
             # BSseq object will have 'sampleNames' as colnames.
-            pData <- DataFrame(row.names = sampleNames)
+            colData <- DataFrame(row.names = sampleNames)
         } else {
-            if (is.null(rownames(pData))) {
-                rownames(pData) <- sampleNames
+            if (is.null(rownames(colData))) {
+                rownames(colData) <- sampleNames
             } else {
-                stopifnot(identical(rownames(pData), sampleNames))
+                stopifnot(identical(rownames(colData), sampleNames))
             }
         }
     }
@@ -134,12 +134,10 @@ MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
 
     # Construct BSseq object ---------------------------------------------------
 
-    assays <- SimpleList(M = M, U = U, H = H, D = D)
-    assays <- assays[!S4Vectors:::sapply_isNULL(assays)]
     se <- SummarizedExperiment(
-        assays = assays,
+        assays = SimpleListExcludeNull(M = M, U = U, H = H, D = D),
         rowRanges = loci,
-        colData = pData)
+        colData = colData)
     .MethylCounts(se, parameters = parameters)
 }
 
@@ -172,35 +170,3 @@ setMethod("show", signature(object = "MethylCounts"), function(object) {
     }
 })
 
-setMethod("pData", "MethylCounts", function(object) {
-    object@colData
-})
-
-setReplaceMethod(
-    "pData",
-    signature = signature(object = "MethylCounts", value = "data.frame"),
-    function(object, value) {
-        colData(object) <- as(value, "DataFrame")
-        object
-    }
-)
-
-setReplaceMethod(
-    "pData",
-    signature = signature(object = "MethylCounts", value = "DataFrame"),
-    function(object, value) {
-        colData(object) <- value
-        object
-    }
-)
-
-setMethod("sampleNames", "MethylCounts", function(object) colnames(object))
-
-setReplaceMethod(
-    "sampleNames",
-    signature = signature(object = "MethylCounts", value = "ANY"),
-    function(object, value) {
-        colnames(object) <- value
-        object
-    }
-)

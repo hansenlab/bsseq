@@ -158,7 +158,7 @@ getCoverage <- function(BSseq, regions = NULL, type = c("Cov", "M"),
     outMatrix
 }
 
-strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
+strandCollapse <- function(x, shift = TRUE, BPPARAM = bpparam(),
                            BACKEND = getAutoRealizationBackend(),
                            dir = tempfile("BSseq"), replace = FALSE,
                            chunkdim = NULL, level = NULL,
@@ -166,12 +166,12 @@ strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
 
     # Argument checks ----------------------------------------------------------
 
-    if (all(runValue(strand(BSseq)) == "*")) {
+    if (all(runValue(strand(x)) == "*")) {
         warning("All loci are unstranded, nothing to collapse.", call. = FALSE)
         return(BSseq)
     }
-    if (!(all(runValue(strand(BSseq)) %in% c("+", "-")))) {
-        stop("'BSseq' object has a mix of stranded and unstranded loci.")
+    if (!(all(runValue(strand(x)) %in% c("+", "-")))) {
+        stop("'x' object has a mix of stranded and unstranded loci.")
     }
     # Register 'BACKEND' and return to current value on exit.
     # TODO: Is this strictly necessary?
@@ -221,7 +221,7 @@ strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
 
     # Collapse loci ------------------------------------------------------------
 
-    loci <- rowRanges(BSseq)
+    loci <- rowRanges(x)
     if (shift) {
         loci <- shift(loci, shift = as.integer(-1L * (strand(loci) == "-")))
     }
@@ -232,7 +232,7 @@ strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
     ol <- findOverlaps(loci, collapsed_loci, type = "equal")
     group <- subjectHits(ol)
     M <- .rowsum(
-        x = assay(BSseq, "M", withDimnames = FALSE),
+        x = assay(x, "M", withDimnames = FALSE),
         group = group,
         # NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
         reorder = TRUE,
@@ -242,35 +242,88 @@ strandCollapse <- function(BSseq, shift = TRUE, BPPARAM = bpparam(),
         chunkdim = chunkdim,
         level = level,
         type = type)
-    Cov <- .rowsum(
-        x = assay(BSseq, "Cov", withDimnames = FALSE),
-        group = group,
-        # NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
-        reorder = TRUE,
-        BPPARAM = BPPARAM,
-        filepath = h5_path,
-        name = "Cov",
-        chunkdim = chunkdim,
-        level = level,
-        type = type)
+    if(is(x, "BSseq")) {
+        Cov <- .rowsum(
+            x = assay(x, "Cov", withDimnames = FALSE),
+            group = group,
+            ## NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
+            reorder = TRUE,
+            BPPARAM = BPPARAM,
+            filepath = h5_path,
+            name = "Cov",
+            chunkdim = chunkdim,
+            level = level,
+            type = type)
+        ## Construct BSseq object, saving it if it is HDF5-backed -------------------
 
-    # Construct BSseq object, saving it if it is HDF5-backed -------------------
+        se <- SummarizedExperiment(
+            assays = SimpleList(M = unname(M), Cov = unname(Cov)),
+            rowRanges = collapsed_loci,
+            colData = colData(x))
+        ## TODO: Is there a way to use the internal constructor with `check = FALSE`?
+        ##       Assuming input was valid, the output is valid, too.
+        ## .BSseq(se, trans = function(x) NULL, parameters = list())
+        out <- new2("BSseq", se, check = FALSE)
+    }
+    if(is(x, "MethylCounts")) {
+        U <- .rowsum(
+            x = assay(x, "U", withDimnames = FALSE),
+            group = group,
+            ## NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
+            reorder = TRUE,
+            BPPARAM = BPPARAM,
+            filepath = h5_path,
+            name = "U",
+            chunkdim = chunkdim,
+            level = level,
+            type = type)
+        if("H" %in% assayNames(x)) {
+            H <- .rowsum(
+                x = assay(x, "H", withDimnames = FALSE),
+                group = group,
+                ## NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
+                reorder = TRUE,
+                BPPARAM = BPPARAM,
+                filepath = h5_path,
+                name = "H",
+                chunkdim = chunkdim,
+                level = level,
+                type = type)
+        } else {
+            H <- NULL
+        }
+        if("D" %in% assayNames(x)) {
+            D <- .rowsum(
+                x = assay(x, "D", withDimnames = FALSE),
+                group = group,
+                ## NOTE: reorder = TRUE to ensure same row-order as collapsed_loci.
+                reorder = TRUE,
+                BPPARAM = BPPARAM,
+                filepath = h5_path,
+                name = "D",
+                chunkdim = chunkdim,
+                level = level,
+                type = type)
+        } else {
+            D <- NULL
+        }
+        se <- SummarizedExperiment(
+            assays = SimpleListExcludeNull(M = unname(M), U = unname(U), H = unname(H), D = unname(D)),
+            rowRanges = collapsed_loci,
+            colData = colData(x))
+        ## TODO: Is there a way to use the internal constructor with `check = FALSE`?
+        ##       Assuming input was valid, the output is valid, too.
+        ## .BSseq(se, trans = function(x) NULL, parameters = list())
+        out <- new2("MethylCounts", se, check = FALSE)
+    }
 
-    se <- SummarizedExperiment(
-        assays = SimpleList(M = unname(M), Cov = unname(Cov)),
-        rowRanges = collapsed_loci,
-        colData = colData(BSseq))
-    # TODO: Is there a way to use the internal constructor with `check = FALSE`?
-    #       Assuming input was valid, the output is valid, too.
-    # .BSseq(se, trans = function(x) NULL, parameters = list())
-    bsseq <- new2("BSseq", se, check = FALSE)
     if (!is.null(BACKEND) && BACKEND == "HDF5Array") {
         # NOTE: Save BSseq object; mimicing
         #       HDF5Array::saveHDF5SummarizedExperiment().
-        x <- bsseq
-        x@assays <- HDF5Array::shorten_assay2h5_links(x@assays)
-        base::saveRDS(x, file = file.path(dir, "se.rds"))
+        xtmp <- out
+        xtmp@assays <- HDF5Array::shorten_assay2h5_links(xtmp@assays)
+        base::saveRDS(xtmp, file = file.path(dir, "se.rds"))
     }
-    bsseq
+    out
 }
 
