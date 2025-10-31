@@ -308,7 +308,7 @@ strandCollapse <- function(x, shift = TRUE, BPPARAM = bpparam(),
             D <- NULL
         }
         se <- SummarizedExperiment(
-            assays = SimpleListExcludeNull(M = unname(M), U = unname(U), H = unname(H), D = unname(D)),
+            assays = SimpleListExcludeNULL(M = unname(M), U = unname(U), H = unname(H), D = unname(D)),
             rowRanges = collapsed_loci,
             colData = colData(x))
         ## TODO: Is there a way to use the internal constructor with `check = FALSE`?

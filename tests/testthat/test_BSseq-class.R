@@ -77,7 +77,7 @@ test_that("strandCollapse() works on good input", {
         expected = as.matrix(assay(bsseq_pos, "Cov") + assay(bsseq_neg, "Cov")))
 
     bsseq_strand_collapsed2 <- strandCollapse(
-        BSseq = bsseq[sample(nrow(bsseq))],
+        x = bsseq[sample(nrow(bsseq))],
         type = "integer")
     expect_equivalent_SE(bsseq_strand_collapsed, bsseq_strand_collapsed2)
 })

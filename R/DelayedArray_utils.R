@@ -260,7 +260,7 @@ blockApplyWithRealization <- function(x, FUN, ..., sink = NULL, x_grid = NULL,
     # Loop over blocks of `x` and write to `sink`
     nblock <- length(x_grid)
     bplapply(seq_len(nblock), function(b) {
-        if (DelayedArray:::get_verbose_block_processing()) {
+        if (getOption("DelayedArray.verbose.block.processing", default = FALSE)) {
             message("Processing block ", b, "/", nblock, " ... ",
                     appendLF = FALSE)
         }
@@ -275,7 +275,7 @@ blockApplyWithRealization <- function(x, FUN, ..., sink = NULL, x_grid = NULL,
             write_block(sink, viewport = sink_viewport, block = block_ans)
             block_ans <- NULL
         }
-        if (DelayedArray:::get_verbose_block_processing()) {
+        if (getOption("DelayedArray.verbose.block.processing", default = FALSE)) {
             message("OK")
         }
     },

@@ -57,7 +57,7 @@ setMethod("names", "FWIRanges", function(x) x@NAMES)
 .set_FWIRanges_start <- function(x, value, check = TRUE) {
     if (!isTRUEorFALSE(check)) stop("'check' must be TRUE or FALSE")
     old_start <- start(x)
-    new_start <- S4Vectors:::numeric2integer(value)
+    new_start <- numeric2integer(value)
     new_width <- x@width - new_start + old_start
     if (any(new_width != new_width[1L])) {
         x <- as(x, "IRanges")
@@ -77,7 +77,7 @@ setReplaceMethod(
 
 .set_FWIRanges_end <- function(x, value, check = TRUE) {
     if (!isTRUEorFALSE(check)) stop("'check' must be TRUE or FALSE")
-    new_width <- x@width + S4Vectors:::numeric2integer(value) - end(x)
+    new_width <- x@width + numeric2integer(value) - end(x)
     if (any(new_width != new_width[1L])) {
         x <- as(x, "IRanges")
         end(x) <- value
@@ -96,7 +96,7 @@ setReplaceMethod(
 
 .set_FWIRanges_width <- function(x, value, check = TRUE) {
     if (!isTRUEorFALSE(check)) stop("'check' must be TRUE or FALSE")
-    new_width <- S4Vectors:::numeric2integer(value)
+    new_width <- numeric2integer(value)
     if (any(new_width != new_width[1L])) {
         x <- as(x, "IRanges")
         width(x) <- value

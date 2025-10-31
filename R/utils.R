@@ -75,9 +75,17 @@ data.frame2GRanges <- function(df, keepColumns = FALSE, ignoreStrand = FALSE) {
     }
 }
 
-SimpleListExcludeNull <- function(...) {
+SimpleListExcludeNULL <- function(...) {
     sl <- SimpleList(...)
-    sl <- sl[!S4Vectors:::sapply_isNULL(sl)]
+    nulls <- vapply(sl, is.null, logical(1), USE.NAMES = FALSE)
+    sl <- sl[!nulls]
     sl
+}
+
+numeric2integer <- function (x) {
+    ## From S4Vectors
+    if (is.numeric(x) && !is.integer(x))
+        as.integer(x)
+    else x
 }
 

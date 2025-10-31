@@ -135,7 +135,7 @@ MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
     # Construct BSseq object ---------------------------------------------------
 
     se <- SummarizedExperiment(
-        assays = SimpleListExcludeNull(M = M, U = U, H = H, D = D),
+        assays = SimpleListExcludeNULL(M = M, U = U, H = H, D = D),
         rowRanges = loci,
         colData = colData)
     .MethylCounts(se, parameters = parameters)
