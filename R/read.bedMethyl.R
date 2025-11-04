@@ -5,7 +5,7 @@
   stopifnot(isTRUEorFALSE(rmZeroCov))
   stopifnot(isTRUEorFALSE(strandCollapse))
   stopifnot(isTRUEorFALSE(sort))
-  M <- H <- C <- DE <- DI <- NO <- mod <- NULL
+  M <- H <- U <- DE <- DI <- NO <- mod <- NULL
   if (rmZeroCov) {
     dt <- .readbedMethylAsDT(file = file,
                             col_spec = "BSseq",
@@ -14,10 +14,10 @@
     if (strandCollapse && !is.null(dt[["strand"]]) &&
         !dt[, all(strand == "*")]) {
       dt[strand == "-", `:=`(start, start - 1L)][, `:=`(strand, NULL)]
-      dt <- unique(dt[, list(M = sum(M), H = sum(H), C = sum(C), D = sum(DE + DI + NO)),
+      dt <- unique(dt[, list(M = sum(M), H = sum(H), U= sum(U), D = sum(DE + DI + NO)),
                       by = c("seqnames", "start")])
     }
-    dt <- dt[(M + H + C) > 0][, `:=`(c("M", "H", "C"),
+    dt <- dt[(M + H + U) > 0][, `:=`(c("M", "H", "U"),
                                      list(NULL, NULL, NULL))]
   } else {
     dt <- .readbedMethylAsDT(file = file,
@@ -28,10 +28,10 @@
     if (strandCollapse && !is.null(dt[["strand"]]) &&
         !dt[, all(strand == "*")]) {
       dt[strand == "-", `:=`(start, start - 1L)][, `:=`(strand, NULL)]
-      dt <- unique(dt[, list(M = sum(M), H = sum(H), C = sum(C), D = sum(DE + DI + NO)),
+      dt <- unique(dt[, list(M = sum(M), H = sum(H), U = sum(U), D = sum(DE + DI + NO)),
                       by = c("seqnames", "start")])
     } else {
-      dt <- unique(dt[, list(M = sum(M), H = sum(H), C = sum(C), D = sum(DE + DI + NO)),
+      dt <- unique(dt[, list(M = sum(M), H = sum(H), U = sum(U), D = sum(DE + DI + NO)),
                by = c("seqnames", "start", "strand")])
     }
   }
@@ -126,7 +126,7 @@
                   "NULL", "integer", "integer", "integer", "integer",
                   "NULL", "integer", "integer")
   drop <- c(3L, 5L, 7L, 8L, 9L, 10L, 11L, 16L)
-  col.names <- c("seqnames", "start", "mod", "strand", "M", "C", "H", "DE", "DI", "NO")
+  col.names <- c("seqnames", "start", "mod", "strand", "M", "U", "H", "DE", "DI", "NO")
   if (verbose) {
     message("[.readbedMethylAsDT] Parsing '", file, "'")
   }
@@ -155,15 +155,15 @@
     message("Reading in 5mC and 5hmC")
   }
 
-  M <- H <- C <- DE <- DI <- NO <- mod <- . <- NULL
-  if (check && all(c("M", "H", "C") %in% colnames(x))) {
+  M <- H <- U <- DE <- DI <- NO <- mod <- . <- NULL
+  if (check && all(c("M", "H", "U") %in% colnames(x))) {
     if (verbose) {
       message("[.readbedMethylAsDT] Checking validity of counts in file.")
     }
-    valid <- x[, isTRUE(all(M >= 0L & C >= 0L & H >= 0L & DE >= 0L & DI >= 0L & NO >= 0L))]
+    valid <- x[, isTRUE(all(M >= 0L & U >= 0L & H >= 0L & DE >= 0L & DI >= 0L & NO >= 0L))]
     if (!valid) {
       stop("[.readbedMethylAsDT] Invalid counts detected.\n",
-           "'M', 'H' and 'C' columns should be non-negative integers.")
+           "'M', 'H' and 'U' columns should be non-negative integers.")
     }
     else {
       if (verbose) {
@@ -186,7 +186,7 @@
                                                    Cov_sink, sink_lock,
                                                    nThread, verbose) {
   subverbose <- max(as.integer(verbose) - 1L, 0L)
-  M <- H <- C <- DE <- DI <- NO <- mod <- NULL
+  M <- H <- U <- DE <- DI <- NO <- mod <- NULL
   file <- files[b]
   if (verbose) {
     message("[.constructCountsFrombedMethylFileAndFWGRanges] Extracting ",
@@ -197,10 +197,10 @@
   if (strandCollapse && !is.null(dt[["strand"]]) &&
       !dt[, all(strand == "*")]) {
     dt[strand == "-", `:=`(start, start - 1L)][, `:=`(strand, NULL)]
-    dt <- unique(dt[, list(M = sum(M), H = sum(H), C = sum(C), D = sum(DE + DI + NO)),
+    dt <- unique(dt[, list(M = sum(M), H = sum(H), U = sum(U), D = sum(DE + DI + NO)),
                     by = c("seqnames", "start")])
   } else {
-    dt <- unique(dt[, list(M = sum(M), H = sum(H), C = sum(C), D = sum(DE + DI + NO)),
+    dt <- unique(dt[, list(M = sum(M), H = sum(H), U = sum(U), D = sum(DE + DI + NO)),
                     by = c("seqnames", "start", "strand")])
   }
   seqnames <- Rle(dt[["seqnames"]])
@@ -225,22 +225,22 @@
   ol <- findOverlaps(loci_from_this_sample, loci, type = "equal")
   M <- matrix(rep(0L, length(loci)), ncol = 1)
   H <- matrix(rep(0L, length(loci)), ncol = 1)
-  C <- matrix(rep(0L, length(loci)), ncol = 1)
+  U <- matrix(rep(0L, length(loci)), ncol = 1)
   D <- matrix(rep(0L, length(loci)), ncol = 1)
   Cov <- matrix(rep(0L, length(loci)), ncol = 1)
   M[subjectHits(ol)] <- dt[queryHits(ol), ][["M"]]
   H[subjectHits(ol)] <- dt[queryHits(ol), ][["H"]]
-  C[subjectHits(ol)] <- dt[queryHits(ol), ][["C"]]
+  U[subjectHits(ol)] <- dt[queryHits(ol), ][["U"]]
   D[subjectHits(ol)] <- dt[queryHits(ol), ][["D"]]
-  Cov[subjectHits(ol)] <- dt[queryHits(ol), list(Cov = (M + H + C))][["Cov"]]
+  Cov[subjectHits(ol)] <- dt[queryHits(ol), list(Cov = (M + H + U))][["Cov"]]
   if (is.null(M_sink)) {
-    return(list(M = M, H = H, C = C, D = D, Cov = Cov))
+    return(list(M = M, H = H, U = U, D = D, Cov = Cov))
   }
   viewport <- grid[[b]]
   ipclock(sink_lock)
   write_block(M_sink, viewport = viewport, block = M)
   write_block(H_sink, viewport = viewport, block = H)
-  write_block(C_sink, viewport = viewport, block = C)
+  write_block(C_sink, viewport = viewport, block = U)
   write_block(D_sink, viewport = viewport, block = D)
   write_block(Cov_sink, viewport = viewport, block = Cov)
   ipcunlock(sink_lock)
@@ -289,7 +289,7 @@
       dimnames = NULL,
       type = "integer",
       filepath = h5_path,
-      name = "C",
+      name = "U",
       chunkdim = chunkdim,
       level = level)
     on.exit(close(C_sink), add = TRUE)
@@ -364,8 +364,8 @@
     attr(M, "dim") <- ans_dim
     H <- do.call(c, lapply(counts, "[[", "H"))
     attr(H, "dim") <- ans_dim
-    C <- do.call(c, lapply(counts, "[[", "C"))
-    attr(C, "dim") <- ans_dim
+    U <- do.call(c, lapply(counts, "[[", "U"))
+    attr(U, "dim") <- ans_dim
     D <- do.call(c, lapply(counts, "[[", "D"))
     attr(D, "dim") <- ans_dim
     Cov <- do.call(c, lapply(counts, "[[", "Cov"))
@@ -373,11 +373,11 @@
   } else {
     M <- as(M_sink, "DelayedArray")
     H <- as(H_sink, "DelayedArray")
-    C <- as(C_sink, "DelayedArray")
+    U <- as(C_sink, "DelayedArray")
     D <- as(D_sink, "DelayedArray")
     Cov <- as(Cov_sink, "DelayedArray")
   }
-  return(list(M = M, H = H, C = C, D = D, Cov = Cov))
+  return(list(M = M, H = H, U = U, D = D, Cov = Cov))
 }
 
 ##
@@ -510,7 +510,7 @@ read.bedMethyl <- function (files,
   ptime1 <- proc.time()
   if (verbose) {
     message("[read.bedMethyl] Parsing files and constructing",
-            "'M', 'H', 'C', 'D' and 'Cov' ", "matrices ...")
+            "'M', 'H', 'U', 'D' and 'Cov' ", "matrices ...")
   }
   counts <- .constructbedMethylCounts(
     files = files,
