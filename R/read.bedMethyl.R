@@ -393,7 +393,7 @@ read.bedMethyl <- function (files,
                             chunkdim = NULL,
                             level = NULL,
                             nThread = 1L,
-                            output = c("BSseq", "MethylCount"),
+                            output = c("BSseq", "MethylCounts"),
                             verbose = getOption("verbose")) {
   output <- match.arg(output)
   if (anyDuplicated(files)) {
@@ -531,9 +531,9 @@ read.bedMethyl <- function (files,
     message("Done in ", round(stime, 1), " secs")
   }
   if (verbose) {
-      message("[read.bedMethyl] Constructing ", if(output=="MethylCount") "MethylCount" else "BSseq", " object ... ")
+      message("[read.bedMethyl] Constructing ", if(output=="MethylCounts") "MethylCounts" else "BSseq", " object ... ")
   }
-  if (output == "MethylCount") {
+  if (output == "MethylCounts") {
       assays_mc <- list(M = counts$M, H = counts$H, U = counts$U, D = counts$D)
       se <- SummarizedExperiment(assays = assays_mc, rowRanges = as(loci, "GRanges"), colData = colData)
       mc <- new2("MethylCounts", se, check = FALSE)
