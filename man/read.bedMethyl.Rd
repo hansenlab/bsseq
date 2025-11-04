@@ -19,6 +19,7 @@ read.bedMethyl(files,
                chunkdim = NULL,
                level = NULL,
                nThread = 1L,
+               output = c("BSseq", "MethylCount"),
                verbose = getOption("verbose"))
 }
 \arguments{
@@ -34,13 +35,14 @@ read.bedMethyl(files,
   \item{chunkdim}{\strong{Only applicable if \code{BACKEND == "HDF5Array"}.} The dimensions of the chunks to use for writing the data to disk.}
   \item{level}{The compression level to use for writing the data to disk.}
   \item{nThread}{The number of threads used by \code{\link[data.table]{fread}} when reading the \code{files}.}
+  \item{output}{The type of output returned when reading the \code{files}. Allowed values are "BSseq" and "MethylCount")}
   \item{verbose}{A \code{logical(1)} indicating whether progress messages should be printed (default \code{TRUE}).}
 }
 
 \section{File formats}{
   The format of each file should be similar to the examples in [link to preprint]. Files ending in \code{.gz}, \code{.bz2}, \code{.xz}, or \code{.zip} will be automatically decompressed to \code{\link{tempdir}()}.
   \subsection{Supported file formats}{
-    Modkit bedMethyl files from modkit pileup. For downstream likelihood functions we recommend running modkit pileup on output from bam files modification/basecalled using a CG context model and not using a reference genome for pileup.     
+    Modkit bedMethyl files from modkit pileup. For downstream likelihood functions we recommend running modkit pileup on output from bam files modification/basecalled using a CG context model and not using a reference genome for pileup.
   }
   \subsection{Unsupported file formats}{
     Other types of output.
@@ -60,7 +62,7 @@ infiles <- c(system.file("extdata/HG002_nanopore_test.bedMethyl.gz",
 
 # Run the function to import data
 bsseq <- read.bedMethyl(files = infiles,
-                        colData = DataFrame(row.names = c("test_nanopore", 
+                        colData = DataFrame(row.names = c("test_nanopore",
                                                           "test_pacbio")),
                         rmZeroCov = FALSE,
                         strandCollapse = TRUE,
@@ -71,5 +73,5 @@ bsseq
 }
 
 \author{
-  Søren Blikdal Hansen (soren.blikdal.hansen@sund.ku.dk) 
+  Søren Blikdal Hansen (soren.blikdal.hansen@sund.ku.dk)
 }

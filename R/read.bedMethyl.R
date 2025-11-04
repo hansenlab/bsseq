@@ -393,7 +393,9 @@ read.bedMethyl <- function (files,
                             chunkdim = NULL,
                             level = NULL,
                             nThread = 1L,
+                            output = c("BSseq", "MethylCount"),
                             verbose = getOption("verbose")) {
+  output <- match.arg(output)
   if (anyDuplicated(files)) {
     stop("'files' cannot have duplicate entries.")
   }
@@ -529,8 +531,15 @@ read.bedMethyl <- function (files,
     message("Done in ", round(stime, 1), " secs")
   }
   if (verbose) {
-    message("[read.bedMethyl] Constructing BSseq object ... ")
+      message("[read.bedMethyl] Constructing ", if(output=="MethylCount") "MethylCount" else "BSseq", " object ... ")
   }
+  if (output == "MethylCount") {
+      assays_mc <- list(M = counts$M, H = counts$H, U = counts$U, D = counts$D)
+      se <- SummarizedExperiment(assays = assays_mc, rowRanges = as(loci, "GRanges"), colData = colData)
+      mc <- new2("MethylCounts", se, check = FALSE)
+      return(mc)
+  }
+  else {
   se <- SummarizedExperiment(assays = counts, rowRanges = as(loci,
                                                              "GRanges"), colData = colData)
   bsseq <- new2("BSseq", se, check = FALSE)
@@ -540,4 +549,5 @@ read.bedMethyl <- function (files,
     saveRDS(x, file = file.path(dir, "se.rds"))
   }
   bsseq
+  }
 }
