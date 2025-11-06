@@ -1,60 +1,60 @@
-#Likelihood functions for calling methylation states from bsseq objects generated from read.bedMethyl
+#Likelihood functions for calling methylation status from MethylCounts objects generated from read.bedMethyl
 
 #estimateErrorRate
 estimateErrorRate <- function(
-    BSseq, 
-    minCov = 10, 
-    maxCov = 100, 
-    minRatio = 0.8, 
-    plotErrorProfile = FALSE) {
-  
-  # Input validation of BSseq
-  if (!inherits(BSseq, "BSseq")) {
-    stop("Error: The input object must be of class 'BSseq'.")
-  }
-  if (ncol(BSseq) != 1) {
-    stop("Error: The input 'BSseq' must have exactly one column.")
-  }
-  if (!all(c("D", "Cov") %in% names(assays(BSseq)))) {
-    stop("Error: The 'BSseq' must contain 'D' and 'Cov' assays.")
-  }
-  
-  # Input validation for thresholds
-  if (minCov < 0 || maxCov < 0) {
-    stop("Error: Both 'minCov' and 'maxCov' must be non-negative.")
-  }
-  if (maxCov <= minCov) {
-    stop("Error: 'maxCov' must be greater than 'minCov'.")
-  }
-  if (minRatio < 0 || minRatio > 1) {
-    stop("Error: 'minRatio' must be between 0 and 1.")
-  }
-  
-  # Access assay data safely
-  cov <- assays(BSseq)[["Cov"]]
-  d <- assays(BSseq)[["D"]]
-  
-  # Calculate CpG-to-non-CpG ratio and filter sites
-  ratio <- cov / (cov + d)
-  sites <- getCoverage(BSseq) >= minCov & 
-    getCoverage(BSseq) <= maxCov & 
-    ratio >= minRatio
-  
-  # Plot the error profile if requested
-  if (plotErrorProfile) {
-    if (any(sites)) {
-      p_all <- hist(ratio, breaks = 100, plot = FALSE)
-      p_used <- hist(ratio[sites], breaks = (1 - minRatio) * 100, plot = FALSE)
-      plot(p_all, xlim = c(0, 1), xlab = "CpG to non-CpG ratio", main = "Error Profile")
-      plot(p_used, col = "black", xlim = c(0, 1), add = TRUE)
-    } else {
-      warning("No sites satisfy the filtering criteria. No error profile will be plotted.")
+        MethylCounts,
+        minCov = 10,
+        maxCov = 100,
+        minRatio = 0.8,
+        plotErrorProfile = FALSE) {
+
+    # Input validation of MethylCounts
+    if (!inherits(MethylCounts, "MethylCounts")) {
+        stop("Error: The input object must be of class 'MethylCounts'.")
     }
-  }
-  
-  # Calculate and return the error rate
-  error_rate <- sum(d[sites]) / (sum(d[sites]) + sum(cov[sites]))
-  return(error_rate)
+    if (ncol(MethylCounts) != 1) {
+        stop("Error: The input 'MethylCounts' must have exactly one column.")
+    }
+    if (!all(c("M", "U", "D") %in% names(assays(MethylCounts)))) {
+        stop("Error: The 'MethylCounts' must contain 'M', 'U', and 'D' assays.")
+    }
+
+    # Input validation for thresholds
+    if (minCov < 0 || maxCov < 0) {
+        stop("Error: Both 'minCov' and 'maxCov' must be non-negative.")
+    }
+    if (maxCov <= minCov) {
+        stop("Error: 'maxCov' must be greater than 'minCov'.")
+    }
+    if (minRatio < 0 || minRatio > 1) {
+        stop("Error: 'minRatio' must be between 0 and 1.")
+    }
+
+    # Access assay data safely
+    cov <- getMethylCounts(MethylCounts, type="Cov")
+    d <- getMethylCounts(MethylCounts, type="D")
+
+    # Calculate CpG-to-non-CpG ratio and filter sites
+    ratio <- cov / (cov + d)
+    sites <- cov >= minCov &
+        cov <= maxCov &
+        ratio >= minRatio
+
+    # Plot the error profile if requested
+    if (plotErrorProfile) {
+        if (any(sites)) {
+            p_all <- hist(ratio, breaks = 100, plot = FALSE)
+            p_used <- hist(ratio[sites], breaks = (1 - minRatio) * 100, plot = FALSE)
+            plot(p_all, xlim = c(0, 1), xlab = "CpG to non-CpG ratio", main = "Error Profile")
+            plot(p_used, col = "black", xlim = c(0, 1), add = TRUE)
+        } else {
+            warning("No sites satisfy the filtering criteria. No error profile will be plotted.")
+        }
+    }
+
+    # Calculate and return the error rate
+    error_rate <- sum(d[sites]) / (sum(d[sites]) + sum(cov[sites]))
+    return(error_rate)
 }
 
 #genotype_likelihood
@@ -76,54 +76,55 @@ estimateErrorRate <- function(
   return(likelihood)
 }
 
+
 #.getScaledLikelihoods
 #internal function to calculate the scaled likelihoods for each genotype
 .getScaledLikelihoods <- function(
-    BSseq, 
-    e = NULL) {
-  # Input validation of BSseq
-  if (!inherits(BSseq, "BSseq")) {
-    stop("Error: The input object must be of class 'BSseq'.")
-  }
-  if (ncol(BSseq) != 1) {
-    stop("Error: The input 'BSseq' must have exactly one column.")
-  }
-  if (!all(c("D", "Cov") %in% names(assays(BSseq)))) {
-    stop("Error: The 'BSseq' must contain 'D' and 'Cov' assays.")
-  }
-  # Input validation of e
-  if (!is.null(e) && (e < 0 || e > 1)) {
-    stop("Error: 'e' must be between 0 and 1.")
-  }
-  if (is.null(e)) {
-    e <- estimateErrorRate(BSseq)
-  }
-  cov <- assays(BSseq)[["Cov"]]
-  d <- assays(BSseq)[["D"]]
-  
-  l <- matrix(0, nrow = length(cov), ncol = 3)
-  l[, 1] <- .genotype_likelihood(g = 0, e = e, cov = cov, D = d)
-  l[, 2] <- .genotype_likelihood(g = 1, e = e, cov = cov, D = d)
-  l[, 3] <- .genotype_likelihood(g = 2, e = e, cov = cov, D = d)
-  
-  SL <- l / rowSums(l)
-  return(SL)
+        MethylCounts,
+        e = NULL) {
+    # Input validation of BSseq
+    if (!inherits(MethylCounts, "MethylCounts")) {
+        stop("Error: The input object must be of class 'MethylCounts'.")
+    }
+    if (ncol(MethylCounts) != 1) {
+        stop("Error: The input 'MethylCounts' must have exactly one column.")
+    }
+    if (!all(c("M", "U", "D") %in% names(assays(MethylCounts)))) {
+        stop("Error: The 'MethylCounts' must contain 'M', 'U', and 'D' assays.")
+    }
+    # Input validation of e
+    if (!is.null(e) && (e < 0 || e > 1)) {
+        stop("Error: 'e' must be between 0 and 1.")
+    }
+    if (is.null(e)) {
+        e <- estimateErrorRate(MethylCounts)
+    }
+    cov <- getMethylCounts(MethylCounts, type="Cov")
+    d <- getMethylCounts(MethylCounts, type="D")
+
+    l <- matrix(0, nrow = length(cov), ncol = 3)
+    l[, 1] <- .genotype_likelihood(g = 0, e = e, cov = cov, D = d)
+    l[, 2] <- .genotype_likelihood(g = 1, e = e, cov = cov, D = d)
+    l[, 3] <- .genotype_likelihood(g = 2, e = e, cov = cov, D = d)
+
+    SL <- l / rowSums(l)
+    return(SL)
 }
 
 getCpGs <- function(
-    BSseq, 
-    type = c("homozygous", "heterozygous", "allCpG", "nonCpG"), 
-    threshold = 0.99, 
+    MethylCounts,
+    type = c("homozygous", "heterozygous", "allCpG", "nonCpG"),
+    threshold = 0.99,
     e = NULL) {
-  # Input validation of BSseq
-  if (!inherits(BSseq, "BSseq")) {
-    stop("Error: The input object must be of class 'BSseq'.")
+  # Input validation of MethylCounts
+  if (!inherits(MethylCounts, "MethylCounts")) {
+    stop("Error: The input object must be of class 'MethylCounts'.")
   }
-  if (ncol(BSseq) != 1) {
-    stop("Error: The input 'BSseq' must have exactly one column.")
+  if (ncol(MethylCounts) != 1) {
+    stop("Error: The input 'MethylCounts' must have exactly one column.")
   }
-  if (!all(c("D", "Cov") %in% names(assays(BSseq)))) {
-    stop("Error: The 'BSseq' must contain 'D' and 'Cov' assays.")
+  if (!all(c("M", "U", "D") %in% names(assays(MethylCounts)))) {
+    stop("Error: The 'MethylCounts' must contain 'M', 'U', and 'D' assays.")
   }
   # Input validation of type
   if (!type %in% c("homozygous", "heterozygous", "allCpG", "nonCpG")) {
@@ -138,51 +139,51 @@ getCpGs <- function(
     stop("Error: 'e' must be between 0 and 1.")
   }
   # Get scaled likelihoods
-  SL <- .getScaledLikelihoods(BSseq, e)
-  
+  SL <- .getScaledLikelihoods(MethylCounts, e)
+
   # Determine the CpG sites based on the type
   loci <- switch(type,
                    "homozygous" = which(SL[, 1] > threshold),
                    "heterozygous" = which(SL[, 2] > threshold),
                    "allCpG" = which(rowSums(SL[, 1:2]) > threshold),
                    "nonCpG" = which(SL[, 3] > threshold))
-  
+
   return(loci)
 }
 
 getCpGMatrix <- function(
-    BSseq, 
-    e = NULL, 
+    MethylCounts,
+    e = NULL,
     allCpG = FALSE) {
-  
-  # Input validation of BSseq
-  if (!inherits(BSseq, "BSseq")) {
-    stop("Error: The input object must be of class 'BSseq'.")
-  }
-  if (!all(c("D", "Cov") %in% names(assays(BSseq)))) {
-    stop("Error: The 'BSseq' must contain 'D' and 'Cov' assays.")
-  }
-  
+
+    # Input validation of MethylCounts
+    if (!inherits(MethylCounts, "MethylCounts")) {
+        stop("Error: The input object must be of class 'MethylCounts'.")
+    }
+    if (!all(c("M", "U", "D") %in% names(assays(MethylCounts)))) {
+        stop("Error: The 'MethylCounts' must contain 'M', 'U', and 'D' assays.")
+    }
+
   # Input validation of e
   if (!is.null(e)) {
-    if (!is.numeric(e) || (length(e) != ncol(BSseq))) {
-      stop("Error: 'e' must be NULL or a numeric vector with the same length as the number of columns in 'BSseq'.")
+    if (!is.numeric(e) || (length(e) != ncol(MethylCounts))) {
+      stop("Error: 'e' must be NULL or a numeric vector with the same length as the number of columns in 'MethylCounts'.")
     }
     if (any(e < 0 | e > 1)) {
       stop("Error: All elements of 'e' must be between 0 and 1.")
     }
   }
-  
+
   # Initialize CpG matrix
-  G <- matrix(nrow = nrow(BSseq), ncol = ncol(BSseq), byrow = FALSE)
-  
-  for (i in 1:ncol(BSseq)) {
+  G <- matrix(nrow = nrow(MethylCounts), ncol = ncol(MethylCounts), byrow = FALSE)
+
+  for (i in 1:ncol(MethylCounts)) {
     # Use the provided error rate or estimate it
-    e_i <- if (is.null(e)) estimateErrorRate(BSseq[, i]) else e[i]
-    
+    e_i <- if (is.null(e)) estimateErrorRate(MethylCounts[, i]) else e[i]
+
     # Get scaled likelihoods
-    SL_i <- .getScaledLikelihoods(BSseq[, i], e_i)
-    
+    SL_i <- .getScaledLikelihoods(MethylCounts[, i], e_i)
+
     # Calculate CpG matrix
     if (allCpG) {
       G[, i] <- ifelse(SL_i[, 3] >= 1/3, 2, 0)
@@ -190,43 +191,43 @@ getCpGMatrix <- function(
       G[, i] <- max.col(SL_i, ties.method = "last") - 1
     }
   }
-  
+
   return(G)
 }
 
 getMaxLikelihoodMatrix <- function(
-    BSseq, 
-    e = NULL, 
+    MethylCounts,
+    e = NULL,
     allCpG = FALSE) {
-  
-  # Input validation of BSseq
-  if (!inherits(BSseq, "BSseq")) {
-    stop("Error: The input object must be of class 'BSseq'.")
-  }
-  if (!all(c("D", "Cov") %in% names(assays(BSseq)))) {
-    stop("Error: The 'BSseq' must contain 'D' and 'Cov' assays.")
-  }
-  
+
+    # Input validation of MethylCounts
+    if (!inherits(MethylCounts, "MethylCounts")) {
+        stop("Error: The input object must be of class 'MethylCounts'.")
+    }
+    if (!all(c("M", "U", "D") %in% names(assays(MethylCounts)))) {
+        stop("Error: The 'MethylCounts' must contain 'M', 'U', and 'D' assays.")
+    }
+
   # Input validation of e
   if (!is.null(e)) {
-    if (!is.numeric(e) || (length(e) != ncol(BSseq))) {
-      stop("Error: 'e' must be NULL or a numeric vector with the same length as the number of columns in 'BSseq'.")
+    if (!is.numeric(e) || (length(e) != ncol(MethylCounts))) {
+      stop("Error: 'e' must be NULL or a numeric vector with the same length as the number of columns in 'MethylCounts'.")
     }
     if (any(e < 0 | e > 1)) {
       stop("Error: All elements of 'e' must be between 0 and 1.")
     }
   }
-  
+
   # Initialize quality matrix
-  Q <- matrix(nrow = nrow(BSseq), ncol = ncol(BSseq), byrow = FALSE)
-  
-  for (i in 1:ncol(BSseq)) {
+  Q <- matrix(nrow = nrow(MethylCounts), ncol = ncol(MethylCounts), byrow = FALSE)
+
+  for (i in 1:ncol(MethylCounts)) {
     # Use the provided error rate or estimate it
-    e_i <- if (is.null(e)) estimateErrorRate(BSseq[, i]) else e[i]
-    
+    e_i <- if (is.null(e)) estimateErrorRate(MethylCounts[, i]) else e[i]
+
     # Get scaled likelihoods
-    SL_i <- .getScaledLikelihoods(BSseq[, i], e_i)
-    
+    SL_i <- .getScaledLikelihoods(MethylCounts[, i], e_i)
+
     # Calculate quality matrix
     if (allCpG) {
       Q[, i] <- ifelse(SL_i[, 3] >= 1/3, SL_i[, 3], (1 - SL_i[, 3]))
@@ -234,7 +235,7 @@ getMaxLikelihoodMatrix <- function(
       Q[, i] <- DelayedMatrixStats::rowMaxs(SL_i)
     }
   }
-  
+
   return(Q)
 }
 
