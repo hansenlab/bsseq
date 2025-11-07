@@ -16,5 +16,15 @@ BiocManager::install("bsseq", version = "devel")
 ```
 
 
+### For development
+
+After Bioc release, run
+
+```r
+libnrary(biocthis)
+use_bioc_github_action(covr = TRUE, pkgdown = FALSE, testthat = TRUE, RUnit = FALSE)
+```
+
+in the root.
 
 
