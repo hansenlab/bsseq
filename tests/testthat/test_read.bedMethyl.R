@@ -77,7 +77,6 @@ bs <- read.bedMethyl(files = infiles,
   #read in files as MethylCount object (Default: rmZeroCov=T, strandCollapse=T)
   mc <- read.bedMethyl(files = infiles,
                        colData = DataFrame(
-
                            row.names = c("test_nanopore","test_pacbio")),
                        rmZeroCov = TRUE,
                        strandCollapse = TRUE,
