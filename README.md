@@ -22,7 +22,7 @@ After Bioc release, run
 
 ```r
 libnrary(biocthis)
-use_bioc_github_action(covr = TRUE, pkgdown = FALSE, testthat = TRUE, RUnit = FALSE)
+use_bioc_github_action(biocdocker = "devel", covr = TRUE, pkgdown = FALSE, testthat = TRUE, RUnit = FALSE)
 ```
 
 in the root.

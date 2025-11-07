@@ -40,7 +40,7 @@ env:
   has_RUnit: 'false'
   cache-version: 'cache-v1'
   run_docker: 'false'
-  bioc_version: 'bioc-release'
+  bioc_version: 'bioc-devel'
   ## Valid options are:
   ##    "bioc-release"
   ##    "bioc-devel"
@@ -85,7 +85,7 @@ jobs:
          fi
          echo "Found these settings:"
          echo "Bioconductor version: $biocversion, R version: $rversion, Bioconductor docker name: $bioccont"
-         echo "matrix={ \"config\": [{\"os\" : \"ubuntu-latest\", \"r\" : \"${rversion}\", \"bioc\" : \"${biocversion}\", \"cont\" : \"${bioccont}\"} , {\"os\" : \"macOS-latest\", \"r\" : \"${rversion}\", \"bioc\" : \"${biocversion}\"} , {\"os\" : \"windows-latest\", \"r\" : \"${rversion}\", \"bioc\" : \"${biocversion}\" }] }" >> "$GITHUB_OUTPUT"
+         echo "matrix={ \"config\": [{\"os\" : \"ubuntu-latest\", \"r\" : \"${rversion}\", \"bioc\" : \"${biocversion}\", \"cont\" : \"${bioccont}\"} ] }" >> "$GITHUB_OUTPUT"
          ## If an OS is failing and you don't want to test it, manually remove it from the 'matrix' JSON entries above
 
   build-check:
@@ -238,7 +238,7 @@ jobs:
       - name: Install pkgdown
         if: github.ref == 'refs/heads/devel' && env.run_pkgdown == 'true' && runner.os == 'Linux'
         run: |
-          remotes::install_cran("pkgdown")
+          remotes::install_github("r-lib/pkgdown")
         shell: Rscript {0}
 
       - name: Session info
@@ -257,7 +257,7 @@ jobs:
           rcmdcheck::rcmdcheck(
               args = c("--no-manual", "--no-vignettes", "--timings"),
               build_args = c("--no-manual", "--keep-empty-dirs", "--no-resave-data"),
-              error_on = "warning",
+              error_on = "error",
               check_dir = "check"
           )
         shell: Rscript {0}
