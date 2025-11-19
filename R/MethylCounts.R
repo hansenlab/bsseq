@@ -143,11 +143,17 @@ MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
 
 ## Move to BSseq-utils?
 getMethylCounts <- function(MethylCounts,
-                        type = c("M", "U", "H", "D", "gr", "parameters"),
+                        type = c("M", "U", "H", "D", "Cov", "gr", "parameters"),
                         withDimnames = TRUE) {
     type <- match.arg(type)
     if (type %in% c("M", "U", "H", "D")) {
         return(assay(MethylCounts, type, withDimnames = withDimnames))
+    }
+    if (type == "Cov") {
+        M<-assay(MethylCounts, "M", withDimnames = withDimnames)
+        U<-assay(MethylCounts, "U", withDimnames = withDimnames)
+        H<-assay(MethylCounts, "H", withDimnames = withDimnames)
+        return(M+U+H)
     }
     if (type == "parameters") {
         return(MethylCounts@parameters)
