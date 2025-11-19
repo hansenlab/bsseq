@@ -2,18 +2,14 @@
 \Rdversion{1.1}
 \docType{class}
 \alias{BSseq-class}
-\alias{[,BSseq-method}
 \alias{combine,BSseq,BSseq-method}
 \alias{combineList}
-\alias{length,BSseq-method}
 \alias{pData,BSseq-method}
 \alias{pData<-,BSseq,data.frame-method}
 \alias{pData<-,BSseq,DataFrame-method}
 \alias{sampleNames,BSseq-method}
 \alias{sampleNames<-,BSseq,ANY-method}
 \alias{updateObject,BSseq-method}
-\alias{assays,BSseq-method}
-\alias{assayNames,BSseq-method}
 \alias{show,BSseq-method}
 \alias{getBSseq}
 \alias{collapseBSseq}
@@ -31,8 +27,7 @@
   An object from the class links together several pieces of information.
   (1) genomic locations stored as a \code{GRanges} object, a location by
   samples matrix of M values, a location by samples matrix of Cov
-  (coverage) values, a location by samples matrix of Filtered (ambiguous
-  modification status) values, and phenodata information.In addition,
+  (coverage) values, and phenodata information.In addition,
   there are slots for representing smoothed data. This class is an
   extension of \link[SummarizedExperiment]{RangedSummarizedExperiment}
   from the \pkg{SummarizedExperiment} package.
@@ -48,12 +43,6 @@
 }
 \section{Methods}{
   \describe{
-    \item{[}{\code{signature(x = "BSseq")}: Subsetting by location
-      (using integer indices) or sample (using integers or sample
-      names).}
-    \item{length}{Unlike for \code{RangedSummarizedExperiment},
-      \code{length()} is the number of methylation loci (equal to
-      \code{length(granges(x))}).}
     \item{sampleNames,sampleNames<-}{Sample names and its replacement
       function for the object.  This is an alias for \code{colnames}.}
     \item{pData,pData<-}{Obtain and replace the \code{pData} slot of the

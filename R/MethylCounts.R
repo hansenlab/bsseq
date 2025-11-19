@@ -36,10 +36,10 @@ setValidity2("MethylCounts", function(object) {
 #       complicated parsing of the inputs. But we're stuck with it because it's
 #       been around for a long time.
 
-MethylCounts <- function(M = NULL, U = NULL, D = NULL, H = NULL,
-                     parameters = NULL, colData = NULL, gr = NULL,
-                     pos = NULL, chr = NULL, sampleNames = NULL,
-                     rmZeroCov = FALSE) {
+MethylCounts <- function(M = NULL, U = NULL, H = NULL, D = NULL,
+                         gr = NULL, pos = NULL, chr = NULL,
+                         colData = NULL, sampleNames = NULL,
+                         parameters = NULL, rmZeroCov = FALSE) {
 
     # Argument checks ----------------------------------------------------------
 
