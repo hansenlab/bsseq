@@ -122,7 +122,7 @@
 
   header <- FALSE
   colClasses <- c("factor", "integer", "NULL", "factor", "NULL",
-                  "factor", "NULL", "NULL", "NULL", "NULL",
+                  "character", "NULL", "NULL", "NULL", "NULL",
                   "NULL", "integer", "integer", "integer", "integer",
                   "NULL", "integer", "integer")
   drop <- c(3L, 5L, 7L, 8L, 9L, 10L, 11L, 16L)
@@ -535,13 +535,12 @@ read.bedMethyl <- function (files,
   }
   if (output == "MethylCounts") {
       assays_mc <- list(M = counts$M, H = counts$H, U = counts$U, D = counts$D)
-      se <- SummarizedExperiment(assays = assays_mc, rowRanges = as(loci, "GRanges"), colData = colData)
+      se <- SummarizedExperiment(assays = assays_mc, rowRanges = shift(as(loci, "GRanges"),1), colData = colData)
       mc <- new2("MethylCounts", se, check = FALSE)
       return(mc)
   }
   else {
-  se <- SummarizedExperiment(assays = counts, rowRanges = as(loci,
-                                                             "GRanges"), colData = colData)
+  se <- SummarizedExperiment(assays = counts, rowRanges = shift(as(loci,"GRanges"),1), colData = colData)
   bsseq <- new2("BSseq", se, check = FALSE)
   if (!is.null(BACKEND) && BACKEND == "HDF5Array") {
     x <- bsseq
