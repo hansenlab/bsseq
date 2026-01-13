@@ -394,6 +394,7 @@ read.bedMethyl <- function (files,
                             level = NULL,
                             nThread = 1L,
                             output = c("BSseq", "MethylCounts"),
+                            check_input = TRUE,
                             verbose = getOption("verbose")) {
   output <- match.arg(output)
   if (anyDuplicated(files)) {
@@ -403,6 +404,12 @@ read.bedMethyl <- function (files,
   if (!isTRUE(all(file_exists))) {
     stop("These files cannot be found:\n  ", paste(files[!file_exists],
                                                    collapse = "\n  "))
+  }
+  # Validate each file using `check_bedMethyl`
+  if (check_input)
+  for (file in files) {
+      message("Validating file: ", file)
+      check_bedMethyl(file = file, output = output)
   }
   if (!is.null(loci)) {
     if (!is(loci, "GenomicRanges")) {
