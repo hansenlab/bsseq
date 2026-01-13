@@ -5,7 +5,7 @@
 #' @param n_max Integer. Maximum number of rows to read for checking (default: 100000).
 #' @return None. Prints messages or stops on errors if input is invalid.
 #'
-check_bedMethyl <- function(file, output, n_max = 100000) {
+.check_bedMethyl <- function(file, output, n_max = 100000) {
     if (!file.exists(file)) {
         stop("Error: File does not exist: ", file)
     }

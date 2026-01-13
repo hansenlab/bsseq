@@ -409,7 +409,7 @@ read.bedMethyl <- function (files,
   if (check_input)
   for (file in files) {
       message("Validating file: ", file)
-      check_bedMethyl(file = file, output = output)
+      .check_bedMethyl(file = file, output = output)
   }
   if (!is.null(loci)) {
     if (!is(loci, "GenomicRanges")) {
