@@ -1,5 +1,6 @@
 BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paired", "group2"),
-                          local.correct = TRUE, maxGap = NULL, qSd = 0.75, k = 21, mc.cores = 1, verbose = TRUE){
+                          local.correct = TRUE, maxGap = NULL, qSd = 0.75, k = 21, mc.cores = 1,
+                          control.local.correct = list(reg.grid = TRUE, by.grid = 2000), verbose = TRUE){
     smoothSd <- function(Sds, k) {
         k0 <- floor(k/2)
         if(all(is.na(Sds))) return(Sds)
@@ -8,7 +9,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         sSds <- as.vector(runmean(Rle(c(addSD, thresSD, addSD)), k = k))
         sSds
     }
-    compute.correction <- function(idx, qSd = 0.75) {
+    compute.correction <- function(idx, qSd = 0.75, control.local.correct = control.local.correct) {
         xx <- start(BSseq)[idx]
         yy <- tstat[idx]
         suppressWarnings({
@@ -17,11 +18,17 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         if(drange <= 25000)
             return(yy)
         tstat.function <- approxfun(xx, yy)
-        xx.reg <- seq(from = min(xx), to = max(xx), by = 2000)
-        yy.reg <- tstat.function(xx.reg)
-        fit <- locfit(yy.reg ~ lp(xx.reg, h = 25000, deg = 2, nn = 0),
-                      family = "huber", maxk = 50000)
-        correction <- predict(fit, newdata = data.frame(xx.reg = xx))
+        if(control.local.correct$reg.grid) {
+            xx.reg <- seq(from = min(xx), to = max(xx), by = control.local.correct$by)
+            yy.reg <- tstat.function(xx.reg)
+            fit <- locfit(yy.reg ~ lp(xx.reg, h = 25000, deg = 2, nn = 0),
+                          family = "huber", maxk = 50000)
+            correction <- predict(fit, newdata = data.frame(xx.reg = xx))
+        } else {
+            fit <- locfit(yy ~ lp(xx, h = 25000, deg = 2, nn = 0),
+                          family = "huber", maxk = 50000)
+            correction <- predict(fit)
+        }
         yy - correction
     }
 
@@ -115,6 +122,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
     if(local.correct) {
         tstat.corrected <- do.call(c, mclapply(clusterIdx,
                                                compute.correction, qSd = qSd,
+                                               control.local.correct = control.local.correct,
                                                mc.cores = mc.cores))
     }
     ptime2 <- proc.time()
