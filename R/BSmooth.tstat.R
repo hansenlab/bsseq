@@ -27,7 +27,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         } else {
             fit <- locfit(yy ~ lp(xx, h = 25000, deg = 2, nn = 0),
                           family = "huber", maxk = 50000)
-            correction <- predict(newdata = data.frame(xx = xx))
+            correction <- predict(fit, newdata = data.frame(xx = xx))
         }
         yy - correction
     }
