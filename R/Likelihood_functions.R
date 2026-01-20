@@ -99,10 +99,10 @@ estimateErrorRate <- function(
     if (is.null(e)) {
         e <- estimateErrorRate(MethylCounts)
     }
-    cov <- getMethylCounts(MethylCounts, type="Cov")
-    d <- getMethylCounts(MethylCounts, type="D")
+    cov <- realize(getMethylCounts(MethylCounts, type="Cov"))
+    d <- realize(getMethylCounts(MethylCounts, type="D"))
 
-    l <- matrix(0, nrow = length(cov), ncol = 3)
+    l <- matrix(0, nrow = nrow(cov), ncol = 3)
     l[, 1] <- .genotype_likelihood(g = 0, e = e, cov = cov, D = d)
     l[, 2] <- .genotype_likelihood(g = 1, e = e, cov = cov, D = d)
     l[, 3] <- .genotype_likelihood(g = 2, e = e, cov = cov, D = d)
