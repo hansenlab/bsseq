@@ -1,36 +1,17 @@
 # read.bedMethyl files into a extended BSseq object
 
 #Internal function to read a single bedMethyl file and return a FWGRanges object
-.readbedMethylAsFWGRanges <- function(file, rmZeroCov = TRUE,
-                                     strandCollapse = TRUE, sort = TRUE,
+.readbedMethylAsFWGRanges <- function(file,strandCollapse = TRUE, sort = TRUE,
                                      nThread = 1L, verbose = FALSE) {
   # Check that the provided arugments are boolean (logical) values
   # This ensures the function parameters are correctly set.
-  stopifnot(isTRUEorFALSE(rmZeroCov)) #Note: bedMethyl files doesn't contain zero coverage loci and can be deprecated, but we can also keep it as a safeguard
   stopifnot(isTRUEorFALSE(strandCollapse))
   stopifnot(isTRUEorFALSE(sort))
   # Initialize all relevant modification-related columns as NULL
   M <- H <- U <- DE <- DI <- NO <- mod <- NULL
-   #Note: This part can be removed if we deprecate rmZeroCov
-   if (rmZeroCov) {
+  # Read and process the bedMethyl file
     # Read the bedMethyl data as a data.table object
-    dt <- .readbedMethylAsDT(file = file,
-                            col_spec = "BSseq",
-                            check = TRUE,
-                            nThread = nThread,
-                            verbose = verbose)
-    if (strandCollapse && !is.null(dt[["strand"]]) &&
-        !dt[, all(strand == "*")]) {
-      dt[strand == "-", `:=`(start, start - 1L)][, `:=`(strand, NULL)]
-      dt <- unique(dt[, list(M = sum(M), H = sum(H), U= sum(U), D = sum(DE + DI + NO)),
-                      by = c("seqnames", "start")])
-    }
-    dt <- dt[(M + H + U) > 0][, `:=`(c("M", "H", "U"),
-                                     list(NULL, NULL, NULL))]
-   #Strand collapse and sort the input
-  } else {
-    # Read the bedMethyl data as a data.table object
-    dt <- .readbedMethylAsDT(file = file,
+    { dt <- .readbedMethylAsDT(file = file,
                             col_spec = "BSseq",
                             check = TRUE,
                             nThread = nThread,
@@ -87,7 +68,6 @@
 
 # Function to read multiple bedMethyl files and construct a combined FWGRanges object
 .constructFWGRangesFrombedMethylFiles <- function(files,
-                                                 rmZeroCov,
                                                  strandCollapse,
                                                  verbose,
                                                  nThread,
@@ -102,7 +82,6 @@
   # This serves as the base loci set for comparison with other files
   loci_from_first_file <- .readbedMethylAsFWGRanges(
     file = files[[1L]],
-    rmZeroCov = rmZeroCov, #Note: This part can be removed if we deprecate rmZeroCov
     strandCollapse = strandCollapse,
     nThread = nThread,
     verbose = subverbose)
@@ -115,7 +94,6 @@
     function(file, loci_from_first_file) {
     loci_from_this_file <- .readbedMethylAsFWGRanges(
       file = file,
-      rmZeroCov = rmZeroCov, #Note: This part can be removed if we deprecate rmZeroCov
       strandCollapse = strandCollapse,
       verbose = subverbose)
     # Keep only loci that don't overlap with those in the first file
@@ -456,7 +434,6 @@
 read.bedMethyl <- function (files,
                             loci = NULL,
                             colData = NULL,
-                            rmZeroCov = TRUE,
                             strandCollapse = TRUE,
                             BPPARAM = bpparam(),
                             BACKEND = NULL,
@@ -505,8 +482,7 @@ read.bedMethyl <- function (files,
   if (nrow(colData) != length(files)) {
     stop("Supplied 'colData' must have nrow(colData) == length(files).")
   }
-  # Validate logical arguments: `rmZeroCov` and `strandCollapse`.
-  stopifnot(isTRUEorFALSE(rmZeroCov))
+  # Validate logical argument `strandCollapse`.
   stopifnot(isTRUEorFALSE(strandCollapse))
   # Handle realization backends (in-memory or on-disk).
   current_BACKEND <- getAutoRealizationBackend()
@@ -552,7 +528,6 @@ read.bedMethyl <- function (files,
     }
     loci <- .constructFWGRangesFrombedMethylFiles(
       files = files,
-      rmZeroCov = rmZeroCov,
       strandCollapse = strandCollapse,
       verbose = verbose,
       nThread = nThread,
@@ -579,15 +554,9 @@ read.bedMethyl <- function (files,
         message("Done in ", round(stime, 1), " secs")
       }
     }
-    if (rmZeroCov) {
-      if (verbose) {
-        message("[read.bedMethyl] Parsing files to identify elements of ",
-                "'loci' with non-zero coverage ...")
-      }
       ptime1 <- proc.time()
       loci_from_files <- .constructFWGRangesFrombedMethylFiles(
         files = files,
-        rmZeroCov = rmZeroCov,
         strandCollapse = strandCollapse,
         verbose = subverbose,
         nThread = nThread,
@@ -598,7 +567,6 @@ read.bedMethyl <- function (files,
       if (verbose) {
         message("Done in ", round(stime, 1), " secs")
       }
-    }
   }
   ptime1 <- proc.time()
   if (verbose) {

@@ -13,7 +13,6 @@
 read.bedMethyl(files,
                loci = NULL,
                colData = NULL,
-               rmZeroCov = TRUE,
                strandCollapse = TRUE,
                BPPARAM = bpparam(),
                BACKEND = NULL,
@@ -30,7 +29,6 @@ read.bedMethyl(files,
   \item{files}{The path to the files created by running modkit pileup, one sample per file. See the methods section of [link to preprint] for validated output.}
   \item{loci}{\code{NULL} (default) or a \code{\link[GenomicRanges]{GenomicRanges}} instance containing methylation loci (all with width equal to 1). If \code{loci = NULL}, then \code{read.bedMethyl()} will perform a first pass over the bedMethyl files to identify candidate loci. If \code{loci} is a \code{\link[GenomicRanges]{GenomicRanges}} instance, then these form the candidate loci. The candidate loci will be collapsed if \code{strandCollapse = TRUE}.}
   \item{colData}{An optional \code{\link[S4Vectors]{DataFrame}} describing the samples. Row names, if present, become the column names of the \linkS4class{BSseq} object. If \code{NULL}, then a \code{\link[S4Vectors]{DataFrame}} will be created with \code{files} used as the row names.}
-  \item{rmZeroCov}{A \code{logical(1)} indicating whether methylation loci that have zero coverage in all samples should be removed. Default setting is \code{rmZeroCov = TRUE}}
   \item{strandCollapse}{A \code{logical(1)} indicating whether strand-symmetric methylation loci (i.e. CpGs) should be collapsed across strands.}
   \item{BPPARAM}{An optional \code{\link[BiocParallel]{BiocParallelParam}} instance determining the parallel back-end to be used during evaluation.}
   \item{BACKEND}{\code{NULL} or a single string specifying the name of the realization backend. Currently, the backend is not supported for downstream applications.}
@@ -71,7 +69,6 @@ infiles <- c(system.file("extdata/HG002_nanopore_test.bedMethyl.gz",
 bsseq <- read.bedMethyl(files = infiles,
                         colData = DataFrame(row.names = c("test_nanopore",
                                                           "test_pacbio")),
-                        rmZeroCov = FALSE,
                         strandCollapse = TRUE,
                         verbose = TRUE)
 
