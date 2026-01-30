@@ -18,7 +18,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         if(drange <= 25000)
             return(yy)
         tstat.function <- approxfun(xx, yy)
-        xx.reg <- seq(from = min(xx), to = max(xx), by = control.local.correct$by)
+        xx.reg <- seq(from = min(xx), to = max(xx), by = 2000)
         yy.reg <- tstat.function(xx.reg)
         fit <- locfit(yy.reg ~ lp(xx.reg, h = 25000, deg = 2, nn = 0),
                       family = "gaussian", maxk = 50000)
