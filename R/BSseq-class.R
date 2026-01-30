@@ -70,10 +70,30 @@ setValidity2("BSseq", function(object) {
 #       complicated parsing of the inputs. But we're stuck with it because it's
 #       been around for a long time.
 
-BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
+BSseq <- function(mc = NULL, M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
                   trans = NULL, parameters = NULL, pData = NULL, gr = NULL,
                   pos = NULL, chr = NULL, sampleNames = NULL,
-                  rmZeroCov = FALSE) {
+                  rmZeroCov = FALSE, conversion = c("MplusH", "onlyM", "onlyH")) {
+
+    # Add MethylCounts as input ------------------------------------------------
+    if (inherits(mc, "MethylCounts")) {
+        # Match the conversionType
+        conversion <- match.arg(conversion)
+        gr <- getMethylCounts(mc, type = "gr")
+        pData <- colData(mc)
+        sampleNames <- colnames(mc)
+        Cov <- getMethylCounts(mc, type = "Cov")
+        M <- getMethylCounts(mc, type = "M")
+        H <- getMethylCounts(mc, type = "H")
+        # Compute M and Cov based on conversionType
+        if (conversion == "MplusH") {
+            M <- M + H
+        } else if (conversion == "onlyM") {
+            M <- M
+        } else if (conversion == "onlyH") {
+            M <- H
+        }
+    }
 
     # Argument checks ----------------------------------------------------------
 
