@@ -460,10 +460,9 @@ read.bedMethyl <- function (files,
   # Optionally validate each bedMethyl file (if `check_input` is enabled).
   # This step calls `.check_bedMethyl` to ensure the file has the expected format and structure.
   if (check_input) {
-   for (file in files) {
-      message("Validating file: ", file)
-      .check_bedMethyl(file = file, output = output)
-   }
+      message("Validating bedMethyl files and collecting metadata ...")
+      info_df <- .check_bedMethyls(files = files, output = output)
+      rownames(info_df) <- files
   }
   # Verify the validity of the `loci` argument (if provided)
   if (!is.null(loci)) {
@@ -474,14 +473,32 @@ read.bedMethyl <- function (files,
       stop("All elements of 'loci' must have width equal to 1.")
     }
   }
-  # Create default colData if none is provided
+  # Ensure colData rows match the number of files, if not NULL
+  if (!is.null(colData) && nrow(colData) != length(files)) {
+      stop("Supplied 'colData' must have nrow(colData) == length(files).")
+  }
+
+  # Create default colData with row names from file names if colData is NULL
+  # Create default info_df
   if (is.null(colData)) {
-    colData <- DataFrame(row.names = files)
+      if (!check_input) {
+          col_df <- DataFrame(row.names = basename(files))  # Empty colData with row names
+      } else {
+          col_df <- DataFrame(info_df, row.names = basename(files))  # Info-based colData
+      }
   }
-  # Ensure colData rows match the number of files
-  if (nrow(colData) != length(files)) {
-    stop("Supplied 'colData' must have nrow(colData) == length(files).")
+
+  # Validate and combine user-provided colData with info_df if `check_input` is TRUE
+  if (!is.null(colData)) {
+      if (!check_input) {
+          col_df <- colData
+      } else {
+          col_df <- cbind(colData, info_df)
+      }
   }
+  # Combine colData with non-duplicated info_df
+  colData <- col_df
+
   # Validate logical argument `strandCollapse`.
   stopifnot(isTRUEorFALSE(strandCollapse))
   # Handle realization backends (in-memory or on-disk).

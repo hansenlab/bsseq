@@ -7,11 +7,14 @@
   The constructor function for BSseq objects.
 }
 \usage{
-BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
+BSseq(mc = NULL, M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
   trans = NULL, parameters = NULL, pData = NULL, gr = NULL,
-  pos = NULL, chr = NULL, sampleNames = NULL, rmZeroCov = FALSE)
+  pos = NULL, chr = NULL, sampleNames = NULL, rmZeroCov = FALSE,
+  mods = c("5mC+5hmC", "5mC", "5hmC"))
 }
+
 \arguments{
+  \item{mc}{A MethylCounts object (see 'Details' below).}
   \item{M}{A matrix-like object of methylation evidence (see 'Details' below).}
   \item{Cov}{A matrix-like object of coverage (see 'Details' below)).}
   \item{coef}{A matrix-like object of smoothing estimates (see 'Details'
@@ -27,6 +30,8 @@ BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
   \item{chr}{A vector of chromosomes.}
   \item{rmZeroCov}{Should genomic locations with zero coverage in all
     samples be removed.}
+  \item{mods}{The modifications from the MethylCounts object to store in the
+    'M' matrix.}
 }
 \details{
   The 'M', 'Cov', 'coef', and 'se.coef' matrix-like objects will be
@@ -37,8 +42,16 @@ BSseq(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
   data and \code{\link[HDF5Array]{HDF5Matrix}} for on-disk storage of
   data.
 
+  The BSseq object can also be constructed directly from a
+  \code{\link{MethylCounts}} object. When doing so, the modification
+  information for the \code{M} matrix must be specified using the
+  \code{mods} argument. The \code{mods} argument accepts one of
+  \code{"5mC+5hmC"}, \code{"5mC"}, or \code{"5hmC"}, which indicates
+  if the counts represent both 5-methylcytosine and 5-hydroxymethylcytosine,
+  only 5-methylcytosine, or only 5-hydroxymethylcytosine, respectively.
+
   Genomic locations are specified either through \code{gr} or through
-  \code{chr} and \code{pos} but not both.  There should be the same
+  \code{chr} and \code{pos} but not both. There should be the same
   number of genomic locations as there are rows in the \code{M} and
   \code{Cov} matrix.
 
