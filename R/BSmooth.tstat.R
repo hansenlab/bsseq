@@ -1,6 +1,6 @@
 BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paired", "group2"),
                           local.correct = TRUE, maxGap = NULL, qSd = 0.75, k = 21, mc.cores = 1,
-                          control.local.correct = list(reg.grid = TRUE, by.grid = 2000), verbose = TRUE){
+                          verbose = TRUE){
     smoothSd <- function(Sds, k) {
         k0 <- floor(k/2)
         if(all(is.na(Sds))) return(Sds)
@@ -18,17 +18,11 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         if(drange <= 25000)
             return(yy)
         tstat.function <- approxfun(xx, yy)
-        if(control.local.correct$reg.grid) {
-            xx.reg <- seq(from = min(xx), to = max(xx), by = control.local.correct$by)
-            yy.reg <- tstat.function(xx.reg)
-            fit <- locfit(yy.reg ~ lp(xx.reg, h = 25000, deg = 2, nn = 0),
-                          family = "huber", maxk = 50000)
-            correction <- predict(fit, newdata = data.frame(xx.reg = xx))
-        } else {
-            fit <- locfit(yy ~ lp(xx, h = 25000, deg = 2, nn = 0),
-                          family = "huber", maxk = 50000)
-            correction <- predict(fit, newdata = data.frame(xx = xx))
-        }
+        xx.reg <- seq(from = min(xx), to = max(xx), by = 2000)
+        yy.reg <- tstat.function(xx.reg)
+        fit <- locfit(yy.reg ~ lp(xx.reg, h = 25000, deg = 2, nn = 0),
+                      family = "gaussian", maxk = 50000)
+        correction <- predict(fit, newdata = data.frame(xx.reg = xx))
         yy - correction
     }
 
