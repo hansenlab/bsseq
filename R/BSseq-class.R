@@ -70,10 +70,31 @@ setValidity2("BSseq", function(object) {
 #       complicated parsing of the inputs. But we're stuck with it because it's
 #       been around for a long time.
 
-BSseq <- function(M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
+BSseq <- function(mc = NULL, M = NULL, Cov = NULL, coef = NULL, se.coef = NULL,
                   trans = NULL, parameters = NULL, pData = NULL, gr = NULL,
                   pos = NULL, chr = NULL, sampleNames = NULL,
-                  rmZeroCov = FALSE) {
+                  rmZeroCov = FALSE, mods = c("5mC+5hmC", "5mC", "5hmC")) {
+
+    # Add MethylCounts as input ------------------------------------------------
+    if (inherits(mc, "MethylCounts")) {
+        # Match the conversionType
+        mods <- match.arg(mods)
+        gr <- getMethylCounts(mc, type = "gr")
+        pData <- colData(mc)
+        sampleNames <- colnames(mc)
+        Cov <- getMethylCounts(mc, type = "Cov")
+        M <- getMethylCounts(mc, type = "M")
+        H <- getMethylCounts(mc, type = "H")
+        # Compute M and Cov based on conversionType
+        if (mods == "5mC+5hmC") {
+            M <- M + H
+        } else if (mods == "5mC") {
+            M <- M
+        } else if (mods == "5hmC") {
+            M <- H
+        }
+    pData$Mod <- rep(mods,ncol(mc))
+    }
 
     # Argument checks ----------------------------------------------------------
 
@@ -203,8 +224,14 @@ getBSseq <- function(BSseq,
 
 setMethod("show", signature(object = "BSseq"), function(object) {
     cat("An object of type 'BSseq' with\n")
-    cat(" ", nrow(object), "methylation loci\n")
+    cat(" ", nrow(object), "loci\n")
     cat(" ", ncol(object), "samples\n")
+
+    # Check if Mod column in colData contains valid entries
+    if (!is.null(colData(object)$Mod)) {
+        cat(" ", unique(colData(object)$Mod), "values are stored in 'M'\n")
+    }
+
     if (hasBeenSmoothed(object)) {
         cat("has been smoothed with\n")
         cat(" ", object@parameters$smoothText, "\n")

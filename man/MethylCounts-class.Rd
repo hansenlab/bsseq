@@ -13,9 +13,10 @@
 \section{Objects from the Class}{
   An object from the class links together several pieces of information.
   (1) genomic locations stored as a \code{GRanges} object, a location by
-  samples matrix of M values, a location by samples matrix of Cov
-  (coverage) values, a location by samples matrix of Filtered (ambiguous
-  modification status) values, and phenodata information.In addition,
+  samples matrix of M (5mC) values, a location by samples matrix of U
+  (unmethylated Cytosine) values, a optional location by samples matrix of H
+  (5hmC) values, a location by samples matrix of D
+  (Non-CpG) values, and phenodata information. In addition,
   there are slots for representing smoothed data. This class is an
   extension of \link[SummarizedExperiment]{RangedSummarizedExperiment}
   from the \pkg{SummarizedExperiment} package.
@@ -33,7 +34,7 @@
   }
 }
 \usage{
-  MethylCounts(M = NULL, U = NULL, H = NULL, D = NULL, 
+  MethylCounts(M = NULL, U = NULL, H = NULL, D = NULL,
                gr = NULL, pos = NULL, chr = NULL,
                colData = NULL, sampleNames = NULL,
                parameters = NULL, rmZeroCov = FALSE)
@@ -59,7 +60,7 @@
   \item{MethylCounts}{An object of class \code{MethylCounts}.}
   \item{type}{What should be extracted from the object?}
   \item{withDimnames}{\code{logical(1)}. Should dimnames be added to the
-                  output when relevent?} 
+                  output when relevent?}
 }
 \section{Details}{
   The \code{M}, \code{U}, \code{H}, and \code{D} matrix-like objects will be
@@ -72,9 +73,9 @@
 
   \code{M}, \code{U} are required methylation and 'unmethylation'
   values. \code{H} is optional hydroxymethylation values. \code{D}
-  represents addition coverage for a loci, but where the data supports
+  represents addition coverage for a locus, but where the data supports
   neither M, U nor H.
-  
+
   The argument \code{rmZeroCov} may be useful in order to reduce the
   size of the return object be removing methylation loci with zero
   coverage.

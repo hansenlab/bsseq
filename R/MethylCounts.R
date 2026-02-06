@@ -167,8 +167,34 @@ getMethylCounts <- function(MethylCounts,
 
 setMethod("show", signature(object = "MethylCounts"), function(object) {
     cat("An object of type 'MethylCounts' with\n")
-    cat(" ", nrow(object), "methylation loci\n")
+    cat(" ", nrow(object), "loci\n")
     cat(" ", ncol(object), "samples\n")
+
+    #print modification info
+    if (all(colData(object)$Mod_5mC) && all(colData(object)$Mod_5hmC)) {
+        cat("  5mC and 5hmC data for all samples\n")
+    } else if (all(colData(object)$Mod_5mC) && any(colData(object)$Mod_5hmC)) {
+        cat("  5mC from all samples and 5hmC data for some samples\n")
+    } else if (any(colData(object)$Mod_5mC) && all(colData(object)$Mod_5hmC)) {
+        cat("  5mC from some samples and 5hmC data for all samples\n")
+    } else if (any(colData(object)$Mod_5mC) && any(colData(object)$Mod_5hmC)) {
+        cat("  5mC from some samples and 5hmC data for some samples\n")
+    } else if (any(colData(object)$Mod_5mC) && any(colData(object)$Mod_5hmC)) {
+        cat("  5mC from some samples and 5hmC data for some samples\n")
+    } else if (all(colData(object)$Mod_5mC) && all(!colData(object)$Mod_5hmC)) {
+        cat("  5mC for all samples")
+    } else if (all(!colData(object)$Mod_5mC) && all(colData(object)$Mod_5hmC)) {
+        cat("  5hmC for all samples")
+    }
+
+    if (all(colData(object)$CGContext)) {
+        cat("  CG-context modification model detected for all samples\n")
+    } else if (any(CGContext)) {
+        cat("  CG-context modification model detected for some samples\n")
+    } else {
+        cat("  all-context modification model detected for all samples\n")
+    }
+
     if (.isHDF5ArrayBacked(object)) {
         cat("Some assays are HDF5Array-backed\n")
     } else {
