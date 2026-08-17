@@ -52,7 +52,8 @@ Suggests:
     doParallel,
     rtracklayer,
     BSgenome.Hsapiens.UCSC.hg38,
-    batchtools
+    batchtools,
+    tidyverse
 Collate:
     utils.R
     hasGRanges.R
