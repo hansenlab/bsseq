@@ -156,7 +156,7 @@ from chromosome 22.
 `combine()` combines two `BSseq` objects in the following way: the samples for the return objects is the union of the samples from the two objects, and the methylation loci are the union of the two methylation loci.  The two objects do not need to have measured the same loci (in the example below, `BStmp` has data on chromosome 1 and X).
 
 ```{r data-combine}
-BStmp2 <- combine(BStmp, BS.chr22[1:3,])
+BStmp2 <- bsseq::combine(BStmp, BS.chr22[1:3,])
 granges(BStmp2)
 getCoverage(BStmp2)
 ``` 

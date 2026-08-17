@@ -591,13 +591,12 @@ mc_filtered
 The raw or filtered `MethylCounts` object can be saved as an HDF5 file using the `saveHDF5SummarizedExperiment()` function from the `HDF5Array` package. This allows for efficient storage and retrieval of large datasets.
 ```{r}
 #hdf5_path <- 
-    "~/Documents/bsseq/inst/extdata/longread/silversides/mc_filtered.hdf5"
+#    "~/Documents/bsseq/inst/extdata/longread/silversides/mc_filtered.hdf5"
 #HDF5Array::saveHDF5SummarizedExperiment(mc_filtered, hdf5_path)
 
 # Load pre-saved HDF5 file
-files <- list.files(system.file("extdata/longread/silversides/mc_filtered.hdf5", 
-                                package = "bsseq"),
-                    full.names = TRUE)
+files <- system.file("extdata/longread/silversides/mc_filtered.hdf5", 
+                                package = "bsseq")
 
 mc_filtered <- HDF5Array::loadHDF5SummarizedExperiment(files)
 mc_filtered
