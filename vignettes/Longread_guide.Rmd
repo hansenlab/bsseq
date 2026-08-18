@@ -1,13 +1,13 @@
 ---
-title: "Reading and filtering long-read modification data with bsseq"
+title: "Importing and filtering long-read modification data with bsseq"
 shorttitle: "bsseq long-read"
 author: "SrenBlikdal"
 package: bsseq
 bibliography: bsseq.bib
 abstract: >
-  This guide outlines a likelihood-based framework for preparing and filtering long-read data from Oxford Nanopore for analysis with the `bsseq` package. Unlike conversion-based methods, single-molecule sequencing captures both the nucleotide sequence and epigenetic modifications directly. This information enables detection of sample-specific CpG loci and supports effective data filtering prior to downstream modification analysis. The guide demonstrates how to process Oxford Nanopore data into bedMethyl format and filter data based on CpG likelihoods prior to modification analysis in `bsseq`.
+  This guide outlines a likelihood-based workflow for preparing, importing, and filtering long-read Oxford Nanopore data for analysis with the `bsseq` package. Unlike conversion-based methods, single-molecule sequencing captures both the nucleotide sequence and epigenetic modifications directly. This enables detection of sample-specific CpG loci and likelihood-based filtering of loci prior to downstream modification analyses. The guide demonstrates how to process Oxford Nanopore data into bedMethyl format, import the data as `MethylCounts` objects, and perform coverage and likelihood-based filtering prior to modification analysis.
 vignette: >
-  %\VignetteIndexEntry{Reading and filtering long-read modification data with bsseq}
+  %\VignetteIndexEntry{Importing and filtering long-read modification data with bsseq}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 output: 
@@ -16,12 +16,11 @@ output:
 ---
 
 # Introduction
+This guide outlines how to import and filter Oxford Nanopore sequencing data using the `bsseq` package in R. Designed for DNA methylation analysis, `bsseq` provides tools for importing, filtering, analyzing, and visualizing modification data.
 
-This guide outlines how to read and filter Oxford Nanopore sequencing data using the `bsseq` package in R. Designed for DNA methylation analysis, `bsseq` offers tools for reading, filtering, analyzing and visualizing modification data.
+The first part focuses on preprocessing. It begins by processing raw `POD5` sequencing files into basecalled and modification-called `BAM` files using `dorado`. These reads are then mapped to a reference genome while preserving modification information using `SAMtools` and `Minimap2`. Finally, modification calls are summarized into read-based `bedMethyl` files using `Modkit`.
 
-The first part focuses on preprocessing. It begins with processing raw `POD5` sequencing files into basecalled and modification-called `BAM` files using `dorado`. Next, these reads are mapped to a reference genome, while preserving modification information, using `SAMtools` and `Minimap2`. Finally, modification information is summarized in read-based `bedMethyl` files using `Modkit`.
-
-The second part of the guide demonstrates how to read `bedMethyl` files as `MethylCounts` objects, and filtering them based on coverage and likelihood of representing a homozygous and/or heterozygous CpG loci. This workflow is illustrated using both single-sample and a multi-sample `MethylCounts` object.
+The second part demonstrates how to import `bedMethyl` files as `MethylCounts` objects and filter loci based on coverage and the likelihood of representing homozygous and/or heterozygous CpG loci. The workflow is illustrated using both single-sample and multi-sample `MethylCounts` objects.
 
 ## Terminology
 
@@ -31,22 +30,20 @@ The following terms are used throughout this document:
 **Modification calling**: Identifying the modification state from the raw sequencing signal. In this guide, limited to C in CpG-context modifications: C, 5hmC or 5mC.\
 **CpG site**: A cytosine followed by a guanine in a DNA strand (5’ to 3’).\
 **CpG locus**: The combined term for the CpG site the forward and reverse strand in double stranded DNA.\
-**CpG status**: Inferring if a locus is a homozygous CpG, heterozygous CpG, a homozygous or heterozygous CpG or not a CpG at all based on sequencing data mapped to the position in the reference genome.\
+**CpG state**: The inferred status of a locus based on the sequencing data. A locus may be classified as homozygous CpG, heterozygous CpG, homozygous or heterozygous CpG ("allCpG"), or non-CpG.\
 **.99 homozygous CpG filtering**: Filtering for loci with scaled likelihood above 99% of being a homozygous CpG locus given the data.\
 **.99 heterozygous CpG filtering**: Filtering for loci with scaled likelihood of above 99% of being a heterozygous CpG locus given the data.\
 **.99 'allCpG' filtering**: Filtering for loci with scaled likelihood of above 99% of being a homozygous CpG locus or heterozygous CpG locus given the data.\
 **Reference-guided filtering**: Restricting analysis to loci that overlap CpG loci in the reference genome (using the --cpg or --preset traditional in Modkit).
 
 ## Citation
-
-If you use the likelihood filtering, please cite our preprint [@Hansen:2025], while the general use can be cited from the BSmooth paper [@Hansen:2012].
+If you use the likelihood-based filtering methods described in this vignette, please cite our preprint [@Hansen:2025]. General use of the package can be cited using the BSmooth paper [@Hansen:2012].
 
 ## Dependencies
 
 ```{r dependencies, warning=FALSE, message=FALSE}
 library(bsseq)
 library(tidyverse)
-library(GenomicRanges)
 #Additional software modules needed for preprocessing: 
 #Dorado https://github.com/nanoporetech/dorado
 #SAMtools https://github.com/samtools
@@ -125,11 +122,11 @@ modkit pileup --$reference_genome --cpg aligned.bam ref_GpG.bedMethyl
 
 The commands above represent the minimum requirements needed to process the raw Oxford Nanopore sequencing data into a `bedMethyl` file. We  strongly recommend reading the documentation for each program to adjust the parameters for your project and data.
 
-# Reading bedMethyl files
+# Importing bedMethyl files
 
 The function `read.bedMethyl()` reads one or more `bedMethyl` file(s) and returns a `MethylCounts` object which can be used for likelihood filtering, when setting `output` = `"MethylCounts"`. Setting `strandCollapse` = `TRUE` merges data from the forward and reverse strand into a single representation.
 
-## Reading read-based pileup
+## Importing read-based pileup
 
 The read-based bedMethyl files include all CpG loci observed in the reads should be read as `MethylCounts` objects as follows:
 
@@ -141,9 +138,9 @@ mc_all<-read.bedMethyl(files, strandCollapse = T, output = "MethylCounts")
 mc_all
 ```
 
-The `MethylCounts` object includes all the loci which are a CpG sites in at least one read mapped to the position. This includes non-reference CpG loci and false positive CpG loci introduced by sequencing and mapping errors.
+The `MethylCounts` object includes all loci that are a CpG sites in at least one read mapped to the position. This includes non-reference CpG loci and false positive CpG loci introduced by sequencing and mapping errors.
 
-## Reading reference CpG loci only
+## Importing reference CpG loci only
 
 The reference-guided bedMethyl files include only the CpG loci present in the reference genome, and can be read as `BSseq` objects or as `MethylCounts` objects as follows:
 
@@ -651,7 +648,7 @@ mean(getMeth(bs_H, type = "raw"))
 
 # Summary
 
-In summary bedMethyl files from modkit can be imported in to bsseq and filtered for loci with a specific coverage or a specific likelihood of being a homozygous, heterozygous or homozygous/heterozygous CpG loci in all or a subset of samples. A import of a multi-sample project and filtering for loci with a scaled likelihood above 0.99 of being homozygous/heterozygous CpG loci in at least six samples and a coverage of at least 5 in at least six samples can be obtain with this command:
+In summary bedMethyl files from modkit can be imported in to bsseq and filtered for loci with a specific coverage or a specific likelihood of being a homozygous, heterozygous or homozygous/heterozygous CpG loci in all or a subset of samples. Multiple samples can be imported and filtered for loci with a scaled likelihood above 0.99 of being a homozygous orheterozygous CpG loci in at least six samples, and a coverage of at least 5 in at least six samples:
 
 ```{r multi coverage samples and likelihood filtering, message=FALSE}
 files <- list.files(system.file("extdata/longread/silversides/all_cpgs", 
@@ -669,7 +666,7 @@ mc_filtered <- mc_all[loci.idx,]
 mc_filtered
 ```
 
-Specific samples in the BSseq object can be filtered for loci with a high probability of being e.g. homozygous CpG loci:
+Specific samples in the MethylCounts object can be filtered for loci with a high probability of being e.g. homozygous CpG loci:
 
 ```{r coverage samples and likelihood filtering}
 mc_sample<- mc_filtered[,1]
@@ -677,6 +674,8 @@ mc_sample_filtered<-mc_sample[
   getCpGs(mc_sample, type = "homozygous", threshold = 0.99)]
 mc_sample_filtered
 ```
+
+And can be converted to a BSseq object for downstream modification analyses: 
 
 ```{r}
 bs_sample_filtered<-BSseq(mc = mc_sample_filtered)
