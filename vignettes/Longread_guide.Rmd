@@ -1,0 +1,693 @@
+---
+title: "Importing and filtering long-read modification data with bsseq"
+shorttitle: "bsseq long-read"
+author: "SrenBlikdal"
+package: bsseq
+bibliography: bsseq.bib
+abstract: >
+  This guide outlines a likelihood-based workflow for preparing, importing, and filtering long-read Oxford Nanopore data for analysis with the `bsseq` package. Unlike conversion-based methods, single-molecule sequencing captures both the nucleotide sequence and epigenetic modifications directly. This enables detection of sample-specific CpG loci and likelihood-based filtering of loci prior to downstream modification analyses. The guide demonstrates how to process Oxford Nanopore data into bedMethyl format, import the data as `MethylCounts` objects, and perform coverage and likelihood-based filtering prior to modification analysis.
+vignette: >
+  %\VignetteIndexEntry{Importing and filtering long-read modification data with bsseq}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output: 
+  BiocStyle::html_document:
+    toc_float: true
+---
+
+# Introduction
+This guide outlines how to import and filter Oxford Nanopore sequencing data using the `bsseq` package in R. Designed for DNA methylation analysis, `bsseq` provides tools for importing, filtering, analyzing, and visualizing modification data.
+
+The first part focuses on preprocessing. It begins by processing raw `POD5` sequencing files into basecalled and modification-called `BAM` files using `dorado`. These reads are then mapped to a reference genome while preserving modification information using `SAMtools` and `Minimap2`. Finally, modification calls are summarized into read-based `bedMethyl` files using `Modkit`.
+
+The second part demonstrates how to import `bedMethyl` files as `MethylCounts` objects and filter loci based on coverage and the likelihood of representing homozygous and/or heterozygous CpG loci. The workflow is illustrated using both single-sample and multi-sample `MethylCounts` objects.
+
+## Terminology
+
+The following terms are used throughout this document:
+
+**Basecalling**: Determining the sequenced nucleotide sequence (A,C,G or T) from the raw sequencing signals.\
+**Modification calling**: Identifying the modification state from the raw sequencing signal. In this guide, limited to C in CpG-context modifications: C, 5hmC or 5mC.\
+**CpG site**: A cytosine followed by a guanine in a DNA strand (5’ to 3’).\
+**CpG locus**: The combined term for the CpG site the forward and reverse strand in double stranded DNA.\
+**CpG state**: The inferred status of a locus based on the sequencing data. A locus may be classified as homozygous CpG, heterozygous CpG, homozygous or heterozygous CpG ("allCpG"), or non-CpG.\
+**.99 homozygous CpG filtering**: Filtering for loci with scaled likelihood above 99% of being a homozygous CpG locus given the data.\
+**.99 heterozygous CpG filtering**: Filtering for loci with scaled likelihood of above 99% of being a heterozygous CpG locus given the data.\
+**.99 'allCpG' filtering**: Filtering for loci with scaled likelihood of above 99% of being a homozygous CpG locus or heterozygous CpG locus given the data.\
+**Reference-guided filtering**: Restricting analysis to loci that overlap CpG loci in the reference genome (using the --cpg or --preset traditional in Modkit).
+
+## Citation
+If you use the likelihood-based filtering methods described in this vignette, please cite our preprint [@Hansen:2025]. General use of the package can be cited using the BSmooth paper [@Hansen:2012].
+
+## Dependencies
+
+```{r dependencies, warning=FALSE, message=FALSE}
+library(bsseq)
+library(tidyverse)
+#Additional software modules needed for preprocessing: 
+#Dorado https://github.com/nanoporetech/dorado
+#SAMtools https://github.com/samtools
+#Minimap2 https://github.com/lh3/minimap2
+#Modkit https://github.com/nanoporetech/modkit
+```
+
+# Preprocessing
+
+Before importing modification data from Oxford Nanopore sequencing into the `bsseq` package, the raw `POD5` data must be processed to generate base and modification called reads, mapped to a reference genome, and summarized in the pileup format, `bedMethyl`.
+
+## Base and modification calling with Dorado
+
+To obtain the base and modification calls from the raw signal data, we use the `dorado` basecaller. The following command will base and modification call the `POD5` files in the input directory using a CpG-context model to call 5-methylcytosine and 5-hydroxymethylcytosine and output an unaligned `BAM` file. The unaligned `BAM` file will contain basecalls and modification calls for each read.
+
+```{bash basecalling example, eval=FALSE, include=TRUE}
+# Set input and output directories
+input_directory= #/insert/input/directory/with/POD5/files/here
+output_directory= #/insert/output/directory/for/unaligned/bam/files/here
+
+# Run dorado basecaller with modification calling
+dorado basecaller sup,5mCG_5hmCG \ 
+$input_directory/ > $output_directory/unaligned.bam
+```
+
+## Mapping with Minimap2 and SAMtools
+
+To map the unaligned `BAM` file to a reference genome, we use `minimap2` and `samtools`. The following command converts the `BAM` to `FASTQ`, maps the reads, and output a sorted and indexed `BAM` file with modification tags.
+
+```{bash mapping example, eval=FALSE, include=TRUE}
+# Set output directory and reference genome
+output_directory= #/insert/output/directory/for/unaligned/bam/files/here
+reference_genome= #/insert/reference/genome/here
+cd $output_directory
+
+# Map reads to the reference genome
+samtools fastq -TMM,ML unaligned.bam | \
+  minimap2 -ax map-ont -y $reference_genome - | \
+  samtools view -bS -| \
+  samtools sort - > aligned.bam 
+  
+# Index the aligned BAM file  
+samtools index aligned.bam
+```
+
+## Pileup modifications with Modkit
+
+To generate a modification pileup from the aligned `BAM` file, we use `modkit`. The pileup can be read-based approach to include all the CpG loci observed in the reads **(recommended)**, or reference-guided and restricted to the CpG loci in the reference genome **(not recommended)**.
+
+### Read-based pileup
+
+For read-based pileup we do not set any flags related to the reference genome CpG loci (--CpG or ----motif CG 0). However, since we used a CpG-context model for modification calling, only the reference positions with at least one mapped CpG site are included in the pileup.
+
+```{bash pileup all, eval=FALSE, include=TRUE}
+# Set directory
+output_directory= #/insert/output/directory/for/unaligned/bam/files/here
+cd $output_directory
+
+# Pileup modification from all CpG loci observed in the reads
+modkit pileup aligned.bam all_GpG.bedMethyl
+```
+
+### Reference-guided pileup
+
+For reference-guided pileup we use the `--cpg` flag to restrict the analysis to the CpG loci in the reference genome.
+
+```{bash pileup cpg, eval=FALSE, include=TRUE}
+# Set directory and reference genome
+output_directory= #/insert/output/directory/for/unaligned/bam/files/here
+reference_genome= #/insert/reference/genome/here
+cd $output_directory
+
+# Pileup modification from the CpG loci present in the reference genome
+modkit pileup --$reference_genome --cpg aligned.bam ref_GpG.bedMethyl
+```
+
+The commands above represent the minimum requirements needed to process the raw Oxford Nanopore sequencing data into a `bedMethyl` file. We  strongly recommend reading the documentation for each program to adjust the parameters for your project and data.
+
+# Importing bedMethyl files
+
+The function `read.bedMethyl()` reads one or more `bedMethyl` file(s) and returns a `MethylCounts` object which can be used for likelihood filtering, when setting `output` = `"MethylCounts"`. Setting `strandCollapse` = `TRUE` merges data from the forward and reverse strand into a single representation.
+
+## Importing read-based pileup
+
+The read-based bedMethyl files include all CpG loci observed in the reads should be read as `MethylCounts` objects as follows:
+
+```{r read all, message=TRUE}
+files <- list.files(system.file("extdata/longread/silversides/all_cpgs", 
+                                package = "bsseq"),
+                    full.names = TRUE)
+mc_all<-read.bedMethyl(files, strandCollapse = T, output = "MethylCounts")
+mc_all
+```
+
+The `MethylCounts` object includes all loci that are a CpG sites in at least one read mapped to the position. This includes non-reference CpG loci and false positive CpG loci introduced by sequencing and mapping errors.
+
+## Importing reference CpG loci only
+
+The reference-guided bedMethyl files include only the CpG loci present in the reference genome, and can be read as `BSseq` objects or as `MethylCounts` objects as follows:
+
+```{r read cpg, message=FALSE}
+files <- list.files(system.file("extdata/longread/silversides/ref_cpgs", 
+                                package = "bsseq"),
+                    full.names = TRUE)
+mc_cpg<-read.bedMethyl(files=files, strandCollapse = T, output = "MethylCounts")
+mc_cpg
+```
+
+This object includes only loci that are a CpG site in at least one read, and are a CpG loci in the reference genome.
+
+# Filter a single sample
+
+Modification analysis is often restricted to a subset of the loci in a sample. Filtering can be based on coverage thresholds or based on the likelihood of a locus being a homozygous or heterozygous CpG.
+
+## Coverage filtering
+
+A `MethylCounts` object can be filtered using `getMethylCounts()`, where the coverage represent the number of times a CpG site is mapped at a specific locus.
+
+### All CpG loci
+
+```{r cov filtering all single sample}
+#get the first sample
+mc_all_1 <- mc_all[,1]
+#get the indices of loci with coverage >= 5
+loci.idx <- which(getMethylCounts(mc_all_1, type="Cov")>= 5)
+#filter the object to retain these loci
+mc_all_1_filtered <- mc_all_1[loci.idx,]
+mc_all_1_filtered
+```
+
+### Reference CpG loci
+
+```{r cov filtering cpg single sample}
+mc_cpg_1 <- mc_cpg[,1]
+loci.idx <- which(getMethylCounts(mc_cpg_1, type="Cov")>= 5)
+mc_cpg_1_filtered<-mc_cpg_1[loci.idx,]
+mc_cpg_1_filtered
+```
+
+In addition to the sample and the sequencing depth of a sample, the number of coverage filtered loci depend on whether non-reference CpG loci are included, and which coverage threshold is applied.
+
+```{r cov filtering all and cpg single sample, echo=FALSE}
+results <- tibble()
+for (i in 1:30) {
+  sites_all_count <- 
+    length(which(DelayedMatrixStats::rowSums2(getMethylCounts(
+      mc_all[,1], type = "Cov") >= i) == 1))
+  sites_cpg_count <- 
+    length(which(DelayedMatrixStats::rowSums2(getMethylCounts(
+      mc_cpg[,1], type = "Cov") >= i) == 1))
+  results <- bind_rows(results, 
+                       tibble(threshold = i, 
+                              all_CpG = sites_all_count, 
+                              ref_CpG = sites_cpg_count))
+}
+
+#make results long format
+results_long <- results %>%
+  pivot_longer(cols = c(all_CpG, ref_CpG),
+               names_to = "Type", 
+               values_to = "sites")
+
+#plot the results with
+ggplot(results_long, aes(x = threshold, y= sites, color = Type)) +
+  geom_point() +
+  xlab("Coverage threshold") +
+  ylab("Number of loci") +
+  ggtitle("Coverage filtering") +
+  scale_color_manual(values = c("all_CpG" = "blue", "ref_CpG" = "red")) +
+  theme_bw(base_size = 14)
+```
+
+## Likelihood filtering
+
+A `MethylCounts` object imported using `read.bedMethyl()` includes both the CpG coverage and the non-CpG coverage all loci, which we use to estimate the error rate and call the CpG status i.e. determine if a locus is a homozygous CpG, a heterozygous CpG or not a CpG at all.
+
+### .99 "allCpG" filtering
+
+To get the total (homozygous and heterozygous) CpG loci in a sample, one can use the `getCpGs()` function with `type` set to `"allCpG"`.
+
+This can be for all the CpG loci observed in the reads:
+
+```{r .99 all filtering all}
+#get the first sample
+mc_all_1 <- mc_all[,1]
+#get the indices of loci with scaled likelihood above 0.99 of being a "allCpG"
+loci.idx <- getCpGs(mc_all_1, type = "allCpG", threshold = 0.99)
+#filter the object to retain these loci
+mc_all_1_filtered <- mc_all_1[loci.idx,]
+mc_all_1_filtered
+```
+
+Or for all the reference CpG loci observed in the reads:
+
+```{r .99 all filtering cpg}
+mc_cpg_1 <- mc_cpg[,1]
+loci.idx <- getCpGs(mc_cpg_1, type = "allCpG", threshold = 0.99)
+mc_cpg_1_filtered <- mc_cpg_1[loci.idx,]
+mc_cpg_1_filtered
+```
+
+The number of "AllCpG" loci depends on the likelihood threshold and whether non-reference CpG loci are included.
+
+```{r all likelihood threshold test, echo=FALSE}
+results <- tibble()
+for (i in seq(0.95, 1, 0.0005)) {
+  sites_all_count <- length(
+    getCpGs(mc_all[,1], type = "allCpG", threshold = i))
+  sites_cpg_count <- length(
+    getCpGs(mc_cpg[,1], type = "allCpG", threshold = i))
+  results <- bind_rows(results, tibble(threshold = i, 
+                                       all_CpG = sites_all_count,
+                                       ref_CpG = sites_cpg_count))
+}
+#change the code to run from 0.05 to 1 with 0.05 increments
+results_long <- results %>%
+  pivot_longer(cols = c(all_CpG, ref_CpG), 
+               names_to = "Type", 
+               values_to = "sites")
+
+#plot the results with
+ggplot(results_long, aes(x = threshold, y= sites, color = Type)) +
+  geom_point() +
+  xlab("Likelihood threshold") +
+  ylab("Number of loci") +
+  ggtitle("Homozygous and heterozygous CpG loci") +
+  scale_color_manual(values = c("all_CpG" = "blue", "ref_CpG" = "red")) +
+  theme_bw(base_size = 14)
+```
+
+### .99 homozygous CpG
+
+To get the homozygous CpG loci in a sample we use `getCpGs()` with `type = "homozygous"`.
+
+This can be for all the CpG loci observed in the reads:
+
+```{r .99 hom filtering all}
+#get the first sample
+mc_all_1 <- mc_all[,1]
+#get the indices of loci with scaled likelihood above 0.99 of being homozygous
+loci.idx <- getCpGs(mc_all_1, type = "homozygous", threshold = 0.99)
+#filter the object to retain these loci
+mc_all_1_filtered <- mc_all_1[loci.idx,]
+mc_all_1_filtered
+```
+
+Or for all the reference CpG loci observed in the reads:
+
+```{r .99 hom filtering cpg}
+mc_cpg_1 <- mc_cpg[,1]
+loci.idx <- getCpGs(mc_cpg_1, type = "homozygous", threshold = 0.99)
+mc_cpg_1_filtered <- mc_cpg_1[loci.idx,]
+mc_cpg_1_filtered
+```
+
+The number of homozygous loci depends on the likelihood threshold and whether non-reference CpG loci are included.
+
+```{r hom likelihood threshold test, echo=FALSE}
+results <- tibble()
+for (i in seq(0.95, 1, 0.0005)) {
+  sites_all_count_hom <- length(
+    getCpGs(mc_all[,1], type = "homozygous", threshold = i))
+  sites_cpg_count_hom <- length(
+    getCpGs(mc_cpg[,1], type = "homozygous", threshold = i))
+  results <- bind_rows(results, tibble(threshold = i, 
+                                       all_CpG = sites_all_count_hom, 
+                                       ref_CpG = sites_cpg_count_hom))
+}
+#change the code to run from 0.05 to 1 with 0.01 increments
+results_long <- results %>%
+  pivot_longer(cols = c(all_CpG, ref_CpG), 
+               names_to = "Type", 
+               values_to = "sites")
+
+#plot the results with
+ggplot(results_long, aes(x = threshold, y= sites, color = Type)) +
+  geom_point() +
+  xlab("Likelihood threshold") +
+  ylab("Number of loci") +
+  ggtitle("Homozygous CpG loci") +
+  scale_color_manual(values = c("all_CpG" = "blue", "ref_CpG" = "red")) +
+  theme_bw(base_size = 14)
+```
+
+### .99 heterozygous CpG
+
+To get the heterozygous CpG loci in a sample, we use the `getCpGs()` function with `type = "heterozygous"`.
+
+This can be for all the CpG loci observed in the reads:
+
+```{r .99 het filtering all}
+#get the first sample
+mc_all_1 <- mc_all[,1]
+#get the indices of loci with scaled likelihood above 0.99 of being heterozygous
+loci.idx <- getCpGs(mc_all_1, type = "heterozygous", threshold = 0.99)
+#filter the object to retain these loci
+mc_all_1_filtered <- mc_all_1[loci.idx,]
+mc_all_1_filtered
+```
+
+Or for all the reference CpG loci observed in the reads:
+
+```{r .99 het filtering cpg}
+mc_cpg_1 <- mc_cpg[,1]
+loci.idx <- getCpGs(mc_cpg_1, type = "heterozygous", threshold = 0.99)
+mc_cpg_1_filtered <- mc_cpg_1[loci.idx,]
+mc_cpg_1_filtered
+```
+
+The number of heterozygous CpG loci depends on the likelihood threshold applied and whether non-reference CpG loci are retained. Reference-guided pileup generally removes \~half of the heterozygous loci in a sample.
+
+```{r het likelihood threshold test, echo=FALSE}
+results <- tibble()
+for (i in seq(0.95, 1, 0.0005)) {
+  sites_all_count_het <- length(
+    getCpGs(mc_all[,1], type = "heterozygous", threshold = i))
+  sites_cpg_count_het <- length(
+    getCpGs(mc_cpg[,1], type = "heterozygous", threshold = i))
+  results <- bind_rows(results, tibble(threshold = i, 
+                                       all_CpG = sites_all_count_het, 
+                                       ref_CpG = sites_cpg_count_het))
+}
+#change the code to run from 0.05 to 1 with 0.01 increments
+results_long <- results %>%
+  pivot_longer(cols = c(all_CpG, ref_CpG), 
+               names_to = "Type", 
+               values_to = "sites")
+
+#plot the results with
+ggplot(results_long, aes(x = threshold, y= sites, color = Type)) +
+  geom_point() +
+  xlab("Likelihood threshold") +
+  ylab("Number of loci") +
+  ggtitle("Heterozygous CpG loci") +
+  scale_color_manual(values = c("all_CpG" = "blue", "ref_CpG" = "red")) +
+  theme_bw(base_size = 14)
+```
+
+# Filter multiple samples
+
+A project often includes multiple samples, and filtering can be applied to all samples in a `MethylCounts` object. Samples often share CpG loci and it is therefore advantageous to filter the loci in the multi-sample `MethylCounts` object to avoid false positive CpG loci introduced by sequencing and mapping errors.
+
+## Coverage filtering
+
+A multi-sample `MethylCounts` object can be coverage filtered using `getMethylCounts()`.
+
+### Coverage threshold
+The coverage threshold can restrict the analysis to the loci with a coverage above a threshold in all samples (here, 9 samples):
+
+```{r multi coverage threshold, echo=FALSE}
+results <- tibble()
+for (i in 1:30) {
+  sites_all_count <- length(which(
+    DelayedMatrixStats::rowSums2(getMethylCounts(mc_all, type = "Cov") >= i) == 9))
+  sites_cpg_count <- length(which(
+    DelayedMatrixStats::rowSums2(getMethylCounts(mc_cpg, type = "Cov") >= i) == 9))
+  results <- bind_rows(results, tibble(threshold = i, all_CpG = sites_all_count, ref_CpG = sites_cpg_count))
+}
+
+#make results long format
+results_long <- results %>%
+  pivot_longer(cols = c(all_CpG, ref_CpG), 
+               names_to = "Type",
+               values_to = "sites")
+
+#plot the results with
+ggplot(results_long, aes(x = as.factor(threshold), y= sites, color = Type)) +
+  geom_point() +
+  xlab("Coverage threshold") +
+  ylab("Number of loci") +
+  ggtitle("Coverage filtering all samples") +
+  scale_color_manual(values = c("all_CpG" = "blue", "ref_CpG" = "red")) +
+  theme_bw(base_size = 14)
+```
+
+### Samples threshold
+
+The coverage filtering can be less conservative by including all loci passing the threshold of 5X in some of the 9 samples:
+
+```{r multi samples threshold, echo=FALSE}
+results <- tibble()
+for (i in 1:9) {
+  sites_all_count <- length(which(DelayedMatrixStats::rowSums2(getMethylCounts(
+      mc_all, type = "Cov") >= 5) >= i))
+  sites_cpg_count <- length(which(DelayedMatrixStats::rowSums2(
+      getMethylCounts(mc_cpg, type = "Cov") >= 5) >= i))
+  results <- bind_rows(results, tibble(threshold = i, 
+                                       all_CpG = sites_all_count, 
+                                       ref_CpG = sites_cpg_count))
+}
+
+#make results long format
+results_long <- results %>%
+  pivot_longer(cols = c(all_CpG, ref_CpG), 
+               names_to = "Type", 
+               values_to = "sites")
+
+#plot the results with
+ggplot(results_long, aes(x = as.factor(threshold), y= sites, color = Type)) +
+  geom_point() +
+  xlab("Samples passing 5X coverage threshold") +
+  ylab("Number of loci") +
+  ggtitle("Coverage filtering") +
+  scale_color_manual(values = c("all_CpG" = "blue", "ref_CpG" = "red")) +
+  theme_bw(base_size = 14)
+```
+
+### Example
+
+Filtering a `MethylCounts` object to retain only loci with a coverage of at least 5X in at least six of the nine samples can be done using this command:
+
+```{r multi coverage and samples filtering}
+loci.idx <- which(
+  DelayedMatrixStats::rowSums2(getMethylCounts(mc_all, type="Cov")>= 5) >= 6)
+mc_coverage_filtered <- mc_all[loci.idx,]
+mc_coverage_filtered
+```
+
+## Likelihood filtering
+
+For likelihood filtering of multiple samples, we recommend utilizing the functions `getCpGMatrix()` and `getMaxLikelihoodMatrix()` to obtain the CpG matrix and the maximum likelihood matrix for the samples.
+
+The function `getCpGMatrix()` returns a matrix with the most likely CpG call for the loci and sample with the same dimensions as the `MethylCounts` object. In the the default setting homozygous CpG loci are represented by 0, heterozygous CpG loci by 1 and non-CpG loci by 2.
+
+```{r getCpGMatrix}
+G_all <- getCpGMatrix(mc_all)
+head(G_all)
+```
+
+The function `getMaxLikelihoodMatrix` returns a matrix with the corresponding scaled likelihood of most likely CpG call for the loci and sample with the same dimensions.
+
+```{r getMaxLikelihoodMatrix}
+Q_all <- getMaxLikelihoodMatrix(mc_all)
+head(round(Q_all,3))
+```
+
+Both functions can be run using `allCpG = TRUE`, where 0 in the CpG matrix represent homozygous or heterozygous CpG and the MaxLikelihoodMatrix represent the joint probability of homozygous or heterozygous CpG. This is useful for filtering the data based on likelihood thresholds.
+
+```{r getCpGMatrix allCpG}
+G_all <- getCpGMatrix(mc_all, allCpG = TRUE)
+head(G_all)
+```
+
+```{r getMaxLikelihoodMatrix allCpG}
+Q_all <- getMaxLikelihoodMatrix(mc_all, allCpG = TRUE)
+head(round(Q_all,3))
+```
+
+In both settings, locus with a coverage of 0 are represented as non-CpGs with likelihood of 1/3.
+
+### Likelihood threshold
+
+The multi-sample `MethylCounts` object can be filtered for loci scaled likelihood of being a homozygous or heterozygous CpG loci in all nine samples above a certain likelihood threshold.
+
+```{r multi likelihood threshold test all, echo=FALSE}
+G_all <- getCpGMatrix(mc_all, allCpG = TRUE)
+G_cpg <- getCpGMatrix(mc_cpg, allCpG = TRUE)
+Q_all <- getMaxLikelihoodMatrix(mc_all, allCpG = TRUE)
+Q_cpg <- getMaxLikelihoodMatrix(mc_cpg, allCpG = TRUE)
+
+results_Q <- tibble()
+for (i in seq(0.95, 1, 0.0005)) {
+sites_count_all <- length(which(
+   DelayedMatrixStats::rowSums2(G_all == 0) == 9 & 
+   DelayedMatrixStats::rowSums2(Q_all >= i) == 9))
+sites_count_cpg <- length(which(
+   DelayedMatrixStats::rowSums2(G_cpg == 0) == 9 & 
+   DelayedMatrixStats::rowSums2(Q_cpg >= i) == 9))
+results_Q <- bind_rows(results_Q, tibble(threshold = i, 
+                                       all_CpG_hom = sites_count_all,
+                                       ref_CpG_hom = sites_count_cpg))
+}
+
+#make results long format
+results_long <- results_Q %>%
+  pivot_longer(cols = c(all_CpG_hom, ref_CpG_hom), 
+               names_to = "Type", 
+               values_to = "sites")
+
+#plot the results with
+ggplot(results_long, aes(x = threshold, y= sites, color = Type)) +
+  geom_point() +
+  xlab("Likelihood threshold") +
+  ylab("Number of CpG loci") +
+  ggtitle("Likelihood filtering") +
+  scale_color_manual(values = c("all_CpG_hom" = "blue", "ref_CpG_hom" = "red")) +
+  theme_bw(base_size = 14)
+```
+
+### Samples threshold
+
+The likelihood threshold can be combined with the samples threshold for more relaxed filtering for loci scaled likelihood of being a homozygous or heterozygous CpG loci in X out of all nine samples.
+
+```{r multi samples threshold test all, echo=FALSE}
+G_all <- getCpGMatrix(mc_all, allCpG = TRUE)
+G_cpg <- getCpGMatrix(mc_cpg, allCpG = TRUE)
+Q_all <- getMaxLikelihoodMatrix(mc_all, allCpG = TRUE)
+Q_cpg <- getMaxLikelihoodMatrix(mc_cpg, allCpG = TRUE)
+
+results <- tibble()
+for (i in 1:9) {
+sites_count_all <- length(which(
+   DelayedMatrixStats::rowSums2(G_all == 0 & Q_all >= 0.99 ) >= i))
+sites_count_cpg <- length(which(
+   DelayedMatrixStats::rowSums2(G_cpg == 0 & Q_cpg >= 0.99 ) >= i))
+results <- bind_rows(results, tibble(threshold = i, 
+                                       all_CpG_hom = sites_count_all,
+                                       ref_CpG_hom = sites_count_cpg))
+}
+
+#make results long format
+results_long <- results %>%
+  pivot_longer(cols = c(all_CpG_hom, ref_CpG_hom), 
+               names_to = "Type", 
+               values_to = "sites")
+
+#plot the results with
+ggplot(results_long, aes(x = as.factor(threshold), y= sites, color = Type)) +
+  geom_point() +
+  xlab("Samples passing .99 all filtering") +
+  ylab("Number of CpG loci") +
+  ggtitle("Samples passing likelihood filtering") +
+  scale_color_manual(values = c("all_CpG_hom" = "blue", "ref_CpG_hom" = "red"))+
+  theme_bw(base_size = 14)
+```
+
+### Example
+
+The likelihood and samples thresholds can be combined to filter for e.g. loci with a likelihood above 0.99 of being a homozygous or heterozygous CpG loci in at least six of the nine samples:
+
+```{r multi likelihood and samples filtering}
+G_all <- getCpGMatrix(mc_all, allCpG = TRUE)
+Q_all <- getMaxLikelihoodMatrix(mc_all, allCpG = TRUE)
+
+loci.idx <- which(
+  DelayedMatrixStats::rowSums2(Q_all >= .99 & G_all==0) >= 6)
+mc_filtered <- mc_all[loci.idx,]
+mc_filtered
+```
+
+# HDF5 storage
+The raw or filtered `MethylCounts` object can be saved as an HDF5 file using the `saveHDF5SummarizedExperiment()` function from the `HDF5Array` package. This allows for efficient storage and retrieval of large datasets.
+```{r}
+#hdf5_path <- 
+#    "~/Documents/bsseq/inst/extdata/longread/silversides/mc_filtered.hdf5"
+#HDF5Array::saveHDF5SummarizedExperiment(mc_filtered, hdf5_path)
+
+# Load pre-saved HDF5 file
+files <- system.file("extdata/longread/silversides/mc_filtered.hdf5", 
+                                package = "bsseq")
+
+mc_filtered <- HDF5Array::loadHDF5SummarizedExperiment(files)
+mc_filtered
+```
+
+# Converting to BSseq
+
+For downstream analysis the filtered `MethylCounts` object can be converted to a `BSseq` object using the `BSseq()` constructor function.
+
+```{r}
+# Filter and process a sample from the MethylCounts object
+mc_sample <- mc_filtered[, 1]
+mc_sample_filtered <- mc_sample[
+  getCpGs(mc_sample, type = "homozygous", threshold = 0.99)]
+
+# Display the filtered MethylCounts object
+mc_sample_filtered
+```
+
+Depending on the analysis, you can specify the modification type (mods) as "5mC+5hmC" (default). 
+
+```{r}
+# Convert to BSseq with both 5mC and 5hmC data
+bs <- BSseq(mc = mc_sample_filtered, mods = "5mC+5hmC")
+bs
+
+# Calculate the mean methylation using raw data
+mean(getMeth(bs, type = "raw"))
+```
+
+Or only one modification type, e.g., "5mC":
+
+```{r}
+# Convert to BSseq with only 5mC data
+bs_M <- BSseq(mc = mc_sample_filtered, mods = "5mC")
+bs_M
+
+# Calculate the mean methylation for 5mC
+mean(getMeth(bs_M, type = "raw"))
+```
+
+or "5hmC":
+
+```{r}
+# Convert to BSseq with only 5hmC data
+bs_H <- BSseq(mc = mc_sample_filtered, mods = "5hmC")
+bs_H
+
+# Calculate the mean methylation for 5hmC
+mean(getMeth(bs_H, type = "raw"))
+```
+
+# Summary
+
+In summary bedMethyl files from modkit can be imported in to bsseq and filtered for loci with a specific coverage or a specific likelihood of being a homozygous, heterozygous or homozygous/heterozygous CpG loci in all or a subset of samples. Multiple samples can be imported and filtered for loci with a scaled likelihood above 0.99 of being a homozygous orheterozygous CpG loci in at least six samples, and a coverage of at least 5 in at least six samples:
+
+```{r multi coverage samples and likelihood filtering, message=FALSE}
+files <- list.files(system.file("extdata/longread/silversides/all_cpgs", 
+                                package = "bsseq"),
+                    full.names = TRUE)
+mc_all<-read.bedMethyl(files, strandCollapse = T, output = "MethylCounts")
+
+G <- getCpGMatrix(mc_all, allCpG = TRUE)
+Q <- getMaxLikelihoodMatrix(mc_all, allCpG = TRUE)
+
+loci.idx <- which(
+  DelayedMatrixStats::rowSums2(Q >= .99 & G==0) >= 6 &
+  DelayedMatrixStats::rowSums2(getMethylCounts(mc_all, type="Cov")>= 5) >= 6)
+mc_filtered <- mc_all[loci.idx,]
+mc_filtered
+```
+
+Specific samples in the MethylCounts object can be filtered for loci with a high probability of being e.g. homozygous CpG loci:
+
+```{r coverage samples and likelihood filtering}
+mc_sample<- mc_filtered[,1]
+mc_sample_filtered<-mc_sample[
+  getCpGs(mc_sample, type = "homozygous", threshold = 0.99)]
+mc_sample_filtered
+```
+
+And can be converted to a BSseq object for downstream modification analyses: 
+
+```{r}
+bs_sample_filtered<-BSseq(mc = mc_sample_filtered)
+bs_sample_filtered
+```
+
+# sessionInfo()
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```
+
+# References
+
+
