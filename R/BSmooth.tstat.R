@@ -9,7 +9,7 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
         sSds <- as.vector(runmean(Rle(c(addSD, thresSD, addSD)), k = k))
         sSds
     }
-    compute.correction <- function(idx, qSd = 0.75, control.local.correct = control.local.correct) {
+    compute.correction <- function(idx, qSd = 0.75) {
         xx <- start(BSseq)[idx]
         yy <- tstat[idx]
         suppressWarnings({
@@ -116,7 +116,6 @@ BSmooth.tstat <- function(BSseq, group1, group2, estimate.var = c("same", "paire
     if(local.correct) {
         tstat.corrected <- do.call(c, mclapply(clusterIdx,
                                                compute.correction, qSd = qSd,
-                                               control.local.correct = control.local.correct,
                                                mc.cores = mc.cores))
     }
     ptime2 <- proc.time()

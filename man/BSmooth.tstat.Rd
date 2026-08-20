@@ -11,8 +11,7 @@
 \usage{
 BSmooth.tstat(BSseq, group1, group2,
   estimate.var = c("same", "paired", "group2"), local.correct = TRUE,
-  maxGap = NULL, qSd = 0.75, k = 21, mc.cores = 1,
-  control.local.correct = list(reg.grid = TRUE, by.grid = 2000), verbose = TRUE)
+  maxGap = NULL, qSd = 0.75, k = 21, mc.cores = 1, verbose = TRUE)
 }
 \arguments{
   \item{BSseq}{An object of class \code{BSseq}.}
@@ -29,11 +28,6 @@ BSmooth.tstat(BSseq, group1, group2,
   \item{mc.cores}{The number of cores used.  Note that setting
     \code{mc.cores} to a value greater than 1 is not supported on MS
     Windows, see the help page for \code{mclapply}.}
-  \item{control.local.correct}{Control options for local
-    correct. Currently \code{reg.grid} uses a regular grid of position
-    values with a separation of \code{by.grid} bases. If \code{reg.grid}
-    is set to \code{FALSE} use the grid specified by the input CpG
-    positions.}
   \item{verbose}{Should the function be verbose?}
 }
 \details{

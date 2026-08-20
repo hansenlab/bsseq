@@ -189,7 +189,7 @@ setMethod("show", signature(object = "MethylCounts"), function(object) {
 
     if (all(colData(object)$CGContext)) {
         cat("  CG-context modification model detected for all samples\n")
-    } else if (any(CGContext)) {
+    } else if (any(colData(object)$CGContext)) {
         cat("  CG-context modification model detected for some samples\n")
     } else {
         cat("  all-context modification model detected for all samples\n")
