@@ -217,7 +217,9 @@ combineList <- function(x, ..., BACKEND = NULL) {
     se <- SummarizedExperiment(
         assays = ans_assays,
         rowRanges = ans_rowRanges,
-        colData = ans_colData)
+        colData = ans_colData,
+        checkDimnames = FALSE
+  )
     # TODO: Avoid validity check.
     .BSseq(se, parameters = ans_parameters, trans = ans_trans)
 }
