@@ -6,7 +6,7 @@ plotAnnoTrack <- function(gr, annoTrack, cex) {
          ylim = c(0.5, length(annoTrack) + 0.5), xlim = c(start(gr), end(gr)), xlab = "", ylab = "")
     lapply(seq(along = annoTrack), function(ii) {
         jj <- length(annoTrack) + 1- ii
-        ir <- subsetByOverlaps(annoTrack[[ii]], gr)
+        ir <- subsetByOverlaps(annoTrack[[ii]], gr, ignore.strand=TRUE)
         if(length(ir) > 0)
             rect(start(ir)-0.5, jj - 0.15, end(ir), jj + 0.15, col = "grey60", border = NA)
         mtext(names(annoTrack)[ii], side = 2, at = jj, las = 1, line = 1,
@@ -215,7 +215,7 @@ plotManyRegions <- function(BSseq, regions = NULL, extend = 0, main = "", addReg
 .plotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd, regionCol,
                             addTicks, addPoints, pointsMinCov, highlightMain) {
     gr <- .bsGetGr(BSseq, region, extend)
-    BSseq <- subsetByOverlaps(BSseq, gr)
+    BSseq <- subsetByOverlaps(BSseq, gr, ignore.strand = TRUE)
 
     ## Extract basic information
     sampleNames <- sampleNames(BSseq)
