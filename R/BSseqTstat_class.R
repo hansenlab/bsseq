@@ -1,11 +1,14 @@
-setClass("BSseqTstat", contains = "hasGRanges",
-         representation(stats = "matrix",
+## Add new union members as needed (e.g. "SparseMatrix").
+setClassUnion("matrix_OR_DelayedMatrix", c("matrix", "DelayedMatrix"))
+
+setClass("BSseqTstat", contains = "GRanges",
+         representation(stats = "matrix_OR_DelayedMatrix",
                         parameters = "list")
          )
 setValidity("BSseqTstat", function(object) {
     msg <- NULL
-    if(length(object@gr) != nrow(object@stats))
-        msg <- c(msg, "length of 'gr' is different from the number of rows of 'stats'")
+    if(length(object) != nrow(object@stats))
+        msg <- c(msg, "'stats' must have one row per methylation locus")
     if(is.null(msg)) TRUE else msg
 })
 
@@ -20,21 +23,13 @@ setMethod("show", signature(object = "BSseqTstat"),
           })
 
 setMethod("[", "BSseqTstat", function(x, i, ...) {
-    if(missing(i))
-        stop("need [i] for subsetting")
-    if(missing(i))
-        return(x)
-    x@gr <- x@gr[i]
+    i <- normalizeSingleBracketSubscript(i, x)
     x@stats <- x@stats[i,, drop = FALSE]
-    x
+    callNextMethod()
 })
 
 BSseqTstat <- function(gr = NULL, stats = NULL, parameters = NULL) {
-    out <- new("BSseqTstat")
-    out@gr <- gr
-    out@stats <- stats
-    out@parameters <- parameters
-    out
+    new("BSseqTstat", gr, stats = stats, parameters = parameters)
 }
 
 summary.BSseqTstat <- function(object, ...) {
@@ -68,10 +63,20 @@ plot.BSseqTstat <- function(x, y, ...) {
 }
 
 setMethod("updateObject", "BSseqTstat",
-          function(object, ...) {
-              stats <- object@stats
-              stats <- stats
-              object@stats <- stats
-              object
-          }
+    function(object, ..., verbose = FALSE) {
+        if (!.hasSlot(object, "gr")) {
+            return(callNextMethod())
+        }
+        if (verbose)
+            message("[updateObject] ", class(object), " object ",
+                    "uses old internal representation from\n",
+                    "[updateObject] bsseq <= 1.49.2. ",
+                    "Updating it ... ", appendLF=FALSE)
+        gr <- updateObject(object@gr)
+        ans <- BSseqTstat(gr = gr, stats = object@stats,
+                                   parameters = object@parameters)
+        if (verbose)
+            message("OK")
+        ans
+    }
 )

@@ -71,6 +71,7 @@ dmrFinder(bstat, cutoff = NULL, qcutoff = c(0.025, 0.975),
 }
 \examples{
 if(require(bsseqData)) {
+  BS.cancer.ex.tstat <- updateObject(BS.cancer.ex.tstat)
   dmrs0 <- dmrFinder(BS.cancer.ex.tstat, cutoff = c(-4.6, 4.6), verbose = TRUE)
   dmrs <- subset(dmrs0, abs(meanDiff) > 0.1 & n >= 3)
 }

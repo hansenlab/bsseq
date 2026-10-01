@@ -1,4 +1,4 @@
-setClass("BSseqStat", contains = "hasGRanges",
+setClass("BSseqStat", contains = "GRanges",
          representation(stats = "list",
                         parameters = "list")
          )
@@ -9,7 +9,7 @@ setValidity("BSseqStat", function(object) {
        anyDuplicated(names(object@stats)))
         msg <- validMsg(msg, "the 'stats' list needs to be named with unique names.")
     for(name in c("rawSds", "smoothsSds", "stat", "rawTstats")) {
-        if(name %in% names(object@stats) && isTRUE(nrow(object@stats[[name]]) != length(object@gr)))
+        if(name %in% names(object@stats) && isTRUE(nrow(object@stats[[name]]) != length(object)))
             msg <- validMsg(msg, sprintf("component '%s' of slot 'stats' has to have the same number of rows as slot 'gr' is long", name))
     }
     if(is.null(msg)) TRUE else msg
@@ -24,11 +24,7 @@ setMethod("show", signature(object = "BSseqStat"),
           })
 
 setMethod("[", "BSseqStat", function(x, i, ...) {
-    if(missing(i))
-        stop("need [i] for subsetting")
-    if(missing(i))
-        return(x)
-    x@gr <- x@gr[i]
+    i <- normalizeSingleBracketSubscript(i, x)
     statnames <- names(x@stats)
     names(statnames) <- statnames
     x@stats <- lapply(statnames, function(nam) {
@@ -38,16 +34,31 @@ setMethod("[", "BSseqStat", function(x, i, ...) {
         }
         x@stats[[nam]]
     })
-    x
+    callNextMethod()
 })
 
 BSseqStat <- function(gr = NULL, stats = NULL, parameters = NULL) {
-    out <- new("BSseqStat")
-    out@gr <- gr
-    out@stats <- stats
-    out@parameters <- parameters
-    out
+    new("BSseqStat", gr, stats = stats, parameters = parameters)
 }
+
+setMethod("updateObject", "BSseqStat",
+    function(object, ..., verbose = FALSE) {
+        if (!.hasSlot(object, "gr")) {
+            return(callNextMethod())
+        }
+        if (verbose)
+            message("[updateObject] ", class(object), " object ",
+                    "uses old internal representation from\n",
+                    "[updateObject] bsseq <= 1.49.2. ",
+                    "Updating it ... ", appendLF=FALSE)
+        gr <- updateObject(object@gr)
+        ans <- BSseqStat(gr = gr, stats = object@stats,
+                                  parameters = object@parameters)
+        if (verbose)
+            message("OK")
+        ans
+    }
+)
 
 # TODO: updateObject() to use ordinary matrix instead of DelayedMatrix with
 #       in-memory seed.

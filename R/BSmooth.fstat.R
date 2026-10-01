@@ -53,7 +53,7 @@ smoothSds <- function(BSseqStat, k = 101, qSd = 0.75, mc.cores = 1,
         stop("need to set argument 'maxGap'")
     if(verbose) cat("[smoothSds] preprocessing ... ")
     ptime1 <- proc.time()
-    clusterIdx <- makeClusters(granges(BSseqStat), maxGap = maxGap)
+    clusterIdx <- makeClusters(BSseqStat, maxGap = maxGap)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))
@@ -137,7 +137,7 @@ localCorrectStat <- function(BSseqStat, threshold = c(-15,15), mc.cores = 1, ver
     maxGap <- BSseqStat$parameters$maxGap
     if(verbose) cat("[BSmooth.tstat] preprocessing ... ")
     ptime1 <- proc.time()
-    clusterIdx <- makeClusters(BSseqStat$gr, maxGap = maxGap)
+    clusterIdx <- makeClusters(BSseqStat, maxGap = maxGap)
     ptime2 <- proc.time()
     stime <- (ptime2 - ptime1)[3]
     if(verbose) cat(sprintf("done in %.1f sec\n", stime))

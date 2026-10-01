@@ -1,7 +1,7 @@
 # Internal functions -----------------------------------------------------------
 
-.rowTickmarks <- function(hasGRanges, maxGap) {
-    gr <- granges(hasGRanges)
+.rowTickmarks <- function(BSseq, maxGap) {
+    gr <- granges(BSseq)
     # NOTE: This relies on 'gr' being sorted, so really want to be sure of this!
     stopifnot(!is.unsorted(gr))
     clusters <- reduce(gr, min.gapwidth = maxGap, with.revmap = TRUE)
@@ -13,7 +13,7 @@
 makeClusters <- function(hasGRanges, maxGap = 10^8) {
     chrOrder <- as.character(runValue(seqnames(hasGRanges)))
     if(anyDuplicated(chrOrder))
-        stop("argument 'hasGRanges' is not properly order")
+        stop("argument 'hasGRanges' is not properly ordered")
     grBase <- granges(hasGRanges)
     clusters <- reduce(resize(grBase, width = 2*maxGap + 1, fix = "center"))
     start(clusters) <- pmax(rep(1, length(clusters)), start(clusters))

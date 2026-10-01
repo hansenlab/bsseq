@@ -17,8 +17,11 @@
 }
 \arguments{
   \item{gr}{The genomic locations as an object of class \code{GRanges}.}
-  \item{stats}{The statistics, as a matrix-like object (see 'Details' below).}
-  \item{parameters}{A list of parameters.}
+  \item{stats}{A matrix-like object (see 'Details' below) with columns
+    representing various statistics for methylation loci along the
+    genome.}
+  \item{parameters}{A list of parameters, as an object of class \code{list},
+    representing how the t-statistics were computed.}
 }
 
 \details{
@@ -35,20 +38,8 @@ Objects can be created by calls of the form \code{BSseqTstat(...)}.
 However, usually objects are returned by \code{BSmooth.tstat(...)} and
 not constructed by the user..
 }
-\section{Slots}{
-  \describe{
-    \item{\code{stats}:}{This is a
-      \code{\link[DelayedArray]{DelayedMatrix}} object with columns
-      representing  various statistics for methylation loci along the
-      genome.}
-    \item{\code{parameters}:}{Object of class \code{list}.  A list of
-      parameters representing how the t-statistics were computed.}
-    \item{\code{gr}:}{Object of class \code{GRanges} giving genomic
-      locations.}
-  }
-}
 \section{Extends}{
-Class \code{\linkS4class{hasGRanges}}, directly.
+Class \code{\link[GenomicRanges]{GRanges}}, directly.
 }
 \section{Methods}{
   \describe{
@@ -58,10 +49,11 @@ Class \code{\linkS4class{hasGRanges}}, directly.
   }
 }
 \section{Utilities}{
-  This class extends \code{hasGRanges} and therefore inherits a number
-  of useful \code{GRanges} methods that operate on the \code{gr} slot,
-  used for accessing and setting the genomic locations and also do
-  \code{subsetByOverlaps}.
+  This class extends \code{\link[GenomicRanges]{GRanges}} and therefore
+  inherits the full \code{GRanges} API. This means that \code{BSseqTstat}
+  objects support any operation supported by \code{GRanges} objects, like
+  \code{seqnames}, \code{start}, \code{end}, \code{width}, \code{strand},
+  \code{[}, \code{findOverlaps}, \code{subsetByOverlaps}, etc...
   }
 \section{Coercion}{
   Package version 1.11.1 introduced a new version of representing
@@ -72,8 +64,9 @@ Class \code{\linkS4class{hasGRanges}}, directly.
   Kasper Daniel Hansen \email{khansen@jhsph.edu}
 }
 \seealso{
-  The package vignette(s).  \code{\linkS4class{hasGRanges}} for accessing
-  the genomic locations.  \code{\link{BSmooth.tstat}} for a function
+  The package vignette(s).  \code{\link[GenomicRanges]{GRanges}} in the
+  \pkg{GenomicRanges} package for accessing the genomic locations.
+  \code{\link{BSmooth.tstat}} for a function
   that returns objects of class \code{BSseqTstat}, and \code{\link{dmrFinder}}
   for a function that computes DMRs based on the t-statistics.  Also see
   \code{\link[bsseqData]{BS.cancer.ex.tstat}} for an example of the
@@ -82,6 +75,7 @@ Class \code{\linkS4class{hasGRanges}}, directly.
 \examples{
 if(require(bsseqData)) {
     data(BS.cancer.ex.tstat)
+    BS.cancer.ex.tstat <- updateObject(BS.cancer.ex.tstat)
     dmrFinder(BS.cancer.ex.tstat)
 }
 }

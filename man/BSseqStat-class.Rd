@@ -17,9 +17,11 @@
 }
 \arguments{
     \item{gr}{The genomic locations as an object of class \code{GRanges}.}
-    \item{stats}{The statistics, as a list of matrix-like objects (see
-        'Details' below).}
-    \item{parameters}{A list of parameters.}
+    \item{stats}{A list of matrix-like objects (see 'Details' below) with
+      list elements representing various statistics for methylation loci
+      along the genome.}
+    \item{parameters}{A list of parameters, as an object of class \code{list},
+      representing how the statistics were computed.}
 }
 \details{
     The matrix-like elements of the list in the 'stats' slot will be
@@ -35,19 +37,8 @@
     However, usually objects are returned by \code{BSmooth.fstat(...)} and
     not constructed by the user.
 }
-\section{Slots}{
-  \describe{
-    \item{\code{stats}:}{This is a list of   \code{\link[DelayedArray]{DelayedMatrix}}
-      objects with list elements representing various statistics for
-      methylation loci along the genome.}
-    \item{\code{parameters}:}{Object of class \code{list}.  A list of
-      parameters representing how the statistics were computed.}
-    \item{\code{gr}:}{Object of class \code{GRanges} giving genomic
-      locations.}
-  }
-}
 \section{Extends}{
-    Class \code{\linkS4class{hasGRanges}}, directly.
+    Class \code{\link[GenomicRanges]{GRanges}}, directly.
 }
 \section{Methods}{
     \describe{
@@ -57,10 +48,11 @@
     }
 }
 \section{Utilities}{
-    This class extends \code{hasGRanges} and therefore inherits a number
-    of useful \code{GRanges} methods that operate on the \code{gr} slot,
-    used for accessing and setting the genomic locations and also do
-    \code{subsetByOverlaps}.
+    This class extends \code{\link[GenomicRanges]{GRanges}} and therefore
+    inherits the full \code{GRanges} API. This means that \code{BSseqStat}
+    objects support any operation supported by \code{GRanges} objects, like
+    \code{seqnames}, \code{start}, \code{end}, \code{width}, \code{strand},
+    \code{[}, \code{findOverlaps}, \code{subsetByOverlaps}, etc...
 }
 \section{Coercion}{
   Package version 1.11.1 introduced a new version of representing
@@ -71,7 +63,8 @@
     Kasper Daniel Hansen \email{khansen@jhsph.edu}
 }
 \seealso{
-    \code{\linkS4class{hasGRanges}} for accessing the genomic locations.
+    \code{\link[GenomicRanges]{GRanges}} in the \pkg{GenomicRanges} package
+    for accessing the genomic locations.
     \code{\link{BSmooth.fstat}} for a function
     that returns objects of class \code{BSseqStat}, and \code{\link{smoothSds}},
     \code{\link{computeStat}} and \code{\link{dmrFinder}}

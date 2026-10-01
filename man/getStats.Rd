@@ -39,6 +39,7 @@ getStats(bstat, regions = NULL, ...)
 \examples{
 if(require(bsseqData)) {
   data(BS.cancer.ex.tstat)
+  BS.cancer.ex.tstat <- updateObject(BS.cancer.ex.tstat)
   head(getStats(BS.cancer.ex.tstat))
   reg <- GRanges(seqnames = c("chr22", "chr22"),
      ranges = IRanges(start = c(1, 2*10^7), end = c(2*10^7 +1, 4*10^7)))

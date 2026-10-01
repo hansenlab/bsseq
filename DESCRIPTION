@@ -56,7 +56,6 @@ Suggests:
     tidyverse
 Collate:
     utils.R
-    hasGRanges.R
     BSseq-class.R
     BSseqTstat_class.R
     MethylCounts.R
